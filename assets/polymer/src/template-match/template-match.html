@@ -1,0 +1,88 @@
+<!--
+@license
+Copyright (c) 2015 The Polymer Project Authors. All rights reserved.
+This code may only be used under the BSD style license found at http://polymer.github.io/LICENSE.txt
+The complete set of authors may be found at http://polymer.github.io/AUTHORS.txt
+The complete set of contributors may be found at http://polymer.github.io/CONTRIBUTORS.txt
+Code distributed by Google as part of the polymer project is also
+subject to an additional IP rights grant found at http://polymer.github.io/PATENTS.txt
+-->
+
+<link rel="import" href="/polymer/bower_components/polymer/polymer.html">
+
+<dom-module id="template-match">
+  <template>
+    <style>
+      :host {
+        display: block;
+      }
+    </style>
+   
+  </template>
+  <script>
+  (function() {
+    'use strict';
+
+    Polymer({
+      is: 'template-match',
+
+      properties: {
+        overrides: {
+          type: Object,
+          value: function() {
+            return {};
+          },
+          notify: true
+        },
+        app: {
+          type: Object,
+          value: function() {
+            return {};
+          },
+          notify: true
+        },
+        viewTemplate: {
+          type: String,
+          value: 'content-full'
+        }
+      },
+
+      ready: function() {
+        var el,
+            viewTemplate = this.viewTemplate || this.app.viewTemplate,
+            viewTemplateOverride = this.getViewTemplate(viewTemplate, JSON.parse(this.app.viewTemplateOverrides)),
+            props = {};
+
+        viewTemplate = viewTemplateOverride || viewTemplate;
+
+        props['app'] = this.app;
+        props['identityNodeId'] = this.app.identityNode._id;
+        el = Polymer.Base.create(viewTemplate, props);
+        this.appendChild(el);
+      },
+
+      getViewTemplate: function(viewTemplate, overrides) {
+        var viewTemplateOverride = "";
+        for (var i = 0; i < overrides.length; i++) {
+          var source = overrides[i].Override.properties.source,
+              matchFile = overrides[i].Override.properties.matchFile,
+              contentTypeIdentifier = overrides[i].Override.properties.contentTypeIdentifier,
+              identityNodeId = overrides[i].Override.properties.identityNodeId;
+
+          if(viewTemplate === source) {
+            if(parseInt(identityNodeId) === parseInt(this.app.identityNode._id) ||
+               contentTypeIdentifier === this.app.identityNode.properties.contentType) {
+              viewTemplateOverride = matchFile;
+            }
+          }
+        };
+        return viewTemplateOverride;
+      }
+
+
+
+    });
+  })();
+  </script>
+</dom-module>
+  

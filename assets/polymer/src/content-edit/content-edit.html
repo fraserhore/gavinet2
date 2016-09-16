@@ -1,0 +1,258 @@
+<!--
+@license
+Copyright (c) 2015 The Polymer Project Authors. All rights reserved.
+This code may only be used under the BSD style license found at http://polymer.github.io/LICENSE.txt
+The complete set of authors may be found at http://polymer.github.io/AUTHORS.txt
+The complete set of contributors may be found at http://polymer.github.io/CONTRIBUTORS.txt
+Code distributed by Google as part of the polymer project is also
+subject to an additional IP rights grant found at http://polymer.github.io/PATENTS.txt
+-->
+
+<link rel="import" href="/polymer/bower_components/polymer/polymer.html">
+
+<dom-module id="content-edit">
+  <template>
+    <style>
+      :host {
+        display: block;
+      }
+    </style>
+
+    <iron-ajax id="getContentTypes"
+      auto
+      url="/content/getContentTypes"
+      params=''
+      handle-as="json"
+      last-response="{{contenttypes}}"
+      debounce-duration="300"></iron-ajax>
+
+    <iron-ajax id="getContentTypeSchema"
+      url="/content/getContentTypeSchema"
+      params='{"contenttype": formData.contenttype}'
+      handle-as="json"
+      last-response="{{dataSchema}}"
+      debounce-duration="300"></iron-ajax>
+
+    <iron-ajax id="postData"
+      url="/content/{{formData.action}}"
+      content-type="application/json"
+      method="POST"
+      body="{{formData}}"
+      handle-as="json"
+      last-response="{{res}}"
+      on-response="_postDataResponse"
+      debounce-duration="300"></iron-ajax>
+
+    <paper-dropdown-menu label="Content Type" selected-item="{{selectedItem}}" selected-item-label="{{selected}}" on-iron-select="_updateContentType">
+      <paper-menu class="dropdown-content">
+        <template is="dom-repeat" items="[[contenttypes]]">
+          <paper-item value="[[item.contentTypeVersion.properties.identifier]]">[[item.contentTypeIdentity.properties.name]]</paper-item>
+        </template>
+      </paper-menu>
+    </paper-dropdown-menu>
+    <!-- Create an identity node name using the pattern defined in the schema -->
+    <paper-input name="identityNamePattern" label="identityNamePattern" value="{{formData.identityNamePattern}}"></paper-input>
+    <template is="dom-repeat" items="{{_toArray(dataSchema.properties)}}">
+      <template is="dom-if" if="{{_eq(item.object.type, 'string')}}">
+        <paper-input name="properties[[[item.key]]]" label="{{item.object.title}}" value="[[_getFormDataProperty(item.key)]]" on-value-changed="_updateProperty"></paper-input>
+      </template>
+      <template is="dom-if" if="{{_eq(item.object.type, 'relationship')}}">
+        <br/>
+        <label>{{item.object.title}}</label>
+        <template is="dom-repeat" items="{{formData.relationships}}">
+          <paper-item>-[{{item.relationshipName}}]-> {{item.relatedNode.properties.name}}</paper-item>
+        </template>
+        <paper-button raised on-click="openDialog" data-dialog="relationshipDialog">Add [[item.object.title]]</paper-button>
+        <content-relationship id="relationshipDialog" reference-node-id="100"  relationship-name="{{item.object.identifier}}" direction="{{item.object.direction}}" parent-node-id="138" related-node-id="{{relatedNodeId}}" related-node="{{relatedNode}}" on-related-node-changed="_addRelationship"></content-relationship>
+      </template>
+    </template>
+
+  </template>
+  <script>
+  (function() {
+    'use strict';
+
+    Polymer({
+      is: 'content-edit',
+
+      properties: {
+        dataSchema: {
+          type: Object,
+          value: function() {
+            return {};
+          },
+          notify: true
+        },
+        uiSchema: {
+          type: Object,
+          value: function() {
+            return {};
+          },
+          notify: true
+        },
+        relationships: {
+          type: Array,
+          value: [],
+          notify: true
+        },
+        formData: {
+          type: Object,
+          value: function() {
+            return {};
+          },
+          notify: true
+        },
+        data: {
+          type: Object,
+          value: function() {
+            return {};
+          },
+          notify: true
+        }
+      },
+
+      ready: function() {
+        
+      },
+
+      // open: function() {
+      //   this.$.editDialog.open();
+      //   if(this.formData.contenttype) {
+      //     this.$.getContentTypeSchema.params = {"contenttype": this.formData.contenttype};
+      //     this.$.getContentTypeSchema.url = '/content/getContentTypeSchema';
+      //     this.$.editDialog.refit();
+      //   }
+      // },
+
+      _submit: function() {
+        console.log(this.formData);
+        this.$.postData.generateRequest();
+        //this.$.editDialog.close();
+      },
+
+
+      edit: function(event) {
+        //console.log(event.model.item.identityNode._id);
+
+      },
+
+      openDialog: function(event) {
+        var button = event.target;
+        while (!button.hasAttribute('data-dialog') && button !== document.body) {
+          button = button.parentElement;
+        }
+        if (!button.hasAttribute('data-dialog')) {
+          return;
+        }
+        var id = button.getAttribute('data-dialog');
+        var dialog = document.getElementById(id);
+        if (dialog) {
+          dialog.open();
+        }
+      },
+
+      _addRelationship: function(event) {
+        if(!event.model.item) return;
+        //console.log(event.model.item.object);
+        var relationship = {
+          "referenceNodeId": this.formData.id,
+          "relationshipName": event.model.item.object.identifier,
+          "direction": event.model.item.object.direction,
+          "relatedNode": this.relatedNode,
+          "relatedNodeId": this.relatedNodeId
+        };
+        this.push('formData.relationships', relationship);
+      },
+
+      _updateContentType: function(event) {
+        var selectedItem = event.target.selectedItem;
+        if(selectedItem) {
+          this.formData.contenttype = selectedItem.value;
+          // could add a change listener to formData.contenttype to handle the following
+          this.$.getContentTypeSchema.params = {"contenttype": selectedItem.value};
+          this.$.getContentTypeSchema.generateRequest();
+          this._initFormData();
+        }
+      },
+
+      _initFormData: function() {
+        // Configure the formData properties and relationships based on the dataSchema if they are not already provided
+        var dataSchemaKeys = Object.keys(this.dataSchema);
+        if(!this.formData.properties) {
+          this.formData.properties = {};
+        }
+        if(!this.formData.relationships) {
+          this.formData.relationships = [];
+        }
+        for (var i = 0; i < dataSchemaKeys.length; i++) {
+          var key = dataSchemaKeys[i];
+          if(!this.formData.properties[key]) {
+            switch(this.dataSchema[key].type) {
+              case 'String':
+                this.formData.properties[key] = '';
+                break;
+              case 'Array':
+                this.formData.properties[key] = [];
+                break;
+              case 'Object':
+                this.formData.properties[key] = {};
+                break;
+              case 'Relationship':
+                break;
+              case 'relationship':
+                break;
+              default:
+                this.formData.properties[key] = undefined;
+                break;       
+            }
+          }
+        };
+      },
+
+      _toArray: function(obj) {
+        if(!obj) return;
+        return Object.keys(obj).map(function(key) {
+            return {
+                key: key,
+                object: obj[key]
+            };
+        });
+      },
+      _getFormDataProperty: function(property) {
+        if(!property || !this.formData.properties) return;
+        var propertyData = this.formData.properties[property] || "";
+        return propertyData;
+      },
+
+      _getFormDataPropertyByKey: function(change, key, path) {
+        // first argument is the change record for the array change,
+        // change.base is the array specified in the binding
+        // this.get(path, root) returns a value for a path
+        // relative to a root object.
+        return this.get(path, change.base[key]);
+      },
+
+      _updateProperty: function(event) {
+        if(!event.model.item) return;
+        this.set(['formData', 'properties', event.model.item.key], event.detail.value);
+        //this.formData.properties[event.model.item.key] = event.detail.value;
+      },
+
+      _eq: function(a, b) {
+        return a === b;
+      },
+
+      _stringify: function(obj) {
+        return JSON.stringify(obj);
+      },
+
+      _postDataResponse: function(event) {
+        console.log(event);
+        this.fire('contentEdited', {action: this.formData.action});
+      }
+
+    });
+  })();
+  </script>
+</dom-module>
+  
