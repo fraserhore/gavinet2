@@ -8,15 +8,10 @@
 
 // Require the neo4j graph database connector
 var neo4j = require('neo4j');
+var localCfg = require('local');
 var db = new neo4j.GraphDatabase({
-    // Support specifying database info via environment variables,
-    // but assume Neo4j installation defaults.
-    // url: process.env['NEO4J_URL'] || process.env['GRAPHENEDB_URL'] || 'http://neo4j:neo4j@localhost:7474',
-    //auth: process.env['NEO4J_AUTH'],
-    //url: 'http://gavigraph.sb06.stations.graphenedb.com:24789',
-    //auth: 'GaviGraph:DNWxlYkxIFzktTxSDGGS'
-    url: 'http://95.85.38.9:7474',
-    auth: 'neo4j:ns9%N%j20gf8'
+    url: 'http://'+localCfg.neo4j.host+':'+localCfg.neo4j.port,
+    auth: localCfg.neo4j.password
 });
 var request = require("request");
 var fs = require("fs");
