@@ -92,7 +92,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       }
     </script>
 
-    <link rel="import" href="/polymer/src/my-app.html">
+    <link rel="import" href="/polymer/src/gavinet-app.html">
 
     <style>
       body {
@@ -109,17 +109,9 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 	       in this file. All other imports should go in elements.html -->
 	  <link rel="import" href="/polymer/src/elements.html">
 
-	  <!-- For shared styles, shared-styles.html import in elements.html -->
-	  <style is="custom-style" include="shared-styles"></style>
-
-	  <!-- Sails Styles -->
-	  <!--STYLES-->
-	  <link rel="stylesheet" href="/styles/importer.css">
-	  <!--STYLES END-->
-
   </head>
   <body>
-    <gavinet-app></gavinet-app>
+    <gavinet-app app='<%-JSON.stringify(app)%>'></gavinet-app>
     <!-- Built with love using Polymer Starter Kit -->
   </body>
 </html>

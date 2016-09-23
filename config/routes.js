@@ -33,7 +33,11 @@ module.exports.routes = {
   ***************************************************************************/
 
   '/': {
-    view: 'homepage'
+    //view: 'homepage'
+    //view: 'index',
+    locals:{layout: false,}, // set to false in case layout not set to false in views.js
+    controller: 'Content',
+    action: 'view',
   },
 
   /***************************************************************************

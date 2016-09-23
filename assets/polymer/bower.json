@@ -23,7 +23,8 @@
     "platinum-elements": "PolymerElements/platinum-elements#^2.0.0",
     "molecules": "PolymerElements/molecules#^1.0.0",
     "gold-elements": "PolymerElements/gold-elements#^1.0.1",
-    "moment-element": "^0.4.1"
+    "moment-element": "^0.4.1",
+    "vaadin-core-elements": "^1.1.2"
   },
   "devDependencies": {
     "web-component-tester": "^4.0.0"

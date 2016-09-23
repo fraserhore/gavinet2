@@ -12,12 +12,13 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
 <dom-module id="template-match">
   <template>
-    <style>
-      :host {
-        display: block;
-      }
-    </style>
-   
+     <iron-ajax id="getViewTemplateOverrides"
+        url="/content/getViewTemplateOverrides"
+        handle-as="json"
+        last-response="{{viewTemplateOverrides}}"
+        on-response="_updateViewTemplateOverrides"
+        debounce-duration="300"></iron-ajax>
+    <div id="template"></div>
   </template>
   <script>
   (function() {
@@ -39,7 +40,9 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
           value: function() {
             return {};
           },
-          notify: true
+          notify: true,
+          reflectToAttribute: true,
+          observer: '_appChanged'
         },
         viewTemplate: {
           type: String,
@@ -47,21 +50,52 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         }
       },
 
+      observers: [
+        '_identityNodeChanged(app.identityNode)'
+      ],
+
+      _identityNodeChanged: function() {
+        console.log('identityNode changed');
+        //this.createElement();
+      },
+
+      _appChanged: function() {
+        console.log('app changed');
+      },
+
+      _updateViewTemplateOverrides: function() {
+        this.app.viewTemplateOverrides = this.viewTemplateOverrides;
+      },
+
       ready: function() {
+        this.createElement();
+      },
+
+      createElement: function() {
         var el,
             viewTemplate = this.viewTemplate || this.app.viewTemplate,
-            viewTemplateOverride = this.getViewTemplate(viewTemplate, JSON.parse(this.app.viewTemplateOverrides)),
+            viewTemplateOverride = '',
             props = {};
+
+        console.log(this.app.viewTemplateOverrides);
+        if(!this.app.viewTemplateOverrides) {
+          this.$.getViewTemplateOverrides.generateRequest();
+        }
+
+        viewTemplateOverride = this.getViewTemplate(viewTemplate, this.app.viewTemplateOverrides);
 
         viewTemplate = viewTemplateOverride || viewTemplate;
 
         props['app'] = this.app;
-        props['identityNodeId'] = this.app.identityNode._id;
+        props['identityNodeId'] = this.app.identityNode.identity.low;
         el = Polymer.Base.create(viewTemplate, props);
-        this.appendChild(el);
+        this.$.template.appendChild(el);
       },
 
       getViewTemplate: function(viewTemplate, overrides) {
+        console.log(viewTemplate);
+        console.log(overrides);
+        if(!overrides) return;
         var viewTemplateOverride = "";
         for (var i = 0; i < overrides.length; i++) {
           var source = overrides[i].Override.properties.source,
@@ -70,7 +104,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
               identityNodeId = overrides[i].Override.properties.identityNodeId;
 
           if(viewTemplate === source) {
-            if(parseInt(identityNodeId) === parseInt(this.app.identityNode._id) ||
+            if(parseInt(identityNodeId) === parseInt(this.app.identityNode.identity.low) ||
                contentTypeIdentifier === this.app.identityNode.properties.contentType) {
               viewTemplateOverride = matchFile;
             }

@@ -63,11 +63,11 @@
     </paper-dialog>
       
     <h3>Child Content</h3>
-    <!-- <content-children id="contentChildren" identity-node-id="{{app.identityNode._id}}" on-edit="update"></content-children> -->
+    <content-children id="contentChildren" identity-node-id="{{app.identityNode.identity.low}}" on-edit="update"></content-children>
     <template-match id="contentChildren" app="{{app}}" view-template="content-children" on-edit="update"></template-match>
 
     <h3>Related Content</h3>
-    <content-related identity-node-id="{{app.identityNode._id}}"></content-related>
+    <content-related identity-node-id="{{app.identityNode.identity.low}}"></content-related>
 
   </template>
   <script>
@@ -81,12 +81,26 @@
         app: {
           type: Object,
           value: function() { return {}; },
-          notify: true
+          notify: true,
+          reflectToAttribute: true,
+          observer: '_appChanged'
         }
       },
 
       listeners: {
         'contentEdit.contentEdited': '_refreshAllContent'
+      },
+
+      observers: [
+        '_identityNodeChanged(app.identityNode)'
+      ],
+
+      _identityNodeChanged: function() {
+        console.log('identityNode changed');
+      },
+
+      _appChanged: function() {
+        console.log('Change');
       },
 
       ready: function() {

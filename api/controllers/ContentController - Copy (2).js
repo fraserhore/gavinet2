@@ -29,18 +29,54 @@ module.exports = {
      * ContentController.view()
      */
     view: function(req, res) {
-        var options = {
-                view: parseInt(req.param('view')) || "full",
-                id: parseInt(req.param('id')) || 10,
-                lang: parseInt(req.param('lang')) || "en-gb",
-                versionName: req.param('versionName'),
-                versionValidityDate: parseInt(req.param('versionValidityDate'))
-            };
+        var view = parseInt(req.param('view')) || "full";
+        var params = {
+            "id": parseInt(req.param('id')) || 10,
+            "lang": parseInt(req.param('lang')) || "en-gb"
+        };
+        // Set the appropriate match query depending on whether request is by validity date, version name, or latest (default)
+        // TODO: Add version number
+        var versionMatch = "";
+        if(req.param('versionName')) {
+            var versionName = req.param('versionName');
+            versionMatch = " AND version.name = " + versionName;
+        } else if(req.param('versionValidityDate')) {
+            var versionValidityDate = parseInt(req.param('versionValidityDate'));
+            versionMatch = " AND version.from <= " + versionValidityDate + " AND version.to >= " + versionValidityDate + " AND relatedVersion.from <= " + versionValidityDate + " AND relatedVersion.to >= " + versionValidityDate;
+        } else {
+            versionMatch = " AND version.to = 9007199254740991 AND relatedVersion.to = 9007199254740991";
+        }
+        var query =   'MATCH (identityNode)-[version:VERSION]->(versionNode), (identityNode)-[relatedRelationship]-(relatedIdentityNode)-[relatedVersion:VERSION]->(relatedVersionNode), (authorNode)-[created:CREATED]->(identityNode)'
+                    +' WHERE id(identityNode) = {id} AND version.lang = {lang} AND relatedVersion.lang = {lang} AND Not (identityNode)-[relatedRelationship:VERSION|:CREATED|:CONTAINS]-(relatedIdentityNode)'
+                    +  versionMatch
+                    +' RETURN identityNode, version, versionNode, collect(relatedVersionNode) as relationships, authorNode';
+        var cb = function(err, data) {
+            //console.log(data);
+            if(err) {
+                console.log(err);
+            } else if(data[0]) {
+                //console.log(data[0].relationships);
+                var identityNode = data[0].identityNode,
+                    versionNode = data[0].versionNode,
+                    authorNode = data[0].authorNode;
 
-        ContentService.view(options, function(done){
-            //console.log(done);
-            return res.view("index", done)
-        });       
+                module.exports.getViewTemplate(view, identityNode, versionNode, authorNode, function(viewTemplate) {
+                    //console.log('viewTemplate: ' + viewTemplate);
+                    var props = {};
+                    props['app'] = data[0];
+                    props.app['viewTemplate'] = viewTemplate;
+                    module.exports.getViewTemplateOverrides(function(viewTemplateOverrides) {
+                        props.app['viewTemplateOverrides'] = viewTemplateOverrides;
+                        //console.log('props: ' + props.app.viewTemplateOverrides);
+                        return res.view("index", props);
+                    });
+                });
+            }
+        }
+        db.cypher({
+            query: query,
+            params: params
+        }, cb);
     },
 
     getNodeData: function(req, res) {
@@ -102,7 +138,7 @@ module.exports = {
     },
 
     getViewTemplateOverrides: function(req, res) {
-        ContentService.getViewTemplateOverrides(function(done){return res.json(done)});
+        ContentService.getViewTemplateOverrides(function(done){return done});
     },
 
     /**

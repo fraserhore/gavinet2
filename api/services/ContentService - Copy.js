@@ -1,9 +1,9 @@
 /**
- * @module          controllers/ContentController
- * @description     Server-side logic for managing content
+ * @module          services/ContentService
+ * @description     Helpers for managing content
  * @author          Fraser Hore
  * @requires        module:neo4j
- * @help            :: See http://sailsjs.org/#!/documentation/concepts/Controllers
+ * @help            :: See http://sailsjs.org/#!/documentation/concepts/Services
  */
 
 // Require the neo4j graph database connector
@@ -12,6 +12,7 @@ var local = require('../../config/local');
 var driver = neo4jBolt.driver("bolt://"+local.neo4j.host, neo4jBolt.auth.basic(local.neo4j.user, local.neo4j.password));
 
 var neo4j = require('neo4j');
+var local = require('../../config/local');
 var db = new neo4j.GraphDatabase({
     url: 'http://'+local.neo4j.host+':'+local.neo4j.port,
     auth: local.neo4j.user+':'+local.neo4j.password
@@ -25,52 +26,101 @@ var XMLSerializer = require('xmldom').XMLSerializer;
 
 module.exports = {
 
+    //id, lang, versionName, versionValidityDate
+    getNodeData: function(options, done) {
+        var session = driver.session();
+        var params = {
+            "id": options.id,
+            "lang": options.lang
+        };
+        var versionMatch = "";
+
+        if(versionName) {
+            versionMatch = " AND version.name = " + options.versionName;
+        } else if(versionValidityDate) {
+            versionMatch = " AND version.from <= " + options.versionValidityDate + " AND version.to >= " + options.versionValidityDate;
+        } else {
+            versionMatch = " AND version.to = 9007199254740991";
+        }
+        //console.log(versionMatch);
+        var query =   'MATCH (identityNode)-[version:VERSION]->(versionNode), (authorNode)-[created:CREATED]->(identityNode)'
+                    +' WHERE id(identityNode) = toInt({id}) AND version.lang = {lang}'
+                    +  versionMatch
+                    +' RETURN identityNode, version, versionNode, authorNode';
+
+        return session
+            .run(query, params)
+            .then(result => {
+                session.close();
+                var record = result.records[0];
+                return done({
+                    'identityNode': record.get('identityNode'), 
+                    'version': record.get('version'),
+                    'versionNode': record.get('versionNode'),
+                    'authorNode': record.get('authorNode')
+                });
+            })
+            .catch(error => {
+                session.close();
+                console.log(error);
+                return done(error);
+                throw error;
+            });
+    },
+
+
     /**
      * ContentController.view()
      */
     view: function(req, res) {
-        var options = {
-                view: parseInt(req.param('view')) || "full",
-                id: parseInt(req.param('id')) || 10,
-                lang: parseInt(req.param('lang')) || "en-gb",
-                versionName: req.param('versionName'),
-                versionValidityDate: parseInt(req.param('versionValidityDate'))
-            };
-
-        ContentService.view(options, function(done){
-            //console.log(done);
-            return res.view("index", done)
-        });       
-    },
-
-    getNodeData: function(req, res) {
-        var route = req.param('route'),
-            routeArray = route.substr(1).split('/');
-            langs = ['en-gb', 'fr-fr'],
-            lang = 'en-gb',
-            id = 0,
-            pathArray = [],
-            versionName = parseInt(req.param('versionName')),
-            versionValidityDate = parseInt(req.param('versionValidityDate')),
-            options = {};
-
-        // Parse route to get either an identity node id or a path to an identity node
-        if(routeArray.length) {
-            for (var i = 0; i < langs.length; i++) {
-                if(routeArray[0] === langs[i]) {
-                    lang = routeArray.shift(); // remove the first item of the array and return it
-                }
-            };
+        var view = parseInt(req.param('view')) || "full";
+        var params = {
+            "id": parseInt(req.param('id')) || 10,
+            "lang": parseInt(req.param('lang')) || "en-gb"
+        };
+        // Set the appropriate match query depending on whether request is by validity date, version name, or latest (default)
+        // TODO: Add version number
+        var versionMatch = "";
+        if(req.param('versionName')) {
+            var versionName = req.param('versionName');
+            versionMatch = " AND version.name = " + versionName;
+        } else if(req.param('versionValidityDate')) {
+            var versionValidityDate = parseInt(req.param('versionValidityDate'));
+            versionMatch = " AND version.from <= " + versionValidityDate + " AND version.to >= " + versionValidityDate + " AND relatedVersion.from <= " + versionValidityDate + " AND relatedVersion.to >= " + versionValidityDate;
+        } else {
+            versionMatch = " AND version.to = 9007199254740991 AND relatedVersion.to = 9007199254740991";
         }
-        if(routeArray.length) {   
-            if(routeArray[0] === '' || Number.isNaN(Number(routeArray[0]))) {
-                pathArray = routeArray;
-            } else {
-                id = Number(routeArray[0]);
+        var query =   'MATCH (identityNode)-[version:VERSION]->(versionNode), (identityNode)-[relatedRelationship]-(relatedIdentityNode)-[relatedVersion:VERSION]->(relatedVersionNode), (authorNode)-[created:CREATED]->(identityNode)'
+                    +' WHERE id(identityNode) = {id} AND version.lang = {lang} AND relatedVersion.lang = {lang} AND Not (identityNode)-[relatedRelationship:VERSION|:CREATED|:CONTAINS]-(relatedIdentityNode)'
+                    +  versionMatch
+                    +' RETURN identityNode, version, versionNode, collect(relatedVersionNode) as relationships, authorNode';
+        var cb = function(err, data) {
+            //console.log(data);
+            if(err) {
+                console.log(err);
+            } else if(data[0]) {
+                //console.log(data[0].relationships);
+                var identityNode = data[0].identityNode,
+                    versionNode = data[0].versionNode,
+                    authorNode = data[0].authorNode;
+
+                module.exports.getViewTemplate(view, identityNode, versionNode, authorNode, function(viewTemplate) {
+                    //console.log('viewTemplate: ' + viewTemplate);
+                    var props = {};
+                    props['app'] = data[0];
+                    props.app['viewTemplate'] = viewTemplate;
+                    module.exports.getViewTemplateOverrides(function(viewTemplateOverrides) {
+                        props.app['viewTemplateOverrides'] = viewTemplateOverrides;
+                        //console.log('props: ' + props.app.viewTemplateOverrides);
+                        return res.view("index", props);
+                    });
+                });
             }
         }
-        options = {id: id, lang: lang, versionName: versionName, versionValidityDate: versionValidityDate};
-        ContentService.getNodeData(options, function(done){return res.json(done)});
+        db.cypher({
+            query: query,
+            params: params
+        }, cb);
     },
 
     /** Get template override */
@@ -101,8 +151,27 @@ module.exports = {
         }, cb);
     },
 
-    getViewTemplateOverrides: function(req, res) {
-        ContentService.getViewTemplateOverrides(function(done){return res.json(done)});
+    getViewTemplateOverrides: function(done) {
+        var session = driver.session();
+        var query =  'MATCH (a:Override)-[r:VERSION {to:9007199254740991}]->(b:Version)'
+                    +' RETURN b as Override';
+        
+        session
+            .run(query)
+            .then(result => {
+                session.close();
+                var Overrides = [];
+                result.records.forEach(res => {
+                    Overrides.push({Override: res.get('Override')});
+                })
+                return done(Overrides);
+            })
+            .catch(error => {
+                session.close();
+                console.log(error);
+                return done(error);
+                throw error;
+            });
     },
 
     /**

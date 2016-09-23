@@ -58,10 +58,10 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         last-response="{{parentNode}}"
         debounce-duration="300"></iron-ajax>
 
-    <h3><a href="/content/view?id=[[parentNode.parentNode._id]]">[[parentNode.parentNode.properties.name]]</a></h3>
+    <h3><a href="/en-gb/[[parentNode.parentNode._id]]">[[parentNode.parentNode.properties.name]]</a></h3>
     <paper-menu>
       <template is="dom-repeat" items="[[siblingNodes]]">
-        <a href="/content/view?id={{item.siblingNode._id}}">[[item.siblingNode.properties.name]]</a>
+        <a href="/en-gb/{{item.siblingNode._id}}">[[item.siblingNode.properties.name]]</a>
       </template>
     </paper-menu>
 
