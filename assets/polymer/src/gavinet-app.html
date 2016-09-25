@@ -135,15 +135,15 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       ],
 
       _identityNodeChanged: function() {
-        console.log('identityNode changed');
+       // console.log('identityNode changed');
       },
 
       _appChanged: function() {
-        console.log('app changed');
+       // console.log('app changed');
       },
 
       _updatedNodeData: function() {
-        //console.log(this.nodeData);
+      //  console.log(this.nodeData);
         this.set('app.identityNode', this.nodeData.identityNode);
         this.set('app.versionNode', this.nodeData.versionNode);
         this.set('app.viewTemplateOverrides', this.nodeData.viewTemplateOverrides);
@@ -165,7 +165,12 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
       _showPath404: function() {
         this.path = 'view404';
+      },
+
+      ready: function() {
+        console.log(this.app)
       }
+
     });
   </script>
 </dom-module>

@@ -32,13 +32,14 @@ module.exports.routes = {
   *                                                                          *
   ***************************************************************************/
 
-  '/': {
-    //view: 'homepage'
-    //view: 'index',
-    locals:{layout: false,}, // set to false in case layout not set to false in views.js
-    controller: 'Content',
-    action: 'view',
-  },
+  // '/*': {
+  //   //view: 'homepage'
+  //   //view: 'index',
+  //   locals:{layout: false,}, // set to false in case layout not set to false in views.js
+  //   controller: 'Content',
+  //   action: 'view',
+  //   skipAssets: true
+  // },
 
   /***************************************************************************
   *                                                                          *
@@ -50,17 +51,49 @@ module.exports.routes = {
   *                                                                          *
   ***************************************************************************/
 
-  '/content/view/:id': {
-    controller: 'Content',
-    action: 'view',
-    skipAssets: false
-  },
+  // '/content/view/:id': {
+  //   controller: 'Content',
+  //   action: 'view',
+  //   skipAssets: false
+  // },
 
   '/content/getChildren/:id': {
     controller: 'Content',
     action: 'getChildren',
     skipAssets: true
-  }
+  },
 
+  '/content/getNodeData': {
+    controller: 'Content',
+    action: 'getNodeData',
+    skipAssets: true
+  },
+
+  '/content/getParent/:id': {
+    controller: 'Content',
+    action: 'getParent',
+    skipAssets: true
+  },
+
+  '/content/getSiblings/:id': {
+    controller: 'Content',
+    action: 'getSiblings',
+    skipAssets: true
+  },
+
+  '/content/getViewTemplateOverrides': {
+    controller: 'Content',
+    action: 'getViewTemplateOverrides',
+    skipAssets: true
+  },
+
+  '/*': {
+      //view: 'homepage'
+      //view: 'index',
+      locals:{layout: false,}, // set to false in case layout not set to false in views.js
+      controller: 'Content',
+      action: 'view',
+      skipAssets: true
+    },
 
 };

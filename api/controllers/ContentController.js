@@ -53,7 +53,7 @@ module.exports = {
             versionName = parseInt(req.param('versionName')),
             versionValidityDate = parseInt(req.param('versionValidityDate')),
             options = {};
-
+        console.log(route);
         // Parse route to get either an identity node id or a path to an identity node
         if(routeArray.length) {
             for (var i = 0; i < langs.length; i++) {

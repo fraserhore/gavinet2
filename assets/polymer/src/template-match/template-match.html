@@ -55,20 +55,23 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       ],
 
       _identityNodeChanged: function() {
-        console.log('identityNode changed');
+       // console.log('identityNode changed');
         //this.createElement();
       },
 
       _appChanged: function() {
-        console.log('app changed');
+       //console.log('app changed');
       },
 
       _updateViewTemplateOverrides: function() {
+      //  console.log('update this.viewTemplateOverrides: '+ this.viewTemplateOverrides);
         this.app.viewTemplateOverrides = this.viewTemplateOverrides;
+      //  console.log('update this.app.viewTemplateOverrides: '+ this.app.viewTemplateOverrides);
+        this.createElement();
       },
 
       ready: function() {
-        this.createElement();
+        //this.createElement();
       },
 
       createElement: function() {
@@ -77,7 +80,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
             viewTemplateOverride = '',
             props = {};
 
-        console.log(this.app.viewTemplateOverrides);
+      //  console.log('create element this.app.viewTemplateOverrides: '+ this.app.viewTemplateOverrides);
         if(!this.app.viewTemplateOverrides) {
           this.$.getViewTemplateOverrides.generateRequest();
         }
@@ -86,15 +89,33 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
         viewTemplate = viewTemplateOverride || viewTemplate;
 
-        props['app'] = this.app;
-        props['identityNodeId'] = this.app.identityNode.identity.low;
-        el = Polymer.Base.create(viewTemplate, props);
-        this.$.template.appendChild(el);
+        console.log(this.$.template.firstChild);
+        console.log('viewTemplate: '+ viewTemplate + ' this.viewTemplate: ' + this.viewTemplate);
+
+        if(this.$.template.firstChild && viewTemplate === this.viewTemplate) {
+          this.$.template.firstChild.app = this.app;
+        }
+
+        if(!this.$.template.firstChild || viewTemplate !== this.viewTemplate) {
+          this.viewTemplate = viewTemplate;
+          console.log('creating child');
+          props['app'] = this.app;
+          props['identityNodeId'] = this.app.identityNode.identity.low;
+          el = Polymer.Base.create(viewTemplate, props);
+          
+          if(this.$.template.firstChild) {
+            this.$.template.removeChild(this.$.template.firstChild);
+          }
+
+          this.$.template.appendChild(el);
+
+        }
+        
       },
 
       getViewTemplate: function(viewTemplate, overrides) {
-        console.log(viewTemplate);
-        console.log(overrides);
+       // console.log(viewTemplate);
+       // console.log(overrides);
         if(!overrides) return;
         var viewTemplateOverride = "";
         for (var i = 0; i < overrides.length; i++) {

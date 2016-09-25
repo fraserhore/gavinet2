@@ -63,7 +63,7 @@
     </paper-dialog>
       
     <h3>Child Content</h3>
-    <content-children id="contentChildren" identity-node-id="{{app.identityNode.identity.low}}" on-edit="update"></content-children>
+    <!-- <content-children id="contentChildren" identity-node-id="{{app.identityNode.identity.low}}" on-edit="update"></content-children> -->
     <template-match id="contentChildren" app="{{app}}" view-template="content-children" on-edit="update"></template-match>
 
     <h3>Related Content</h3>
@@ -96,11 +96,12 @@
       ],
 
       _identityNodeChanged: function() {
-        console.log('identityNode changed');
+       //console.log('identityNode changed');
+       this.$.contentChildren.createElement();
       },
 
       _appChanged: function() {
-        console.log('Change');
+       // console.log('Change');
       },
 
       ready: function() {
@@ -108,8 +109,8 @@
         this.versionSliderValue = Date.now();
         this.versionSliderMax = Date.now();
         this.versionSliderMin = Date.now() - 2629746000; // one day = 86400000, one week = 604800000, One month = 2629746000, one year = 31556952000
-        console.log(today.toISOString());
-        console.log(this.app);
+       // console.log(today.toISOString());
+       // console.log(this.app);
       },
 
       create: function(event) {
@@ -205,7 +206,7 @@
       },
 
       _refreshAllContent: function() {
-        console.log("test");
+       // console.log("test");
         // this.$.contentChildren.refresh();
         this.$.contentChildren.firstElementChild.refresh();
       },
@@ -230,7 +231,7 @@
         var id = button.getAttribute('data-form');
         var form = document.getElementById(id);
         if (form) {
-          console.log(form);
+         // console.log(form);
           form._submit();
         }
         this.$.editDialog.close();
