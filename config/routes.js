@@ -69,6 +69,12 @@ module.exports.routes = {
     skipAssets: true
   },
 
+  '/content/getContent/:id': {
+    controller: 'Content',
+    action: 'getContent',
+    skipAssets: true
+  },
+
   '/content/getParent/:id': {
     controller: 'Content',
     action: 'getParent',
@@ -86,6 +92,13 @@ module.exports.routes = {
     action: 'getViewTemplateOverrides',
     skipAssets: true
   },
+
+  '/content/getContentTypeSchema': {
+    controller: 'Content',
+    action: 'getContentTypeSchema',
+    skipAssets: true
+  },  
+
 
   '/*': {
       //view: 'homepage'
