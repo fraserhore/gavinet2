@@ -7,137 +7,131 @@ The complete set of contributors may be found at http://polymer.github.io/CONTRI
 Code distributed by Google as part of the polymer project is also
 subject to an additional IP rights grant found at http://polymer.github.io/PATENTS.txt
 -->
-
 <link rel="import" href="/polymer/bower_components/polymer/polymer.html">
-
 <dom-module id="template-match">
-  <template>
-     <iron-ajax id="getViewTemplateOverrides"
-        url="/content/getViewTemplateOverrides"
-        handle-as="json"
-        last-response="{{viewTemplateOverrides}}"
-        on-response="_updateViewTemplateOverrides"
-        debounce-duration="300"></iron-ajax>
-    <div id="template"></div>
-  </template>
-  <script>
-  (function() {
-    'use strict';
+    <template>
+        <iron-ajax 
+            id="getViewTemplateOverrides" 
+            url="/content/getViewTemplateOverrides" 
+            handle-as="json" 
+            last-response="{{viewTemplateOverrides}}" 
+            on-response="_updateViewTemplateOverrides" 
+            debounce-duration="300">
+        </iron-ajax>
+        <div id="template"></div>
+    </template>
+    <script>
+    (function() {
+        'use strict';
 
-    Polymer({
-      is: 'template-match',
+        Polymer({
+            is: 'template-match',
 
-      properties: {
-        overrides: {
-          type: Object,
-          value: function() {
-            return {};
-          },
-          notify: true
-        },
-        app: {
-          type: Object,
-          value: function() {
-            return {};
-          },
-          notify: true,
-          reflectToAttribute: true,
-          observer: '_appChanged'
-        },
-        viewTemplate: {
-          type: String,
-          value: 'content-full'
-        }
-      },
+            properties: {
+                overrides: {
+                    type: Object,
+                    value: function() {
+                        return {};
+                    },
+                    notify: true
+                },
+                app: {
+                    type: Object,
+                    value: function() {
+                        return {};
+                    },
+                    notify: true,
+                    reflectToAttribute: true,
+                    observer: '_appChanged'
+                },
+                viewTemplate: {
+                    type: String,
+                    value: 'content-full'
+                }
+            },
 
-      observers: [
-        '_identityNodeChanged(app.identityNode)'
-      ],
+            observers: [
+                '_identityNodeChanged(app.identityNode)'
+            ],
 
-      _identityNodeChanged: function() {
-       // console.log('identityNode changed');
-        //this.createElement();
-      },
+            _identityNodeChanged: function() {
+                // console.log('identityNode changed');
+                //this.createElement();
+            },
 
-      _appChanged: function() {
-       //console.log('app changed');
-      },
+            _appChanged: function() {
+                //console.log('app changed');
+            },
 
-      _updateViewTemplateOverrides: function() {
-      //  console.log('update this.viewTemplateOverrides: '+ this.viewTemplateOverrides);
-        this.app.viewTemplateOverrides = this.viewTemplateOverrides;
-      //  console.log('update this.app.viewTemplateOverrides: '+ this.app.viewTemplateOverrides);
-        this.createElement();
-      },
+            _updateViewTemplateOverrides: function() {
+                //  console.log('update this.viewTemplateOverrides: '+ this.viewTemplateOverrides);
+                this.app.viewTemplateOverrides = this.viewTemplateOverrides;
+                //  console.log('update this.app.viewTemplateOverrides: '+ this.app.viewTemplateOverrides);
+                // this.createElement();
+            },
 
-      ready: function() {
-        //this.createElement();
-      },
+            ready: function() {
+                //this.createElement();
+            },
 
-      createElement: function() {
-        var el,
-            viewTemplate = this.viewTemplate || this.app.viewTemplate,
-            viewTemplateOverride = '',
-            props = {};
+            createElement: function() {
+                var el,
+                    viewTemplateOverride = '',
+                    props = {};
 
-      //  console.log('create element this.app.viewTemplateOverrides: '+ this.app.viewTemplateOverrides);
-        if(!this.app.viewTemplateOverrides) {
-          this.$.getViewTemplateOverrides.generateRequest();
-        }
+                // Get view template overrides if they are not already in the app object
+                if (!this.app.viewTemplateOverrides) {
+                    this.$.getViewTemplateOverrides.generateRequest();
+                }
 
-        viewTemplateOverride = this.getViewTemplate(viewTemplate, this.app.viewTemplateOverrides);
+                // Get the view template override, if there is one
+                viewTemplateOverride = this.getViewTemplate(this.viewTemplate, this.app.viewTemplateOverrides);
+                if(!viewTemplateOverride) {
+                    viewTemplateOverride = this.viewTemplate;
+                } 
 
-        viewTemplate = viewTemplateOverride || viewTemplate;
+                // Remove the first child if there is one
+                if (this.$.template.firstChild) {
+                    console.log('Remove child: ' + this.$.template.firstChild);
+                    this.$.template.removeChild(this.$.template.firstChild);
+                }
 
-        console.log(this.$.template.firstChild);
-        console.log('viewTemplate: '+ viewTemplate + ' this.viewTemplate: ' + this.viewTemplate);
 
-        if(this.$.template.firstChild && viewTemplate === this.viewTemplate) {
-          this.$.template.firstChild.app = this.app;
-        }
+                console.log('viewTemplateOverride: ' + viewTemplateOverride + ' this.viewTemplate: ' + this.viewTemplate);
 
-        if(!this.$.template.firstChild || viewTemplate !== this.viewTemplate) {
-          this.viewTemplate = viewTemplate;
-          console.log('creating child');
-          props['app'] = this.app;
-          props['identityNodeId'] = this.app.identityNode.identity.low;
-          el = Polymer.Base.create(viewTemplate, props);
-          
-          if(this.$.template.firstChild) {
-            this.$.template.removeChild(this.$.template.firstChild);
-          }
+                console.log('creating child');
+                props['app'] = this.app;
+                props['identityNodeId'] = this.app.identityNode.identity.low;
+                el = Polymer.Base.create(viewTemplateOverride, props);
+                this.$.template.appendChild(el);
 
-          this.$.template.appendChild(el);
 
-        }
-        
-      },
+            },
 
-      getViewTemplate: function(viewTemplate, overrides) {
-       // console.log(viewTemplate);
-       // console.log(overrides);
-        if(!overrides) return;
-        var viewTemplateOverride = "";
-        for (var i = 0; i < overrides.length; i++) {
-          var source = overrides[i].Override.properties.source,
-              matchFile = overrides[i].Override.properties.matchFile,
-              contentTypeIdentifier = overrides[i].Override.properties.contentTypeIdentifier,
-              identityNodeId = overrides[i].Override.properties.identityNodeId;
+            getViewTemplate: function(viewTemplate, overrides) {
+                // console.log(viewTemplate);
+                // console.log(overrides);
+                if (!overrides) return;
+                var viewTemplateOverride = "";
+                for (var i = 0; i < overrides.length; i++) {
+                    var source = overrides[i].Override.properties.source,
+                        matchFile = overrides[i].Override.properties.matchFile,
+                        contentTypeIdentifier = overrides[i].Override.properties.contentTypeIdentifier,
+                        identityNodeId = overrides[i].Override.properties.identityNodeId;
 
-          if(viewTemplate === source) {
-            if(parseInt(identityNodeId) === parseInt(this.app.identityNode.identity.low) ||
-               contentTypeIdentifier === this.app.identityNode.properties.contentType) {
-              viewTemplateOverride = matchFile;
+                    if (viewTemplate === source) {
+                        if (parseInt(identityNodeId) === parseInt(this.app.identityNode.identity.low) ||
+                            contentTypeIdentifier === this.app.identityNode.properties.contentType) {
+                            viewTemplateOverride = matchFile;
+                        }
+                    }
+                };
+                return viewTemplateOverride;
             }
-          }
-        };
-        return viewTemplateOverride;
-      }
 
 
 
-    });
-  })();
-  </script>
+        });
+    })();
+    </script>
 </dom-module>
-  

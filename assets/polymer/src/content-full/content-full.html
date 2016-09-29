@@ -13,17 +13,18 @@
     <div>{{app.versionNode.properties.description}}</div>
     <br/>
     
-    <iron-ajax id="getContent"
-      
-      url="/content/getContent/{{app.identityNode._id}}"
+    <iron-ajax 
+      id="getContent"
+      url="/content/getContent/{{app.identityNode.identity.low}}"
       params={}
       handle-as="json"
       last-response="{{content}}"
       on-response="_refreshContent"
-      debounce-duration="300"></iron-ajax>
+      debounce-duration="300">
+    </iron-ajax>
 
-    <iron-ajax id="getContentTypeSchema"
-      auto
+    <iron-ajax 
+      id="getContentTypeSchema"
       url="/content/getContentTypeSchema"
       params='{"contenttype": formData.contenttype}'
       handle-as="json"
@@ -41,7 +42,7 @@
     <paper-dialog id="relationshipDialog" entry-animation="scale-up-animation" exit-animation="fade-out-animation" autoFitOnAttach="true">
       <h2>Create Relationship</h2>
       <paper-dialog-scrollable>
-        <content-relationship reference-node-id="{{app.identityNode._id}}" direction="outbound" parent-node-id="{{app.identityNode._id}}"></content-relationship>
+        <content-relationship reference-node-id="{{app.identityNode.identity.low}}" direction="outbound" parent-node-id="{{app.identityNode.identity.low}}"></content-relationship>
       </paper-dialog-scrollable>
     </paper-dialog> -->
 
@@ -115,8 +116,8 @@
 
       create: function(event) {
         this.set('formData.action', 'create');
-        this.set('formData.authorId', this.app.authorNode._id);
-        this.set('formData.parentId', this.app.identityNode._id);
+        this.set('formData.authorId', this.app.authorNode.identity.low);
+        this.set('formData.parentId', this.app.identityNode.identity.low);
         this.set('formData.id', undefined);
         this.set('formData.lang', 'en-gb');
         this.set('formData.versionName', '');
@@ -126,6 +127,7 @@
         this.$.getContentTypeSchema.params = {"contenttype": this.formData.contenttype};
         this.$.getContentTypeSchema.generateRequest;
         this._initFormData();
+        console.log(this.formData);
         this.$.editDialog.open();
       },
 
@@ -135,9 +137,9 @@
             relationships = event.detail.relationships || this.app.relationships,
             authorNode = event.detail.authorNode || this.app.authorNode;
         this.set('formData.action', 'update');
-        this.set('formData.authorId', authorNode._id);
+        this.set('formData.authorId', authorNode.identity.low);
         this.set('formData.parentId', undefined);
-        this.set('formData.id', identityNode._id);
+        this.set('formData.id', identityNode.identity.low);
         this.set('formData.lang', 'en-gb');
         this.set('formData.versionName', '');
         this.set('formData.contenttype', identityNode.properties.contentType);
@@ -153,7 +155,7 @@
 
       delete: function(event) {
         this.$.deleteRequest.url = "/content/delete";
-        this.$.deleteRequest.params = {"id": event.model.item.identityNode._id};
+        this.$.deleteRequest.params = {"id": event.model.item.identityNode.identity.low};
         this.$.deleteRequest.generateRequest();
       },
 
