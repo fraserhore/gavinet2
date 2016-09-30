@@ -563,70 +563,88 @@ module.exports = {
 
 
     /** Get child content objects */
-    getContent: function(req, res) {
-
+    getContent: function(options, done) {
+        var session = driver.session();
         var params = {
-            "id": parseInt(req.param('id')) || 0,
-            "lang": parseInt(req.param('lang')) || "en-gb"
+            "id": options.id,
+            "lang": options.lang
         };
-
         var versionMatch = "";
 
-        if(req.param('versionName')) {
-            var versionName = req.param('versionName');
-            versionMatch = " AND version.name = " + versionName;
-        } else if(req.param('versionValidityDate')) {
-            var versionValidityDate = parseInt(req.param('versionValidityDate'));
-            versionMatch = " AND version.from <= " + versionValidityDate + " AND version.to >= " + versionValidityDate;
+        if(options.versionName) {
+            versionMatch = " AND version.name = " + options.versionName;
+        } else if(options.versionValidityDate) {
+            versionMatch = " AND version.from <= " + options.versionValidityDate + " AND version.to >= " + options.versionValidityDate;
         } else {
             versionMatch = " AND version.to = 9007199254740991";
         }
         //console.log(versionMatch);
         var query =   'MATCH (identityNode)-[version:VERSION]->(versionNode), (authorNode)-[created:CREATED]->(identityNode)'
-                    +' WHERE id(identityNode) = {id} AND version.lang = {lang}'
+                    +' WHERE id(identityNode) = toInt({id}) AND version.lang = {lang}'
                     +  versionMatch
                     +' RETURN identityNode, version, versionNode, authorNode';
 
-        var cb = function(err, data) {
-            //console.log(data);
-            return res.json(data[0]);
-        }
-        db.cypher({
-            query: query,
-            params: params
-        }, cb);
+        return session
+            .run(query, params)
+            .then(result => {
+                session.close();
+                var record = result.records[0];
+                return done({
+                    'identityNode': record.get('identityNode'), 
+                    'version': record.get('version'),
+                    'versionNode': record.get('versionNode'),
+                    'authorNode': record.get('authorNode')
+                });
+            })
+            .catch(error => {
+                session.close();
+                console.log(error);
+                return done(error);
+                throw error;
+            });
     },
 
     /** Get child content objects */
-    getChildren: function(req, res) {
+    getChildren: function(options, done) {
+        var session = driver.session();
         var params = {
-            "id": parseInt(req.param('id')),
-            "lang": parseInt(req.param('lang')) || "en-gb"
+            "id": options.id,
+            "lang": options.lang
         };
         var versionMatch = "";
 
-        if(req.param('versionName')) {
-            var versionName = req.param('versionName');
-            versionMatch = " AND version.name = " + versionName;
-        } else if(req.param('versionValidityDate')) {
-            var versionValidityDate = parseInt(req.param('versionValidityDate'));
-            versionMatch = " AND version.from <= " + versionValidityDate + " AND version.to >= " + versionValidityDate;
+        if(options.versionName) {
+            versionMatch = " AND version.name = " + options.versionName;
+        } else if(options.versionValidityDate) {
+            versionMatch = " AND version.from <= " + options.versionValidityDate + " AND version.to >= " + options.versionValidityDate;
         } else {
             versionMatch = " AND parentChildRel.to = 9007199254740991 AND version.to = 9007199254740991";
         }
         var query =   'MATCH (parentNode)-[parentChildRel:CONTAINS]->(identityNode)-[version:VERSION]->(versionNode), (authorNode)-[created:CREATED]->(identityNode)'
-                    +' WHERE id(parentNode) = {id} AND version.lang = {lang}'
+                    +' WHERE id(parentNode) = toInt({id}) AND version.lang = {lang}'
                     +  versionMatch
                     +' RETURN identityNode, version, versionNode, authorNode';
-
-        var cb = function(err, data) {
-            //console.log(data);
-            return res.json(data);
-        }
-        db.cypher({
-            query: query,
-            params: params
-        }, cb);
+        return session
+            .run(query, params)
+            .then(result => {
+                var children = [];
+                result.records.forEach(function(record) {
+                    children.push({
+                        'identityNode': record.get('identityNode'), 
+                        'version': record.get('version'),
+                        'versionNode': record.get('versionNode'),
+                        'authorNode': record.get('authorNode')
+                    });
+                });
+                session.close();
+                return done(children);
+            })
+            .catch(error => {
+                session.close();
+                console.log(error);
+                return done(error);
+                throw error;
+            });      
     },
 
     /** Get related content objects 
@@ -672,7 +690,7 @@ module.exports = {
     getParent: function(req, res) {
 
         var query =  'MATCH (a)<-[r:CONTAINS {to:9007199254740991}]-(parentNode)'
-                    +' WHERE id(a) = {id}'
+                    +' WHERE id(a) = toInt({id})'
                     +' RETURN parentNode'
         var params = {
             "id": parseInt(req.param('id'))
@@ -691,7 +709,7 @@ module.exports = {
     getSiblings: function(req, res) {
 
         var query =  'MATCH (a)<-[r:CONTAINS {to:9007199254740991}]-(parent)'
-                    +' WHERE id(a) = {id}'
+                    +' WHERE id(a) = toInt({id})'
                     +' WITH parent'
                     +' MATCH (parent)-[:CONTAINS {to:9007199254740991}]->(c)'
                     +' RETURN c as siblingNode'
@@ -765,7 +783,7 @@ module.exports = {
         var query =   'MATCH (parentNode)-[parentChildRel:CONTAINS]->(identityNode)-[versionRel:VERSION]->(versionNode), (authorNode)-[createdRel:CREATED]->(identityNode)'
                     +' MATCH (parentNode)-[mxCellParentChildRel:CONTAINS]->(mxCellIdentityNode:MxCell)<-[:HAS_MXCELL]-(identityNode)'
                     +' MATCH (mxCellIdentityNode)-[mxCellVersionRel:VERSION]->(mxCellVersionNode)'
-                    +' WHERE id(parentNode) = {id} AND versionRel.lang = {lang}'
+                    +' WHERE id(parentNode) = toInt({id}) AND versionRel.lang = {lang}'
                     +  versionMatch
                     +' RETURN '
                     +' {'
@@ -822,7 +840,7 @@ module.exports = {
                     inboundSymbol = direction === 'inbound' ? '<' : '',
                     outboundSymbol = direction === 'outbound' ? '>' : '',
                     relatedNode = relationships[i].relatedNode,
-                    relatedNodeId = relatedNode._id,
+                    relatedNodeId = relatedNode.identity.low,
                     relatedIdentifier = 'node' + relatedNodeId;
 
                 matchRelated += ', (' + relatedIdentifier + ')';
@@ -915,7 +933,7 @@ module.exports = {
                     inboundSymbol = direction === 'inbound' ? '<' : '',
                     outboundSymbol = direction === 'outbound' ? '>' : '',
                     relatedNode = relationships[i].relatedNode,
-                    relatedNodeId = relatedNode._id,
+                    relatedNodeId = relatedNode.identity.low,
                     relatedIdentifier = 'node' + relatedNodeId;
 
                 matchRelated += ', (' + relatedIdentifier + ')';
@@ -927,7 +945,7 @@ module.exports = {
         var query = 
             // UPDATE (CONTENT) - Add a Version node
               ' MATCH (identitynode)-[currentversionrelationship:VERSION {to:9007199254740991}]->(currentversion)' + matchRelated
-            + ' WHERE id(identitynode) = {id} AND currentversionrelationship.lang = {lang}' + whereRelated
+            + ' WHERE id(identitynode) = toInt({id}) AND currentversionrelationship.lang = {lang}' + whereRelated
             // Update the current version relationship to end validity
             + ' SET currentversionrelationship.to = timestamp()'
             // Create the new version relationship and node
@@ -973,7 +991,7 @@ module.exports = {
     delete: function(req, res) {
 
         var query =  'MATCH (child)<-[relationship:CONTAINS {to:9007199254740991}]-(parent)'
-                    +' WHERE id(child) = {id}'
+                    +' WHERE id(child) = toInt({id})'
                     +' SET relationship.to = timestamp()'
                     +' RETURN parent, child';
         var params = {

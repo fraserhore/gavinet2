@@ -74,31 +74,9 @@ module.exports = {
     },
 
     /** Get template override */
-    getViewTemplate: function(source, identityNode, versionNode, authorNode, callback) {
-        
-        var query =  'MATCH ()-[:CONTAINS {to:9007199254740991}]->(a:Override)-[r:VERSION {to:9007199254740991}]->(b:Version {source:{source}})'
-                    +' WHERE b.contentTypeIdentifier = {contentTypeIdentifier} OR b.contentTypeId = {contentTypeId} or toInt(b.identityNodeId) = {identityNodeId}'
-                    +' RETURN b as override';
-        var params = {
-            "source": source,
-            "contentTypeIdentifier": identityNode.properties.contentType || 'folder',
-            "contentTypeId": 0,
-            "identityNodeId": identityNode._id
-
-        };
-        var cb = function(err, data) {
-            if(err || data.length === 0) {
-                console.log(err);
-                callback('content-full');
-            } else {
-                //console.log(data[0].override.properties.matchFile);
-                callback(data[0].override.properties.matchFile);   
-            }
-        };
-        db.cypher({
-            query: query,
-            params: params
-        }, cb);
+    getViewTemplate: function(req, res) {
+        var options = {};
+        ContentService.getViewTemplate(options, function(done){return res.json(done)});
     },
 
     getViewTemplateOverrides: function(req, res) {
@@ -485,69 +463,24 @@ module.exports = {
 
     /** Get child content objects */
     getContent: function(req, res) {
-
-        var params = {
+        var options = {
             "id": parseInt(req.param('id')) || 0,
-            "lang": parseInt(req.param('lang')) || "en-gb"
+            "lang": parseInt(req.param('lang')) || "en-gb",
+            "versionName": req.param('versionName'),
+            "versionValidityDate": parseInt(req.param('versionValidityDate'))
         };
-
-        var versionMatch = "";
-
-        if(req.param('versionName')) {
-            var versionName = req.param('versionName');
-            versionMatch = " AND version.name = " + versionName;
-        } else if(req.param('versionValidityDate')) {
-            var versionValidityDate = parseInt(req.param('versionValidityDate'));
-            versionMatch = " AND version.from <= " + versionValidityDate + " AND version.to >= " + versionValidityDate;
-        } else {
-            versionMatch = " AND version.to = 9007199254740991";
-        }
-        //console.log(versionMatch);
-        var query =   'MATCH (identityNode)-[version:VERSION]->(versionNode), (authorNode)-[created:CREATED]->(identityNode)'
-                    +' WHERE id(identityNode) = {id} AND version.lang = {lang}'
-                    +  versionMatch
-                    +' RETURN identityNode, version, versionNode, authorNode';
-
-        var cb = function(err, data) {
-            //console.log(data);
-            return res.json(data[0]);
-        }
-        db.cypher({
-            query: query,
-            params: params
-        }, cb);
+        ContentService.getContent(options, function(done){return res.json(done)});
     },
 
     /** Get child content objects */
     getChildren: function(req, res) {
-        var params = {
-            "id": parseInt(req.param('id')),
-            "lang": parseInt(req.param('lang')) || "en-gb"
+        var options = {
+            "id": parseInt(req.param('id')) || 0,
+            "lang": parseInt(req.param('lang')) || "en-gb",
+            "versionName": req.param('versionName'),
+            "versionValidityDate": parseInt(req.param('versionValidityDate'))
         };
-        var versionMatch = "";
-
-        if(req.param('versionName')) {
-            var versionName = req.param('versionName');
-            versionMatch = " AND version.name = " + versionName;
-        } else if(req.param('versionValidityDate')) {
-            var versionValidityDate = parseInt(req.param('versionValidityDate'));
-            versionMatch = " AND version.from <= " + versionValidityDate + " AND version.to >= " + versionValidityDate;
-        } else {
-            versionMatch = " AND parentChildRel.to = 9007199254740991 AND version.to = 9007199254740991";
-        }
-        var query =   'MATCH (parentNode)-[parentChildRel:CONTAINS]->(identityNode)-[version:VERSION]->(versionNode), (authorNode)-[created:CREATED]->(identityNode)'
-                    +' WHERE id(parentNode) = {id} AND version.lang = {lang}'
-                    +  versionMatch
-                    +' RETURN identityNode, version, versionNode, authorNode';
-
-        var cb = function(err, data) {
-            //console.log(data);
-            return res.json(data);
-        }
-        db.cypher({
-            query: query,
-            params: params
-        }, cb);
+        ContentService.getChildren(options, function(done){return res.json(done)});
     },
 
     /** Get related content objects 
@@ -743,7 +676,7 @@ module.exports = {
                     inboundSymbol = direction === 'inbound' ? '<' : '',
                     outboundSymbol = direction === 'outbound' ? '>' : '',
                     relatedNode = relationships[i].relatedNode,
-                    relatedNodeId = relatedNode._id,
+                    relatedNodeId = relatedNode.identity.low,
                     relatedIdentifier = 'node' + relatedNodeId;
 
                 matchRelated += ', (' + relatedIdentifier + ')';
@@ -836,7 +769,7 @@ module.exports = {
                     inboundSymbol = direction === 'inbound' ? '<' : '',
                     outboundSymbol = direction === 'outbound' ? '>' : '',
                     relatedNode = relationships[i].relatedNode,
-                    relatedNodeId = relatedNode._id,
+                    relatedNodeId = relatedNode.identity.low,
                     relatedIdentifier = 'node' + relatedNodeId;
 
                 matchRelated += ', (' + relatedIdentifier + ')';
