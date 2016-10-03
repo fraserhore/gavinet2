@@ -101,7 +101,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
                 console.log('creating child');
                 props['app'] = this.app;
-                props['identityNodeId'] = this.app.identityNode.identity.low;
+                props['identityNodeId'] = this.app.identityNode.properties.uuid;
                 el = Polymer.Base.create(viewTemplateOverride, props);
                 this.$.template.appendChild(el);
 
@@ -120,7 +120,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
                         identityNodeId = overrides[i].Override.properties.identityNodeId;
 
                     if (viewTemplate === source) {
-                        if (parseInt(identityNodeId) === parseInt(this.app.identityNode.identity.low) ||
+                        if (identityNodeId === this.app.identityNode.properties.uuid ||
                             contentTypeIdentifier === this.app.identityNode.properties.contentType) {
                             viewTemplateOverride = matchFile;
                         }

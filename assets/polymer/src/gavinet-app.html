@@ -86,10 +86,8 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         <app-toolbar>Menu</app-toolbar>
         <iron-selector selected="[[path]]" attr-for-selected="name" class="drawer-list" role="navigation">
           <a name="view1" href="/en-gb/root/content">root/content</a>
-          <a name="view2" href="/en-gb/20">identity Node 20</a>
-          <a name="view3" href="/en-gb/10">View Three</a>
         </iron-selector>
-        <content-left-menu identity-node-id="10"></content-left-menu>
+        <content-left-menu identity-node-id="{{app.identityNode.properties.uuid}}"></content-left-menu>
       </app-drawer>
 
       <!-- Main content -->

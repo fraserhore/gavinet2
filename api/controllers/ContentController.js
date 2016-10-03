@@ -31,7 +31,7 @@ module.exports = {
     view: function(req, res) {
         var options = {
                 view: parseInt(req.param('view')) || "full",
-                id: parseInt(req.param('id')) || 10,
+                id: req.param('id') || '52562074-7557-4191-a654-abe5b12c7b35',
                 lang: parseInt(req.param('lang')) || "en-gb",
                 versionName: req.param('versionName'),
                 versionValidityDate: parseInt(req.param('versionValidityDate'))
@@ -48,9 +48,9 @@ module.exports = {
             routeArray = route.substr(1).split('/');
             langs = ['en-gb', 'fr-fr'],
             lang = 'en-gb',
-            id = 0,
+            id = '',
             pathArray = [],
-            versionName = parseInt(req.param('versionName')),
+            versionName = req.param('versionName'),
             versionValidityDate = parseInt(req.param('versionValidityDate')),
             options = {};
         console.log(route);
@@ -62,14 +62,16 @@ module.exports = {
                 }
             };
         }
-        if(routeArray.length) {   
-            if(routeArray[0] === '' || Number.isNaN(Number(routeArray[0]))) {
-                pathArray = routeArray;
+        if(routeArray.length) {
+            var regexUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+            if(regexUuid.test(routeArray[0])) {
+                id = routeArray[0];
             } else {
-                id = Number(routeArray[0]);
+                pathArray = routeArray;
             }
         }
-        options = {id: id, lang: lang, versionName: versionName, versionValidityDate: versionValidityDate};
+        options = {id: id, path: pathArray, lang: lang, versionName: versionName, versionValidityDate: versionValidityDate};
+        // console.log(options);
         ContentService.getNodeData(options, function(done){return res.json(done)});
     },
 
@@ -464,7 +466,7 @@ module.exports = {
     /** Get child content objects */
     getContent: function(req, res) {
         var options = {
-            "id": parseInt(req.param('id')) || 0,
+            "id": req.param('id') || 0,
             "lang": parseInt(req.param('lang')) || "en-gb",
             "versionName": req.param('versionName'),
             "versionValidityDate": parseInt(req.param('versionValidityDate'))
@@ -475,7 +477,7 @@ module.exports = {
     /** Get child content objects */
     getChildren: function(req, res) {
         var options = {
-            "id": parseInt(req.param('id')) || 0,
+            "id": req.param('id') || 0,
             "lang": parseInt(req.param('lang')) || "en-gb",
             "versionName": req.param('versionName'),
             "versionValidityDate": parseInt(req.param('versionValidityDate'))
@@ -493,7 +495,7 @@ module.exports = {
                     +' WHERE id(a) = {id} AND NOT (a)-[r:VERSION|:CREATED|:CONTAINS]->(b) AND NOT (a)<-[r:VERSION|:CREATED|:CONTAINS]-(b)'
                     +' RETURN b as identityNode, r as relationship, c as versionNode'
         var params = {
-            "id": parseInt(req.param('id'))
+            "id": req.param('id')
         };
         var cb = function(err, data) {
             return res.json(data);
@@ -525,11 +527,11 @@ module.exports = {
     /** Get parent */
     getParent: function(req, res) {
 
-        var query =  'MATCH (a)<-[r:CONTAINS {to:9007199254740991}]-(parentNode)'
-                    +' WHERE id(a) = {id}'
+        var query =  'MATCH (identityNode)<-[r:CONTAINS {to:9007199254740991}]-(parentNode)'
+                    +' WHERE identityNode.uuid = {id}'
                     +' RETURN parentNode'
         var params = {
-            "id": parseInt(req.param('id'))
+            "id": req.param('id')
         };
         var cb = function(err, data) {
             //console.log(data);
@@ -544,13 +546,13 @@ module.exports = {
     /** Get siblings */
     getSiblings: function(req, res) {
 
-        var query =  'MATCH (a)<-[r:CONTAINS {to:9007199254740991}]-(parent)'
-                    +' WHERE id(a) = {id}'
+        var query =  'MATCH (identityNode)<-[r:CONTAINS {to:9007199254740991}]-(parent)'
+                    +' WHERE identityNode.uuid = {id}'
                     +' WITH parent'
-                    +' MATCH (parent)-[:CONTAINS {to:9007199254740991}]->(c)'
-                    +' RETURN c as siblingNode'
+                    +' MATCH (parent)-[:CONTAINS {to:9007199254740991}]->(siblingNode)'
+                    +' RETURN siblingNode'
         var params = {
-            "id": parseInt(req.param('id'))
+            "id": req.param('id')
         };
         var cb = function(err, data) {
             //console.log(data);
@@ -602,7 +604,7 @@ module.exports = {
     /** Get child content objects */
     getProcess: function(req, res) {
         var params = {
-            "id": parseInt(req.param('id')),
+            "id": req.param('id'),
             "lang": parseInt(req.param('lang')) || "en-gb"
         };
         var versionMatch = "";
@@ -661,66 +663,17 @@ module.exports = {
      // TODO: Add url alias subnode with from and to timestamps
 
     create: function(req, res) {
-        var properties = req.body.properties,
-            relationships = req.body.relationships,
-            matchRelated = '',
-            whereRelated = '',
-            createRelationships = '',
-            identityNamePattern = req.body.identityNamePattern ? req.body.identityNamePattern : 'childversion.' + (properties.name ? 'name' : properties.title ? 'title' : properties.term ? 'term' : properties.identifier ? 'identifier' : 'name');
-
-        if(relationships) {
-            for (var i = relationships.length - 1; i >= 0; i--) {
-                console.log(relationships[i]);
-                var relationshipName = relationships[i].relationshipName.toUpperCase(),
-                    direction = relationships[i].direction,
-                    inboundSymbol = direction === 'inbound' ? '<' : '',
-                    outboundSymbol = direction === 'outbound' ? '>' : '',
-                    relatedNode = relationships[i].relatedNode,
-                    relatedNodeId = relatedNode.identity.low,
-                    relatedIdentifier = 'node' + relatedNodeId;
-
-                matchRelated += ', (' + relatedIdentifier + ')';
-                whereRelated += ' AND id(' + relatedIdentifier + ') = ' + relatedNodeId;
-                createRelationships += ' CREATE (childidentity)' + inboundSymbol + '-[:' + relationshipName + ' {from:timestamp(), to:9007199254740991}]-' + outboundSymbol + '(' + relatedIdentifier + ')';
-
-                //console.log(matchRelated);
+        var options = {
+                "parentId": parseInt(req.body.parentId),
+                "authorId": parseInt(req.body.authorId),
+                "contenttype": req.body.contenttype,
+                "lang": req.body.lang,
+                "properties": req.body.properties,
+                "relationships": req.body.relationships,
+                "identityNamePattern": req.body.identityNamePattern ? req.body.identityNamePattern : 'childversion.' + (properties.name ? 'name' : properties.title ? 'title' : properties.term ? 'term' : properties.identifier ? 'identifier' : 'name')
             };
-        }
-
-        var query =   'MATCH (parent), (author)' + matchRelated
-                    +' WHERE id(parent)={parentId} AND id(author)={authorId}' + whereRelated
-                    +' CREATE parent-[:CONTAINS {from:timestamp(), to:9007199254740991, versionNumber:1, versionName:"Initial"}]->'
-                    +       '(childidentity:Identity:ContentObject {contentType:{contenttype}})'
-                    +       '-[:VERSION {from:timestamp(), to:9007199254740991, versionNumber:1, versionName:"Initial", lang:"en-gb"}]->'
-                    +       '(childversion:Version)'
-                    +' CREATE author-[:CREATED {timestamp:timestamp()}]->childidentity'
-                    +' CREATE author-[:CREATED {timestamp:timestamp()}]->childversion'
-                    + createRelationships
-                    +' SET childidentity:' + this.pascalize(req.body.contenttype) 
-                    +' SET childversion = {properties}'
-                    +' SET childidentity.name = ' + identityNamePattern
-                    +' SET childidentity.spId = childversion.Id'
-                    +' SET childidentity.spID = childversion.ID'
-                    +' RETURN parent,childidentity,childversion';
-        var params = {
-            "parentId": parseInt(req.body.parentId),
-            "authorId": parseInt(req.body.authorId),
-            "contenttype": req.body.contenttype,
-            "identityNamePattern": req.body.identityNamePattern,
-            "properties": req.body.properties
-        };
-        var cb = function(err, data) {
-            if(err) {
-                console.log(err);
-            } else {
-                console.log(data);
-                return res.json(data);
-            }
-        };
-        db.cypher({
-            query: query, 
-            params: params
-        }, cb);
+        console.log(options);
+        ContentService.create(options, function(done){return res.json(done)});       
     },
 
     /**
@@ -769,7 +722,7 @@ module.exports = {
                     inboundSymbol = direction === 'inbound' ? '<' : '',
                     outboundSymbol = direction === 'outbound' ? '>' : '',
                     relatedNode = relationships[i].relatedNode,
-                    relatedNodeId = relatedNode.identity.low,
+                    relatedNodeId = relatedNode.properties.uuid,
                     relatedIdentifier = 'node' + relatedNodeId;
 
                 matchRelated += ', (' + relatedIdentifier + ')';
@@ -831,7 +784,7 @@ module.exports = {
                     +' SET relationship.to = timestamp()'
                     +' RETURN parent, child';
         var params = {
-            "id": parseInt(req.param('id'))
+            "id": req.param('id')
         };
         
         var cb = function(err, data) {
@@ -854,49 +807,6 @@ module.exports = {
     /** Add content object to an additional location (create new location relationship) */
     addLocation: function(req, res) {
 
-    },
-
-    // Utilies
-    separateWords: function(string, options) {
-        options = options || {};
-        var separator = options.separator || '_';
-        var split = options.split || /(?=[A-Z])/;
-
-        return string.split(split).join(separator);
-    },
-
-    camelize: function(string) {
-        if (this._isNumerical(string)) {
-          return string;
-        }
-        string = string.replace(/[\-_\s]+(.)?/g, function(match, chr) {
-          return chr ? chr.toUpperCase() : '';
-        });
-        // Ensure 1st char is always lowercase
-        return string.substr(0, 1).toLowerCase() + string.substr(1);
-    },
-
-    pascalize: function(string) {
-        var camelized = this.camelize(string);
-        // Ensure 1st char is always uppercase
-        return camelized.substr(0, 1).toUpperCase() + camelized.substr(1);
-    },
-
-    decamelize: function(string, options) {
-        return this.separateWords(string, options).toLowerCase();
-    },
-
-    // Performant way to determine if obj coerces to a number
-    _isNumerical: function(obj) {
-        obj = obj - 0;
-        return obj === obj;
     }
-
-    // var isDefined = function(value, path) {
-    //     path.split('.').forEach(function(key) {
-    //         value = value && value[key];
-    //     });
-    //     return (typeof value != 'undefined' && value !== null);
-    // };
 
 };

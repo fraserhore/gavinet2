@@ -15,7 +15,7 @@
     
     <iron-ajax 
       id="getContent"
-      url="/content/getContent/{{app.identityNode.identity.low}}"
+      url="/content/getContent/{{app.identityNode.properties.uuid}}"
       params={}
       handle-as="json"
       last-response="{{content}}"
@@ -42,7 +42,7 @@
     <paper-dialog id="relationshipDialog" entry-animation="scale-up-animation" exit-animation="fade-out-animation" autoFitOnAttach="true">
       <h2>Create Relationship</h2>
       <paper-dialog-scrollable>
-        <content-relationship reference-node-id="{{app.identityNode.identity.low}}" direction="outbound" parent-node-id="{{app.identityNode.identity.low}}"></content-relationship>
+        <content-relationship reference-node-id="{{app.identityNode.properties.uuid}}" direction="outbound" parent-node-id="{{app.identityNode.properties.uuid}}"></content-relationship>
       </paper-dialog-scrollable>
     </paper-dialog> -->
 
@@ -64,11 +64,11 @@
     </paper-dialog>
       
     <h3>Child Content</h3>
-    <!-- <content-children id="contentChildren" identity-node-id="{{app.identityNode.identity.low}}" on-edit="update"></content-children> -->
+    <!-- <content-children id="contentChildren" identity-node-id="{{app.identityNode.properties.uuid}}" on-edit="update"></content-children> -->
     <template-match id="contentChildren" app="{{app}}" view-template="content-children" on-edit="update"></template-match>
 
     <h3>Related Content</h3>
-    <content-related identity-node-id="{{app.identityNode.identity.low}}"></content-related>
+    <content-related identity-node-id="{{app.identityNode.properties.uuid}}"></content-related>
 
   </template>
   <script>
@@ -116,8 +116,8 @@
 
       create: function(event) {
         this.set('formData.action', 'create');
-        this.set('formData.authorId', this.app.authorNode.identity.low);
-        this.set('formData.parentId', this.app.identityNode.identity.low);
+        this.set('formData.authorId', this.app.authorNode.properties.uuid);
+        this.set('formData.parentId', this.app.identityNode.properties.uuid);
         this.set('formData.id', undefined);
         this.set('formData.lang', 'en-gb');
         this.set('formData.versionName', '');
@@ -137,9 +137,9 @@
             relationships = event.detail.relationships || this.app.relationships,
             authorNode = event.detail.authorNode || this.app.authorNode;
         this.set('formData.action', 'update');
-        this.set('formData.authorId', authorNode.identity.low);
+        this.set('formData.authorId', authorNode.properties.uuid);
         this.set('formData.parentId', undefined);
-        this.set('formData.id', identityNode.identity.low);
+        this.set('formData.id', identityNode.properties.uuid);
         this.set('formData.lang', 'en-gb');
         this.set('formData.versionName', '');
         this.set('formData.contenttype', identityNode.properties.contentType);
@@ -155,7 +155,7 @@
 
       delete: function(event) {
         this.$.deleteRequest.url = "/content/delete";
-        this.$.deleteRequest.params = {"id": event.model.item.identityNode.identity.low};
+        this.$.deleteRequest.params = {"id": event.model.item.identityNode.uuid};
         this.$.deleteRequest.generateRequest();
       },
 
@@ -233,7 +233,7 @@
         var id = button.getAttribute('data-form');
         var form = document.getElementById(id);
         if (form) {
-         // console.log(form);
+         console.log(form);
           form._submit();
         }
         this.$.editDialog.close();

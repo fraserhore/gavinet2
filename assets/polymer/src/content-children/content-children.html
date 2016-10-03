@@ -37,7 +37,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
     <template is="dom-repeat" items="[[children]]">
       <div class="horizontal-section">
-        <h4><a href="/content/view?id={{item.identityNode._id}}">[[item.identityNode.properties.name]]</a></h4>
+        <h4><a href="/content/view?id={{item.identityNode.properties.uuid}}">[[item.identityNode.properties.name]]</a></h4>
         <template is="dom-repeat" items="[[_toArray(item.versionNode.properties)]]">
           <template is="dom-if" if="{{item.value}}">
             <p>[[item.name]]: [[item.value]]</p>
@@ -78,7 +78,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
       delete: function(event) {
         this.$.deleteRequest.url = "/content/delete";
-        this.$.deleteRequest.params = {"id": event.model.item.identityNode._id};
+        this.$.deleteRequest.params = {"id": event.model.item.identityNode.properties.uuid};
         console.log(deleteRequest);
         this.$.deleteRequest.generateRequest();
       },
