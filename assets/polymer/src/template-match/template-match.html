@@ -92,14 +92,14 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
                 // Remove the first child if there is one
                 if (this.$.template.firstChild) {
-                    console.log('Remove child: ' + this.$.template.firstChild);
+                    // console.log('Remove child: ' + this.$.template.firstChild);
                     this.$.template.removeChild(this.$.template.firstChild);
                 }
 
 
-                console.log('viewTemplateOverride: ' + viewTemplateOverride + ' this.viewTemplate: ' + this.viewTemplate);
+                // console.log('viewTemplateOverride: ' + viewTemplateOverride + ' this.viewTemplate: ' + this.viewTemplate);
 
-                console.log('creating child');
+                // console.log('creating child');
                 props['app'] = this.app;
                 props['identityNodeId'] = this.app.identityNode.properties.uuid;
                 el = Polymer.Base.create(viewTemplateOverride, props);

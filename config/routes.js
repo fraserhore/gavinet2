@@ -105,6 +105,11 @@ module.exports.routes = {
     skipAssets: true
   },  
 
+  '/content/create': {
+    controller: 'Content',
+    action: 'create',
+    skipAssets: true
+  },  
 
   '/*': {
       //view: 'homepage'

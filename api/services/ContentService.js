@@ -843,12 +843,12 @@ module.exports = {
      * Create new content object (identityNode and versionNode)
      */
     create: function(options, done) {
+        var session = driver.session();
         var properties = options.properties,
             relationships = options.relationships,
             matchRelated = '',
             whereRelated = '',
             createRelationships = '';
-        console.log('test');
         if(relationships) {
             for (var i = relationships.length - 1; i >= 0; i--) {
                 console.log(relationships[i]);
@@ -866,30 +866,30 @@ module.exports = {
                 //console.log(matchRelated);
             };
         }
-
+        //console.log(options);
         var query =  // Match path from root to parent so we can use it later to create the URL alias.
-					+' MATCH p = (a:Root)-[:CONTAINS*]->(parent)' + matchRelated
+					 ' MATCH p = (a:Root)-[:CONTAINS*]->(parent)' + matchRelated
 					// Match on parent uuid and author uuid
-                    +' WHERE parent.uuid = {parentUuid}' + whereRelated
+                    +' WHERE parent.uuid = {parentId}' + whereRelated
                     // Create new identity and version
                     +' CREATE (parent)-[:CONTAINS {from:timestamp(), to:9007199254740991, versionNumber:1, versionName:"Initial"}]->'
                     +       '(childidentity:Identity:ContentObject {contentType:{contenttype}})'
-                    +       '-[:VERSION {from:timestamp(), to:9007199254740991, versionNumber:1, versionName:"Initial", lang:"{lang}"}]->'
+                    +       '-[:VERSION {from:timestamp(), to:9007199254740991, versionNumber:1, versionName:"Initial", lang:{lang}}]->'
                     +       '(childversion:Version)'
                     // Create URL alias identity and version
                     +' CREATE (childidentity)-[:URL_ALIAS {from:timestamp(), to:9007199254740991, versionNumber:1, versionName:"Initial"}]->'
                     +       '(urlAliasIdentity:Identity:UrlAlias {contentType:"urlAlias"})'
-                    +       '-[:VERSION {from:timestamp(), to:9007199254740991, versionNumber:1, versionName:"Initial", lang:"{lang}"}]->'
+                    +       '-[:VERSION {from:timestamp(), to:9007199254740991, versionNumber:1, versionName:"Initial", lang:{lang}}]->'
                     +       '(urlAliasVersion:Version)'
                     + createRelationships
                     // Set properties
                     +' SET childidentity:' + ContentService.pascalize(options.contenttype) 
                     +' SET childversion = {properties}'
-                    +' SET childidentity.name = ' + identityNamePattern
+                    +' SET childidentity.name = ' + options.identityNamePattern
 
                     +' WITH parent, childidentity, childversion, urlAliasIdentity, urlAliasVersion, reduce(urlAlias = "", n IN nodes(p)| urlAlias + "/" + replace(n.name," ", "-") + "/" + replace(childversion.name," ", "-")) AS urlAlias'
                     +' MATCH (author)'
-                    +' WHERE author.uuid = {authorUuid}'
+                    +' WHERE author.uuid = {authorId}'
                     // Create relationshps from author to identity nodes and version nodes
                     +' CREATE (author)-[:CREATED {timestamp:timestamp()}]->(childidentity)'
                     +' CREATE (author)-[:CREATED {timestamp:timestamp()}]->(childversion)'
@@ -913,6 +913,7 @@ module.exports = {
             .then(result => {
                 session.close();
                 var record = result.records[0];
+                console.log(record.get('childversion'));
                 return done({
                     'parent': record.get('parent'),
                     'identityNode': record.get('childidentity'), 

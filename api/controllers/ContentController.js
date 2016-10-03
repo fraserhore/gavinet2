@@ -71,7 +71,7 @@ module.exports = {
             }
         }
         options = {id: id, urlAlias: urlAlias, lang: lang, versionName: versionName, versionValidityDate: versionValidityDate};
-        console.log(options);
+        //console.log(options);
         ContentService.getNodeData(options, function(done){return res.json(done)});
     },
 
@@ -650,14 +650,15 @@ module.exports = {
      // TODO: Add url alias subnode with from and to timestamps
 
     create: function(req, res) {
+        console.log(req.body);
         var options = {
-                "parentId": parseInt(req.body.parentId),
-                "authorId": parseInt(req.body.authorId),
+                "parentId": req.body.parentId,
+                "authorId": req.body.authorId,
                 "contenttype": req.body.contenttype,
                 "lang": req.body.lang,
                 "properties": req.body.properties,
                 "relationships": req.body.relationships,
-                "identityNamePattern": req.body.identityNamePattern ? req.body.identityNamePattern : 'childversion.' + (properties.name ? 'name' : properties.title ? 'title' : properties.term ? 'term' : properties.identifier ? 'identifier' : 'name')
+                "identityNamePattern": req.body.identityNamePattern ? req.body.identityNamePattern : 'childversion.' + (req.body.properties.name ? 'name' : req.body.properties.title ? 'title' : req.body.properties.term ? 'term' : req.body.properties.identifier ? 'identifier' : 'name')
             };
         console.log(options);
         ContentService.create(options, function(done){return res.json(done)});       

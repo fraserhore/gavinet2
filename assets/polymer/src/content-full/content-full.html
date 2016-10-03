@@ -127,7 +127,7 @@
         this.$.getContentTypeSchema.params = {"contenttype": this.formData.contenttype};
         this.$.getContentTypeSchema.generateRequest;
         this._initFormData();
-        console.log(this.formData);
+        //console.log(this.formData);
         this.$.editDialog.open();
       },
 
@@ -231,9 +231,11 @@
           return;
         }
         var id = button.getAttribute('data-form');
-        var form = document.getElementById(id);
+        var form = this.$.contentEdit;
+        console.log(form);
         if (form) {
-         console.log(form);
+          console.log('submit form');
+          console.log(form);
           form._submit();
         }
         this.$.editDialog.close();
