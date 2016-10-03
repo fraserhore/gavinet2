@@ -57,7 +57,7 @@ module.exports = {
                     +  versionMatch
                     +' RETURN identityNode, version, versionNode, authorNode, urlAliasVersion.urlAlias as urlAlias';
         }
-        console.log(query);
+        // console.log(query);
         return session
             .run(query, params)
             .then(result => {
