@@ -849,16 +849,21 @@ module.exports = {
             };
         }
 
-        var query =   'MATCH p = (a:Root)-[:CONTAINS*]->(parent), (author)' + matchRelated
+        var query =  // Match path from root to parent so we can use it later to create the URL alias.
+					+' MATCH p = (a:Root)-[:CONTAINS*]->(parent), (author)' + matchRelated
+					// Match on parent uuid and author uuid
                     +' WHERE parent.uuid = {parentUuid} AND author.uuid = {authorUuid}' + whereRelated
+                    // Create new identity and version
                     +' CREATE (parent)-[:CONTAINS {from:timestamp(), to:9007199254740991, versionNumber:1, versionName:"Initial"}]->'
                     +       '(childidentity:Identity:ContentObject {contentType:{contenttype}})'
                     +       '-[:VERSION {from:timestamp(), to:9007199254740991, versionNumber:1, versionName:"Initial", lang:"{lang}"}]->'
                     +       '(childversion:Version)'
+                    // Create URL alias identity and version
                     +' CREATE (childidentity)-[:URL_ALIAS {from:timestamp(), to:9007199254740991, versionNumber:1, versionName:"Initial"}]->'
                     +       '(urlAliasIdentity:Identity:UrlAlias {contentType:"urlAlias"})'
                     +       '-[:VERSION {from:timestamp(), to:9007199254740991, versionNumber:1, versionName:"Initial", lang:"{lang}"}]->'
                     +       '(urlAliasVersion:Version)'
+                    // Create relationshps from author to identity nodes and version nodes
                     +' CREATE (author)-[:CREATED {timestamp:timestamp()}]->(childidentity)'
                     +' CREATE (author)-[:CREATED {timestamp:timestamp()}]->(childversion)'
                     +' CREATE (author)-[:CREATED {timestamp:timestamp()}]->(urlAliasIdentity)'
@@ -867,6 +872,8 @@ module.exports = {
                     +' SET childidentity:' + ContentService.pascalize(options.contenttype) 
                     +' SET childversion = {properties}'
                     +' SET childidentity.name = ' + identityNamePattern
+                    // Set uuids and URL alias
+                    +' WITH parent, childidentity, childversion, author, urlAliasIdentity, urlAliasVersion, reduce(urlAlias = "", n IN nodes(p)| urlAlias + "/" + replace(n.name," ", "-")) AS urlAlias'
                     +' CALL apoc.create.uuid() YIELD uuid'
                     +' SET childidentity.uuid = uuid'
                     +' SET childversion.uuid = uuid'
