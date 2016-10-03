@@ -84,10 +84,10 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       <!-- Drawer content -->
       <app-drawer>
         <app-toolbar>Menu</app-toolbar>
-        <iron-selector selected="[[path]]" attr-for-selected="name" class="drawer-list" role="navigation">
-          <a name="view1" href="/en-gb/root/content">root/content</a>
-        </iron-selector>
-        <content-left-menu identity-node-id="{{app.identityNode.properties.uuid}}"></content-left-menu>
+        <!-- <iron-selector selected="[[path]]" attr-for-selected="name" class="drawer-list" role="navigation">
+          <a name="view1" href="/{{app.lang}}/root/content">root/content</a>
+        </iron-selector> -->
+        <content-left-menu app="{{app}}"></content-left-menu>
       </app-drawer>
 
       <!-- Main content -->
@@ -146,6 +146,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         this.set('app.identityNode', this.nodeData.identityNode);
         this.set('app.versionNode', this.nodeData.versionNode);
         this.set('app.viewTemplateOverrides', this.nodeData.viewTemplateOverrides);
+        this.set('app.lang', this.nodeData.lang);
       },
 
       _routePathChanged: function(path) {

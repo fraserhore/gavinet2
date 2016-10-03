@@ -21,7 +21,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
     <iron-ajax
       id="getChildren"
       auto
-      url="/content/getChildren/{{identityNodeId}}?versionValidityDate={{versionValidityDate}}"
+      url="/content/getChildren/{{app.identityNode.properties.uuid}}?versionValidityDate={{versionValidityDate}}"
       params=''
       handle-as="json"
       last-response="{{children}}"
@@ -37,7 +37,14 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
     <template is="dom-repeat" items="[[children]]">
       <div class="horizontal-section">
-        <h4><a href="/content/view?id={{item.identityNode.properties.uuid}}">[[item.identityNode.properties.name]]</a></h4>
+        <h4>
+          <template is="dom-if" if="{{item.urlAlias}}">
+            <a href="/{{app.lang}}{{item.urlAlias}}">[[item.identityNode.properties.name]]</a>
+          </template>
+          <template is="dom-if" if="{{!item.urlAlias}}">
+            <a href="/{{app.lang}}/{{item.identityNode.properties.uuid}}">[[item.identityNode.properties.name]]</a>
+          </template>
+        </h4>
         <template is="dom-repeat" items="[[_toArray(item.versionNode.properties)]]">
           <template is="dom-if" if="{{item.value}}">
             <p>[[item.name]]: [[item.value]]</p>
@@ -58,10 +65,11 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       is: 'content-children',
 
       properties: {
-        identityNodeId: {
-          type: Number,
-          value: 0,
-          notify: true
+        app: {
+          type: Object,
+          value: function() { return {}; },
+          notify: true,
+          reflectToAttribute: true,
         },
 
         versionValidityDate: {

@@ -49,11 +49,11 @@ module.exports = {
             langs = ['en-gb', 'fr-fr'],
             lang = 'en-gb',
             id = '',
-            pathArray = [],
+            urlAlias = '',
             versionName = req.param('versionName'),
             versionValidityDate = parseInt(req.param('versionValidityDate')),
             options = {};
-        console.log(route);
+        //console.log(route);
         // Parse route to get either an identity node id or a path to an identity node
         if(routeArray.length) {
             for (var i = 0; i < langs.length; i++) {
@@ -67,11 +67,11 @@ module.exports = {
             if(regexUuid.test(routeArray[0])) {
                 id = routeArray[0];
             } else {
-                pathArray = routeArray;
+                urlAlias = "/" + routeArray.join('/');
             }
         }
-        options = {id: id, path: pathArray, lang: lang, versionName: versionName, versionValidityDate: versionValidityDate};
-        // console.log(options);
+        options = {id: id, urlAlias: urlAlias, lang: lang, versionName: versionName, versionValidityDate: versionValidityDate};
+        console.log(options);
         ContentService.getNodeData(options, function(done){return res.json(done)});
     },
 
@@ -545,23 +545,10 @@ module.exports = {
 
     /** Get siblings */
     getSiblings: function(req, res) {
-
-        var query =  'MATCH (identityNode)<-[r:CONTAINS {to:9007199254740991}]-(parent)'
-                    +' WHERE identityNode.uuid = {id}'
-                    +' WITH parent'
-                    +' MATCH (parent)-[:CONTAINS {to:9007199254740991}]->(siblingNode)'
-                    +' RETURN siblingNode'
-        var params = {
+        var options = {
             "id": req.param('id')
         };
-        var cb = function(err, data) {
-            //console.log(data);
-            return res.json(data);
-        }
-        db.cypher({
-            query: query,
-            params: params
-        }, cb);
+        ContentService.getSiblings(options, function(done){return res.json(done)});
     },
 
     /** Get content type schema */

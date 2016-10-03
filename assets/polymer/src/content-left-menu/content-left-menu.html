@@ -43,7 +43,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
     <iron-ajax
         id="getSiblings"
         auto
-        url="/content/getSiblings/{{identityNodeId}}"
+        url="/content/getSiblings/{{app.identityNode.properties.uuid}}"
         params=''
         handle-as="json"
         last-response="{{siblingNodes}}"
@@ -52,16 +52,21 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       <iron-ajax
         id="getParent"
         auto
-        url="/content/getParent/{{identityNodeId}}"
+        url="/content/getParent/{{app.identityNode.properties.uuid}}"
         params=''
         handle-as="json"
         last-response="{{parentNode}}"
         debounce-duration="300"></iron-ajax>
 
-    <h3><a href="/en-gb/[[parentNode.parentNode.properties.uuid]]">[[parentNode.parentNode.properties.name]]</a></h3>
+    <h3><a href="/{{app.lang}}/[[parentNode.parentNode.properties.uuid]]">[[parentNode.parentNode.properties.name]]</a></h3>
     <paper-menu>
       <template is="dom-repeat" items="[[siblingNodes]]">
-        <a href="/en-gb/{{item.siblingNode.properties.uuid}}">[[item.siblingNode.properties.name]]</a>
+        <template is="dom-if" if="{{item.urlAlias}}">
+          <a href="/{{app.lang}}{{item.urlAlias}}">[[item.siblingNode.properties.name]]</a>
+        </template>
+        <template is="dom-if" if="{{!item.urlAlias}}">
+          <a href="/{{app.lang}}/{{item.siblingNode.properties.uuid}}">[[item.siblingNode.properties.name]]</a>
+        </template>
       </template>
     </paper-menu>
 
@@ -74,15 +79,16 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       is: 'content-left-menu',
 
       properties: {
-        identityNodeId: {
-          type: String,
-          value: '',
-          notify: true
+        app: {
+          type: Object,
+          value: function() { return {}; },
+          notify: true,
+          reflectToAttribute: true
         }
       },
 
       ready: function() {
-        //console.log('left menu: ' + this.identityNodeId);
+        console.log(this.app);
       }
       
     });
