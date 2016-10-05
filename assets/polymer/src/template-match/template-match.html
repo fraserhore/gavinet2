@@ -76,6 +76,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
                     //console.log('ready: no overrides, get them');
                     this.$.getViewTemplateOverrides.generateRequest();
                 }
+                this.currentViewTemplate = this.viewTemplate;
             },
 
             createElement: function() {
@@ -98,19 +99,26 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
                 viewTemplateOverride = this.getViewTemplate();
                 if(!viewTemplateOverride) {
                     viewTemplateOverride = this.viewTemplate;
-                } 
-
-                // Remove the first child if there is one
-                if (this.$.template.firstChild) {
-                    //console.log('Remove child: ' + this.$.template.firstChild);
-                    this.$.template.removeChild(this.$.template.firstChild);
                 }
+                // console.log('this.currentViewTemplate: ' + this.currentViewTemplate);
+                // console.log('viewTemplateOverride: ' + viewTemplateOverride);
 
-                //console.log('creating child');
-                props['app'] = this.app;
-                props['identityNodeId'] = this.app.identityNode.properties.uuid;
-                el = Polymer.Base.create(viewTemplateOverride, props);
-                this.$.template.appendChild(el);
+                if(this.currentViewTemplate !== viewTemplateOverride || !this.$.template.firstChild) {
+                    // Remove the first child if there is one
+                    if (this.$.template.firstChild) {
+                        //console.log('Remove child: ' + this.$.template.firstChild);
+                        this.$.template.removeChild(this.$.template.firstChild);
+                    }
+                    //console.log('creating child');
+                    props['app'] = this.app;
+                    props['identityNodeId'] = this.app.identityNode.properties.uuid;
+                    el = Polymer.Base.create(viewTemplateOverride, props);
+                    this.$.template.appendChild(el);
+                    this.currentViewTemplate = viewTemplateOverride;
+                } else {
+                    this.$.template.firstChild.notifyPath('app.identityNode');
+                    this.$.template.firstChild.refresh();
+                }
             },
 
             getViewTemplate: function() {

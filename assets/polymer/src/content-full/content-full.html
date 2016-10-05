@@ -199,7 +199,8 @@
                 // this.$.contentChildren.versionValidityDate = event.target.value;
                 // this.$.contentChildren.refresh();
                 //this.$.contentChildren.firstElementChild.versionValidityDate = event.target.value;
-                //this.$.contentChildren.firstElementChild.refresh();
+                this.$.contentChildren.$.template.firstChild.notifyPath('app.versionValidityDate');
+                this.$.contentChildren.$.template.firstChild.refresh();
             },
 
             _submit: function(event) {
