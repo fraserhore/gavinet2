@@ -43,7 +43,9 @@
           <template is="dom-repeat" items="[[children]]">
             <tr>
               <td>
-                <h4><a href="/{{app.lang}}/{{item.identityNode.properties.uuid}}">[[item.identityNode.properties.name]]</a></h4>
+                <h4>
+                  <a href="/{{app.lang}}/{{item.identityNode.properties.uuid}}">[[item.identityNode.properties.name]]</a>
+                </h4>
               </td>
               <td>{{item.versionNode.properties.description}}</td>
               <td>
