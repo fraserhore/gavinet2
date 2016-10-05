@@ -77,18 +77,17 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       handle-as="json"
       last-response="{{nodeData}}"
       on-response="_updatedNodeData"
-      debounce-duration="300"></iron-ajax>
+      debounce-duration="300">
+    </iron-ajax>
 
     <app-drawer-layout fullbleed>
       <!-- Drawer content -->
       <app-drawer>
         <app-toolbar>Menu</app-toolbar>
-        <iron-selector selected="[[path]]" attr-for-selected="name" class="drawer-list" role="navigation">
-          <a name="view1" href="/en-gb/root/content">root/content</a>
-          <a name="view2" href="/en-gb/20">identity Node 20</a>
-          <a name="view3" href="/en-gb/10">View Three</a>
-        </iron-selector>
-        <content-left-menu identity-node-id="10"></content-left-menu>
+        <!-- <iron-selector selected="[[path]]" attr-for-selected="name" class="drawer-list" role="navigation">
+          <a name="view1" href="/{{app.lang}}/root/content">root/content</a>
+        </iron-selector> -->
+        <content-left-menu app="{{app}}"></content-left-menu>
       </app-drawer>
 
       <!-- Main content -->
@@ -143,14 +142,18 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       },
 
       _updatedNodeData: function() {
-      //  console.log(this.nodeData);
+        console.log(this.nodeData);
         this.set('app.identityNode', this.nodeData.identityNode);
+        this.set('app.version', this.nodeData.version);
         this.set('app.versionNode', this.nodeData.versionNode);
-        this.set('app.viewTemplateOverrides', this.nodeData.viewTemplateOverrides);
+        this.set('app.authorNode', this.nodeData.authorNode);
+        this.set('app.lang', this.nodeData.lang);
+        // this.set('app', this.nodeData);
       },
 
       _routePathChanged: function(path) {
         this.path = path || 'view1';
+        this.$.getNodeData.generateRequest();
         // console.log(this.route);
         // console.log(this.routeData);
         // console.log(this.subroute);
@@ -168,7 +171,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       },
 
       ready: function() {
-        console.log(this.app)
+
       }
 
     });

@@ -99,6 +99,17 @@ module.exports.routes = {
     skipAssets: true
   },  
 
+  '/content/getContentTypes': {
+    controller: 'Content',
+    action: 'getContentTypes',
+    skipAssets: true
+  },  
+
+  '/content/create': {
+    controller: 'Content',
+    action: 'create',
+    skipAssets: true
+  },  
 
   '/*': {
       //view: 'homepage'

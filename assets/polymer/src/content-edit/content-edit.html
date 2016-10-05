@@ -125,6 +125,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       // },
 
       _submit: function() {
+        console.log('formData');
         console.log(this.formData);
         this.$.postData.generateRequest();
         //this.$.editDialog.close();
@@ -132,7 +133,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
 
       edit: function(event) {
-        //console.log(event.model.item.identityNode._id);
+        //console.log(event.model.item.identityNode.properties.uuid);
 
       },
 
