@@ -142,15 +142,18 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       },
 
       _updatedNodeData: function() {
-      //  console.log(this.nodeData);
+        console.log(this.nodeData);
         this.set('app.identityNode', this.nodeData.identityNode);
+        this.set('app.version', this.nodeData.version);
         this.set('app.versionNode', this.nodeData.versionNode);
-        this.set('app.viewTemplateOverrides', this.nodeData.viewTemplateOverrides);
+        this.set('app.authorNode', this.nodeData.authorNode);
         this.set('app.lang', this.nodeData.lang);
+        // this.set('app', this.nodeData);
       },
 
       _routePathChanged: function(path) {
         this.path = path || 'view1';
+        this.$.getNodeData.generateRequest();
         // console.log(this.route);
         // console.log(this.routeData);
         // console.log(this.subroute);
@@ -168,7 +171,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       },
 
       ready: function() {
-        //console.log(this.app)
+
       }
 
     });

@@ -64,54 +64,59 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
             },
 
             _updateViewTemplateOverrides: function() {
-                //  console.log('update this.viewTemplateOverrides: '+ this.viewTemplateOverrides);
+                //console.log('update this.viewTemplateOverrides: ');
                 this.app.viewTemplateOverrides = this.viewTemplateOverrides;
-                //  console.log('update this.app.viewTemplateOverrides: '+ this.app.viewTemplateOverrides);
-                // this.createElement();
+                //console.log(this.app.viewTemplateOverrides);
+                this.createElement();
             },
 
             ready: function() {
-                //this.createElement();
+                // Get view template overrides if they are not already in the app object
+                if (!this.app.viewTemplateOverrides) {
+                    //console.log('ready: no overrides, get them');
+                    this.$.getViewTemplateOverrides.generateRequest();
+                }
             },
 
             createElement: function() {
+                //console.log('create Element starting');
+                if (!this.app.viewTemplateOverrides) {
+                    //console.log('createElement: no overrides, get them');
+                    //console.log(this.app.viewTemplateOverrides);
+                    this.$.getViewTemplateOverrides.generateRequest();
+                    return;
+                }
+                if (!this.app.identityNode) {
+                    //console.log('createElement: no identityNode yet');
+                    return;
+                }
                 var el,
                     viewTemplateOverride = '',
                     props = {};
 
-                // Get view template overrides if they are not already in the app object
-                if (!this.app.viewTemplateOverrides) {
-                    this.$.getViewTemplateOverrides.generateRequest();
-                }
-
                 // Get the view template override, if there is one
-                viewTemplateOverride = this.getViewTemplate(this.viewTemplate, this.app.viewTemplateOverrides);
+                viewTemplateOverride = this.getViewTemplate();
                 if(!viewTemplateOverride) {
                     viewTemplateOverride = this.viewTemplate;
                 } 
 
                 // Remove the first child if there is one
                 if (this.$.template.firstChild) {
-                    // console.log('Remove child: ' + this.$.template.firstChild);
+                    //console.log('Remove child: ' + this.$.template.firstChild);
                     this.$.template.removeChild(this.$.template.firstChild);
                 }
 
-
-                // console.log('viewTemplateOverride: ' + viewTemplateOverride + ' this.viewTemplate: ' + this.viewTemplate);
-
-                // console.log('creating child');
+                //console.log('creating child');
                 props['app'] = this.app;
                 props['identityNodeId'] = this.app.identityNode.properties.uuid;
                 el = Polymer.Base.create(viewTemplateOverride, props);
                 this.$.template.appendChild(el);
-
-
             },
 
-            getViewTemplate: function(viewTemplate, overrides) {
-                // console.log(viewTemplate);
-                // console.log(overrides);
-                if (!overrides) return;
+            getViewTemplate: function() {
+                var viewTemplate = this.viewTemplate,
+                    overrides = this.app.viewTemplateOverrides;
+
                 var viewTemplateOverride = "";
                 for (var i = 0; i < overrides.length; i++) {
                     var source = overrides[i].Override.properties.source,
@@ -128,8 +133,6 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
                 };
                 return viewTemplateOverride;
             }
-
-
 
         });
     })();
