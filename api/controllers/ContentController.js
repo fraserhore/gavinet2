@@ -768,7 +768,7 @@ module.exports = {
     delete: function(req, res) {
 
         var query =  'MATCH (child)<-[relationship:CONTAINS {to:9007199254740991}]-(parent)'
-                    +' WHERE id(child) = {id}'
+                    +' WHERE child.uuid = {id}'
                     +' SET relationship.to = timestamp()'
                     +' RETURN parent, child';
         var params = {

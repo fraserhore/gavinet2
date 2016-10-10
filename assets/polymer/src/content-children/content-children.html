@@ -87,13 +87,12 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       delete: function(event) {
         this.$.deleteRequest.url = "/content/delete";
         this.$.deleteRequest.params = {"id": event.model.item.identityNode.properties.uuid};
-        console.log(deleteRequest);
         this.$.deleteRequest.generateRequest();
       },
 
       deleteResponse: function(request) {
-        //console.log(request.detail.response);
-        //console.log(this.$.deleteRequest.lastResponse);
+        console.log(request.detail.response);
+        this.refresh();
       },
 
       refresh: function() {

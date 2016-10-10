@@ -111,6 +111,12 @@ module.exports.routes = {
     skipAssets: true
   },  
 
+  '/content/delete': {
+    controller: 'Content',
+    action: 'delete',
+    skipAssets: true
+  },  
+
   '/*': {
       //view: 'homepage'
       //view: 'index',

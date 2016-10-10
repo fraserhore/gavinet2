@@ -845,11 +845,12 @@ module.exports = {
     create: function(options, done) {
         var session = driver.session();
         var properties = options.properties,
-            relationships = options.relationships,
-            matchRelated = '',
-            whereRelated = '',
-            createRelationships = '';
-        if(relationships) {
+            relationships = options.relationships
+            relationshipsStatement = '';
+        if(relationships.length) {
+            var matchRelated = ' MATCH ',
+                whereRelated = ' WHERE ',
+                createRelationships = '';
             for (var i = relationships.length - 1; i >= 0; i--) {
                 console.log(relationships[i]);
                 var relationshipName = relationships[i].relationshipName.toUpperCase(),
@@ -859,18 +860,26 @@ module.exports = {
                     relatedNode = relationships[i].relatedNode,
                     relatedNodeId = relatedNode.properties.uuid,
                     relatedIdentifier = 'node' + relatedNodeId;
-
-                matchRelated += ', (' + relatedIdentifier + ')';
-                whereRelated += ' AND id(' + relatedIdentifier + ') = ' + relatedNodeId;
+                
+                matchRelated += '(' + relatedIdentifier + ')';
+                whereRelated += relatedIdentifier + '.uuid = ' + relatedNodeId;
+                if(i) {
+                    matchRelated += ', ';
+                    whereRelated += ', ';
+                } 
                 createRelationships += ' CREATE (childidentity)' + inboundSymbol + '-[:' + relationshipName + ' {from:timestamp(), to:9007199254740991}]-' + outboundSymbol + '(' + relatedIdentifier + ')';
                 //console.log(matchRelated);
             };
+            relationshipsStatement = ' WITH parent, childidentity, childversion, urlAliasIdentity, urlAliasVersion, author' 
+                                     + matchRelated
+                                     + whereRelated 
+                                     + createRelationships;
         }
         //console.log(options);
         var query =  // Match path from root to parent so we can use it later to create the URL alias.
-					 ' MATCH p = (a:Root)-[:CONTAINS*]->(parent)' + matchRelated
+					 ' MATCH p = (a:Root)-[:CONTAINS*]->(parent)'
 					// Match on parent uuid and author uuid
-                    +' WHERE parent.uuid = {parentId}' + whereRelated
+                    +' WHERE parent.uuid = {parentId}'
                     // Create new identity and version
                     +' CREATE (parent)-[:CONTAINS {from:timestamp(), to:9007199254740991, versionNumber:1, versionName:"Initial"}]->'
                     +       '(childidentity:Identity:ContentObject {contentType:{contenttype}})'
@@ -881,7 +890,6 @@ module.exports = {
                     +       '(urlAliasIdentity:Identity:UrlAlias {contentType:"urlAlias"})'
                     +       '-[:VERSION {from:timestamp(), to:9007199254740991, versionNumber:1, versionName:"Initial", lang:{lang}}]->'
                     +       '(urlAliasVersion:Version)'
-                    + createRelationships
                     // Set properties
                     +' SET childidentity:' + ContentService.pascalize(options.contenttype) 
                     +' SET childversion = {properties}'
@@ -906,6 +914,16 @@ module.exports = {
                     +' SET childversion.uuid = uuids[1]'
                     +' SET urlAliasIdentity.uuid = uuids[2]'
                     +' SET urlAliasVersion.uuid = uuids[3]'
+
+                    // Create relationships if there are any
+                    +  relationshipsStatement
+
+                    // Create relationship to content type
+                    +' WITH parent, childidentity, childversion, urlAliasIdentity, urlAliasVersion, author'
+                    +' MATCH (contentType:ContentType)-[:VERSION {to:9007199254740991}]->(contentTypeVersion)'
+                    +' WHERE contentTypeVersion.identifier = {contenttype}'
+                    +' CREATE (childidentity)-[:INSTANCE_OF]->(contentType)'
+
                     // Return results
                     +' RETURN parent, childidentity, childversion, urlAliasIdentity, urlAliasVersion, author';
         return session
