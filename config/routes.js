@@ -117,6 +117,18 @@ module.exports.routes = {
     skipAssets: true
   },  
 
+  'get /login': {
+       view: 'login'
+  },
+
+  'post /login': 'AuthController.login',
+
+  '/logout': 'AuthController.logout',
+
+  'get /signup': {
+    view: 'signup'
+  },
+
   '/*': {
       //view: 'homepage'
       //view: 'index',
