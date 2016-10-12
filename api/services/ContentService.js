@@ -35,6 +35,7 @@ module.exports = {
                 "lang": options.lang
             },
             query = '',
+            urlMatch = '',
             versionMatch = "";
 
         if(versionName) {
@@ -47,28 +48,41 @@ module.exports = {
         //console.log(versionMatch);
 
         if(options.urlAlias) {
-            query =   'MATCH (urlAliasVersion)<-[urlAliasVersionRel:VERSION]-(urlAliasIdentity)-[:URL_ALIAS]-(identityNode)-[version:VERSION]->(versionNode), (authorNode)-[created:CREATED]->(identityNode)'
-                    +' WHERE urlAliasVersion.urlAlias = {urlAlias} AND version.lang = {lang}'
-                    +  versionMatch
-                    +' RETURN identityNode, version, versionNode, authorNode, urlAliasVersion.urlAlias as urlAlias';
+            urlMatch = 'urlAliasVersion.urlAlias = {urlAlias} AND version.lang = {lang}';
         } else {
-            query =   'MATCH (urlAliasVersion)<-[urlAliasVersionRel:VERSION]-(urlAliasIdentity)-[:URL_ALIAS]-(identityNode)-[version:VERSION]->(versionNode), (authorNode)-[created:CREATED]->(identityNode)'
-                    +' WHERE identityNode.uuid = {id} AND urlAliasVersionRel.to = 9007199254740991 AND version.lang = {lang}'
-                    +  versionMatch
-                    +' RETURN identityNode, version, versionNode, authorNode, urlAliasVersion.urlAlias as urlAlias';
+            urlMatch = 'identityNode.uuid = {id} AND urlAliasVersionRel.to = 9007199254740991 AND version.lang = {lang}';
         }
+        query =   'MATCH (urlAliasVersion)<-[urlAliasVersionRel:VERSION]-(urlAliasIdentity)-[:URL_ALIAS]-(identityNode)-[version:VERSION]->(versionNode), (authorNode)-[created:CREATED]->(identityNode)'
+                +' WHERE ' + urlMatch + versionMatch
+                +' WITH identityNode, version, versionNode, authorNode, urlAliasVersion.urlAlias as urlAlias'
+                // get the content type schema
+                +' OPTIONAL MATCH (identityNode)-[:INSTANCE_OF]->(contentTypeIdentity)-[:VERSION {to:9007199254740991}]->(contentTypeVersion),'
+                +' (contentTypeIdentity)-[:PROPERTY|RELATIONSHIP|CONTAINS {to:9007199254740991}]->(propertyIdentity)-[:VERSION {to:9007199254740991}]->(propertyVersion:Version)'
+                +' RETURN identityNode, version, versionNode, authorNode, urlAlias, contentTypeIdentity, contentTypeVersion, collect(propertyIdentity) as propertyIdentities, collect(propertyVersion) as propertyVersions';
         // console.log(query);
         return session
             .run(query, params)
             .then(result => {
                 session.close();
-                var record = result.records[0];
+                var record = result.records[0],
+                    schema = {},
+                    contentTypeVersion = record.get('contentTypeVersion');
+                if(contentTypeVersion) {
+                    var contentTypeVersionProperties = contentTypeVersion.properties,
+                        propertyVersions = record.get('propertyVersions');
+                    schema = contentTypeVersionProperties;
+                    schema["properties"] = {};
+                    for (var i = 0; i < propertyVersions.length; i++) {
+                        schema.properties[propertyVersions[i].properties.identifier] = propertyVersions[i].properties;
+                    };
+                }
                 return done({
                     'identityNode': record.get('identityNode'), 
                     'version': record.get('version'),
                     'versionNode': record.get('versionNode'),
                     'authorNode': record.get('authorNode'),
-                    'lang': options.lang
+                    'lang': options.lang,
+                    'schema': schema
                 });
             })
             .catch(error => {
@@ -666,7 +680,7 @@ module.exports = {
     */
     getRelated: function(req, res) {
         var query =  'MATCH (a)-[r]-(b), (b)-[:VERSION {to:9007199254740991}]->(c)'
-                    +' WHERE id(a) = {id} AND NOT (a)-[r:VERSION|:CREATED|:CONTAINS]->(b) AND NOT (a)<-[r:VERSION|:CREATED|:CONTAINS]-(b)'
+                    +' WHERE a.uuid = {id} AND NOT (a)-[r:VERSION|:CREATED|:CONTAINS]->(b) AND NOT (a)<-[r:VERSION|:CREATED|:CONTAINS]-(b)'
                     +' RETURN b as identityNode, r as relationship, c as versionNode'
         var params = {
             "id": req.param('id')
@@ -748,40 +762,39 @@ module.exports = {
     },
 
     /** Get content type schema */
-    getContentTypeSchema: function(req, res) {
-
+    getContentTypeSchema: function(options, done) {
+        var session = driver.session();
         var query =     'MATCH (contentTypeIdentity:ContentType)-[:VERSION {to:9007199254740991}]->(contentTypeVersion:Version {identifier:{contenttype}}),'
                     + ' (contentTypeIdentity)-[:PROPERTY|RELATIONSHIP|CONTAINS {to:9007199254740991}]->(propertyIdentity)-[:VERSION {to:9007199254740991}]->(propertyVersion:Version)'
                     + ' RETURN contentTypeIdentity, contentTypeVersion, collect(propertyIdentity) as propertyIdentities, collect(propertyVersion) as propertyVersions'
-        var params = {
-            "contenttype": req.param('contenttype')
-        };
-        //console.log(req.param('contenttype'));
-        var cb = function(err, data) {
-            //console.log(data);
-            if(!data) return;
-            if(!data[0]) return;
-            //console.log(err);
 
-            var contentTypeVersionProperties = data[0].contentTypeVersion.properties,
-                propertyVersions = data[0].propertyVersions,
-                schema = {};
+        return session
+            .run(query, options)
+            .then(result => {
+                var record = result.records[0];
+                //console.log(data);
+                if(!record) return;
 
-            //schema["$schema"] = "http://json-schema.org/draft-04/schema#";
-            schema = data[0].contentTypeVersion.properties;
-            schema["properties"] = {};
+                var contentTypeVersion = record.get('contentTypeVersion'),
+                    contentTypeVersionProperties = contentTypeVersion.properties,
+                    propertyVersions = record.get('propertyVersions'),
+                    schema = contentTypeVersionProperties;
 
-            //console.log[schema];
+                schema["properties"] = {};
 
-            for (var i = 0; i < propertyVersions.length; i++) {
-                schema.properties[propertyVersions[i].properties.identifier] = propertyVersions[i].properties;
-            };
-            return res.json(schema);
-        }
-        db.cypher({
-            query: query,
-            params: params
-        }, cb);
+                for (var i = 0; i < propertyVersions.length; i++) {
+                    schema.properties[propertyVersions[i].properties.identifier] = propertyVersions[i].properties;
+                };
+
+                session.close();
+                return done(schema);
+            })
+            .catch(error => {
+                session.close();
+                console.log(error);
+                return done(error);
+                throw error;
+            });        
     },
 
     /** Get child content objects */

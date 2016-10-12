@@ -9,10 +9,31 @@
         <h1>{{app.identityNode.properties.name}}</h1>
         <div>{{app.versionNode.properties.description}}</div>
         <br/>
-        <iron-ajax id="getContent" url="/content/getContent/{{app.identityNode.properties.uuid}}" params={} handle-as="json" last-response="{{content}}" on-response="_refreshContent" debounce-duration="300">
+        <iron-ajax 
+            id="getContent" 
+            url="/content/getContent/{{app.identityNode.properties.uuid}}" 
+            params={} 
+            handle-as="json" 
+            last-response="{{content}}" 
+            on-response="_refreshContent" 
+            debounce-duration="300">
         </iron-ajax>
-        <iron-ajax id="getContentTypeSchema" url="/content/getContentTypeSchema" params='{"contenttype": formData.contenttype}' handle-as="json" last-response="{{dataSchema}}" debounce-duration="300"></iron-ajax>
-        <iron-ajax id="deleteRequest" url="" handle-as="json" on-response="deleteResponse" debounce-duration="300"></iron-ajax>
+        <iron-ajax 
+            id="getContentTypeSchema" 
+            url="/content/getContentTypeSchema" 
+            params='{"contenttype": formData.contenttype}' 
+            handle-as="json" 
+            last-response="{{dataSchema}}" 
+            on-response="contentTypeSchemaResponse"
+            debounce-duration="300">
+        </iron-ajax>
+        <iron-ajax 
+            id="deleteRequest" 
+            url="" h
+            andle-as="json" 
+            on-response="deleteResponse" 
+            debounce-duration="300">
+        </iron-ajax>
         <!-- <paper-button raised on-click="openDialog" data-dialog="relationshipDialog">Create Relationship</paper-button>
     <paper-dialog id="relationshipDialog" entry-animation="scale-up-animation" exit-animation="fade-out-animation" autoFitOnAttach="true">
       <h2>Create Relationship</h2>
@@ -77,6 +98,11 @@
 
             _appChanged: function() {
                 // console.log('Change');
+                // console.log(this.app);
+            },
+
+            contentTypeSchemaResponse: function() {
+                // console.log("this.dataSchema");
             },
 
             ready: function() {
@@ -85,7 +111,6 @@
                 this.versionSliderMax = Date.now();
                 this.versionSliderMin = Date.now() - 2629746000; // one day = 86400000, one week = 604800000, One month = 2629746000, one year = 31556952000
                 // console.log(today.toISOString());
-                // console.log(this.app);
             },
 
             create: function(event) {
@@ -125,7 +150,7 @@
                 this.$.getContentTypeSchema.params = {
                     "contenttype": this.formData.contenttype
                 };
-                this.$.getContentTypeSchema.generateRequest;
+                this.$.getContentTypeSchema.generateRequest();
                 this._initFormData();
                 this.$.editDialog.open();
                 // this.$.editDialog.refit(); this didn't work. need to try something else.

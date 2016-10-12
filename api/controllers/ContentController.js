@@ -492,7 +492,7 @@ module.exports = {
     */
     getRelated: function(req, res) {
         var query =  'MATCH (a)-[r]-(b), (b)-[:VERSION {to:9007199254740991}]->(c)'
-                    +' WHERE id(a) = {id} AND NOT (a)-[r:VERSION|:CREATED|:CONTAINS]->(b) AND NOT (a)<-[r:VERSION|:CREATED|:CONTAINS]-(b)'
+                    +' WHERE a.uuid = {id} AND NOT (a)-[r:VERSION|:CREATED|:CONTAINS]->(b) AND NOT (a)<-[r:VERSION|:CREATED|:CONTAINS]-(b)'
                     +' RETURN b as identityNode, r as relationship, c as versionNode'
         var params = {
             "id": req.param('id')
@@ -553,39 +553,8 @@ module.exports = {
 
     /** Get content type schema */
     getContentTypeSchema: function(req, res) {
-
-        var query =     'MATCH (contentTypeIdentity:ContentType)-[:VERSION {to:9007199254740991}]->(contentTypeVersion:Version {identifier:{contenttype}}),'
-                    + ' (contentTypeIdentity)-[:PROPERTY|RELATIONSHIP|CONTAINS {to:9007199254740991}]->(propertyIdentity)-[:VERSION {to:9007199254740991}]->(propertyVersion:Version)'
-                    + ' RETURN contentTypeIdentity, contentTypeVersion, collect(propertyIdentity) as propertyIdentities, collect(propertyVersion) as propertyVersions'
-        var params = {
-            "contenttype": req.param('contenttype')
-        };
-        //console.log(req.param('contenttype'));
-        var cb = function(err, data) {
-            //console.log(data);
-            if(!data) return;
-            if(!data[0]) return;
-            //console.log(err);
-
-            var contentTypeVersionProperties = data[0].contentTypeVersion.properties,
-                propertyVersions = data[0].propertyVersions,
-                schema = {};
-
-            //schema["$schema"] = "http://json-schema.org/draft-04/schema#";
-            schema = data[0].contentTypeVersion.properties;
-            schema["properties"] = {};
-
-            //console.log[schema];
-
-            for (var i = 0; i < propertyVersions.length; i++) {
-                schema.properties[propertyVersions[i].properties.identifier] = propertyVersions[i].properties;
-            };
-            return res.json(schema);
-        }
-        db.cypher({
-            query: query,
-            params: params
-        }, cb);
+        var options = {"contenttype": req.param('contenttype')};
+        ContentService.getContentTypeSchema(options, function(done){return res.json(done)});
     },
 
     /** Get child content objects */
