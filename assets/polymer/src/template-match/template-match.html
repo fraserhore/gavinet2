@@ -8,8 +8,12 @@ Code distributed by Google as part of the polymer project is also
 subject to an additional IP rights grant found at http://polymer.github.io/PATENTS.txt
 -->
 <link rel="import" href="/polymer/bower_components/polymer/polymer.html">
+<link rel="import" href="/polymer/src/app-data.html">
+
 <dom-module id="template-match">
     <template>
+        <app-data key="viewTemplateOverrides" data="{{viewTemplateOverrides}}"></app-data>
+        <app-data key="nodeData" data="{{nodeData}}"></app-data>
         <iron-ajax 
             id="getViewTemplateOverrides" 
             url="/content/getViewTemplateOverrides" 
@@ -65,14 +69,14 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
             _updateViewTemplateOverrides: function() {
                 //console.log('update this.viewTemplateOverrides: ');
-                this.app.viewTemplateOverrides = this.viewTemplateOverrides;
+                // this.app.viewTemplateOverrides = this.viewTemplateOverrides;
                 //console.log(this.app.viewTemplateOverrides);
                 this.createElement();
             },
 
             ready: function() {
                 // Get view template overrides if they are not already in the app object
-                if (!this.app.viewTemplateOverrides) {
+                if (!this.viewTemplateOverrides) {
                     //console.log('ready: no overrides, get them');
                     this.$.getViewTemplateOverrides.generateRequest();
                 }
@@ -81,13 +85,13 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
             createElement: function() {
                 //console.log('create Element starting');
-                if (!this.app.viewTemplateOverrides) {
+                if (!this.viewTemplateOverrides) {
                     //console.log('createElement: no overrides, get them');
-                    //console.log(this.app.viewTemplateOverrides);
+                    //console.log(this.viewTemplateOverrides);
                     this.$.getViewTemplateOverrides.generateRequest();
                     return;
                 }
-                if (!this.app.identityNode) {
+                if (!this.nodeData.identityNode) {
                     //console.log('createElement: no identityNode yet');
                     return;
                 }
@@ -111,7 +115,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
                     }
                     //console.log('creating child');
                     props['app'] = this.app;
-                    props['identityNodeId'] = this.app.identityNode.properties.uuid;
+                    props['identityNodeId'] = this.nodeData.identityNode.properties.uuid;
                     el = Polymer.Base.create(viewTemplateOverride, props);
                     this.$.template.appendChild(el);
                     this.currentViewTemplate = viewTemplateOverride;
@@ -123,7 +127,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
             getViewTemplate: function() {
                 var viewTemplate = this.viewTemplate,
-                    overrides = this.app.viewTemplateOverrides;
+                    overrides = this.viewTemplateOverrides;
 
                 var viewTemplateOverride = "";
                 for (var i = 0; i < overrides.length; i++) {
@@ -133,8 +137,8 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
                         identityNodeId = overrides[i].Override.properties.identityNodeId;
 
                     if (viewTemplate === source) {
-                        if (identityNodeId === this.app.identityNode.properties.uuid ||
-                            contentTypeIdentifier === this.app.identityNode.properties.contentType) {
+                        if (identityNodeId === this.nodeData.identityNode.properties.uuid ||
+                            contentTypeIdentifier === this.nodeData.identityNode.properties.contentType) {
                             viewTemplateOverride = matchFile;
                         }
                     }

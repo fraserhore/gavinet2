@@ -20,6 +20,10 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 <link rel="import" href="../bower_components/iron-pages/iron-pages.html">
 <link rel="import" href="../bower_components/iron-selector/iron-selector.html">
 <link rel="import" href="../bower_components/paper-icon-button/paper-icon-button.html">
+<link rel="import" href="../bower_components/iron-localstorage/iron-localstorage.html">
+<link rel="import" href="app-data.html">
+<link rel="import" href="log-out.html">
+<link rel="import" href="register-login.html">
 <link rel="import" href="my-icons.html">
 <link rel="import" href="shared-styles.html">
 
@@ -62,7 +66,22 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
         font-weight: bold;
       }
+
+      app-header .greeting,
+      app-header a {
+          color: #fff;
+          font-size: 13px;
+      }
+      app-header .greeting {
+          border-right: 1px solid rgba(255,255,255,.5);
+          display: inline-block;
+          padding-right: 6px;
+      }
     </style>
+
+    <iron-localstorage name="user-storage" value="{{storedUser}}"></iron-localstorage>
+    <app-data key="userData" data="{{storedUser}}"></app-data>
+    <app-data key="nodeData" data="{{nodeData}}"></app-data>
 
     <app-location route="{{route}}"></app-location>
     <!-- <app-route
@@ -97,12 +116,18 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
           <app-toolbar>
             <paper-icon-button icon="menu" drawer-toggle></paper-icon-button>
             <div main-title>Gavinet</div>
+            <a name="register-login" href="/register-login" hidden$="[[storedUser.loggedin]]">Log In</a>
+            <div hidden$="[[!storedUser.loggedin]]">
+              <span class="greeting">Hi [[storedUser.name]]!</span>
+              <log-out stored-user="{{storedUser}}" link></log-out>
+            </div>
           </app-toolbar>
         </app-header>
 
         <div class="card">
 
           <content-full name="view1" app="{{app}}" view-template="content-full"></content-full>
+          <register-login name="register-login"></register-login>
 
         </div>
       </app-header-layout>
@@ -125,7 +150,8 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
           type: String,
           reflectToAttribute: true,
           observer: '_pathChanged'
-        }
+        },
+        test: Object
       },
 
       observers: [
@@ -150,10 +176,11 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         this.set('app.lang', this.nodeData.lang);
         this.set('app.schema', this.nodeData.schema);
         // this.set('app', this.nodeData);
+        this.set('nodeData', this.nodeData);
       },
 
       _routePathChanged: function(path) {
-        this.path = path || 'view1';
+        this.path = path || 'register-login';
         this.$.getNodeData.generateRequest();
         // console.log(this.route);
         // console.log(this.routeData);
@@ -172,7 +199,6 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       },
 
       ready: function() {
-
       }
 
     });

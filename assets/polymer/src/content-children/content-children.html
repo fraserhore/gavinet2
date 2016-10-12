@@ -9,6 +9,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 -->
 
 <link rel="import" href="/polymer/bower_components/polymer/polymer.html">
+<link rel="import" href="/polymer/src/app-data.html">
 
 <dom-module id="content-children">
   <template>
@@ -17,6 +18,8 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         display: block;
       }
     </style>
+
+    <app-data key="" data="[[]]"></app-data>
 
     <iron-ajax
       id="getChildren"

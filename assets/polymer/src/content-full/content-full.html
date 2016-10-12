@@ -1,4 +1,7 @@
 <link rel="import" href="/polymer/bower_components/polymer/polymer.html">
+<link rel="import" href="/polymer/bower_components/iron-localstorage/iron-localstorage.html">
+<link rel="import" href="/polymer/src/app-data.html">
+
 <dom-module id="content-full">
     <template>
         <style>
@@ -6,12 +9,15 @@
             display: block;
         }
         </style>
-        <h1>{{app.identityNode.properties.name}}</h1>
-        <div>{{app.versionNode.properties.description}}</div>
+
+        <app-data key="nodeData" data="{{nodeData}}"></app-data>
+
+        <h1>{{nodeData.identityNode.properties.name}}</h1>
+        <div>{{nodeData.versionNode.properties.description}}</div>
         <br/>
         <iron-ajax 
             id="getContent" 
-            url="/content/getContent/{{app.identityNode.properties.uuid}}" 
+            url="/content/getContent/{{nodeData.identityNode.properties.uuid}}" 
             params={} 
             handle-as="json" 
             last-response="{{content}}" 
@@ -38,7 +44,7 @@
     <paper-dialog id="relationshipDialog" entry-animation="scale-up-animation" exit-animation="fade-out-animation" autoFitOnAttach="true">
       <h2>Create Relationship</h2>
       <paper-dialog-scrollable>
-        <content-relationship reference-node-id="{{app.identityNode.properties.uuid}}" direction="outbound" parent-node-id="{{app.identityNode.properties.uuid}}"></content-relationship>
+        <content-relationship reference-node-id="{{nodeData.identityNode.properties.uuid}}" direction="outbound" parent-node-id="{{nodeData.identityNode.properties.uuid}}"></content-relationship>
       </paper-dialog-scrollable>
     </paper-dialog> -->
         <div>Version validity date:
@@ -58,10 +64,10 @@
             </div>
         </paper-dialog>
         <h3>Child Content</h3>
-        <!-- <content-children id="contentChildren" identity-node-id="{{app.identityNode.properties.uuid}}" on-edit="update"></content-children> -->
-        <template-match id="contentChildren" app="{{app}}" view-template="content-children" on-edit="update"></template-match>
+        <!-- <content-children id="contentChildren" identity-node-id="{{nodeData.identityNode.properties.uuid}}" on-edit="update"></content-children> -->
+        <template-match id="contentChildren" app="{{nodeData}}" view-template="content-children" on-edit="update"></template-match>
         <h3>Related Content</h3>
-        <content-related identity-node-id="{{app.identityNode.properties.uuid}}"></content-related>
+        <content-related identity-node-id="{{nodeData.identityNode.properties.uuid}}"></content-related>
     </template>
     <script>
     (function() {
@@ -79,7 +85,9 @@
                     notify: true,
                     reflectToAttribute: true,
                     observer: '_appChanged'
-                }
+                },
+                storedUser: Object,
+                test: Object
             },
 
             listeners: {
@@ -89,6 +97,18 @@
             observers: [
                 '_identityNodeChanged(app.identityNode)'
             ],
+
+            initStoredUser: function() {
+                // if entering site on the secret quotes page, verify if logged in and if so, preload a secret quote
+                if (this.storedUser.loggedin) {
+                    this.getSecretQuote();
+                }
+            },
+            getSecretQuote: function() {
+                // add token authorization and generate Ajax request
+                //this.$.getSecretQuoteAjax.headers['Authorization'] = 'Bearer ' + this.storedUser.token;
+                //this.$.getSecretQuoteAjax.generateRequest();
+            },
 
             _identityNodeChanged: function() {
                 if (this.app.identityNode) {
