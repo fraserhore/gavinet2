@@ -81,8 +81,8 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
       properties: {
         referenceNodeId: {
-          type: Number,
-          value: 0,
+          type: String,
+          value: '',
           notify: true,
           reflectToAttribute: true
         },
@@ -101,14 +101,14 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
           reflectToAttribute: true
         },
         relatedNodeId: {
-          type: Number,
-          value: 0,
+          type: String,
+          value: '',
           notify: true,
           reflectToAttribute: true
         },
         parentNodeId: {
-          type: Number,
-          value: 0,
+          type: String,
+          value: '',
           notify: true,
           reflectToAttribute: true
         },
@@ -130,7 +130,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
       _openFolder: function(event) {
         this.previousParentNodeId = this.parentNodeId;
-        this.parentNodeId = event.model.item.identityNode._id;
+        this.parentNodeId = event.model.item.identityNode.properties.uuid;
       },
 
       _back: function() {
@@ -138,7 +138,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       },
 
       _confirmSelection: function(event) {
-        this.relatedNodeId = this.selectedNode.value._id;
+        this.relatedNodeId = this.selectedNode.value.properties.uuid;
         this.relatedNode = this.selectedNode.value;
         this.$.relationshipDialog.close();
       }
