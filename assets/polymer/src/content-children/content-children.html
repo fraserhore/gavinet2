@@ -19,12 +19,12 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       }
     </style>
 
-    <app-data key="" data="[[]]"></app-data>
+    <app-data key="nodeData" data="{{nodeData}}"></app-data>
 
     <iron-ajax
       id="getChildren"
       auto
-      url="/content/getChildren/{{app.identityNode.properties.uuid}}?versionValidityDate={{app.versionValidityDate}}"
+      url="/content/getChildren/{{nodeData.identityNode.properties.uuid}}?versionValidityDate={{nodeData.versionValidityDate}}"
       params=''
       handle-as="json"
       last-response="{{children}}"
@@ -42,10 +42,10 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       <div class="horizontal-section">
         <h4>
           <template is="dom-if" if="{{item.urlAlias}}">
-            <a href="/{{app.lang}}{{item.urlAlias}}">[[item.identityNode.properties.name]]</a>
+            <a href="/{{nodeData.lang}}{{item.urlAlias}}">[[item.identityNode.properties.name]]</a>
           </template>
           <template is="dom-if" if="{{!item.urlAlias}}">
-            <a href="/{{app.lang}}/{{item.identityNode.properties.uuid}}">[[item.identityNode.properties.name]]</a>
+            <a href="/{{nodeData.lang}}/{{item.identityNode.properties.uuid}}">[[item.identityNode.properties.name]]</a>
           </template>
         </h4>
         <template is="dom-repeat" items="[[_toArray(item.versionNode.properties)]]">
@@ -99,7 +99,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       },
 
       refresh: function() {
-        // this.notifyPath('app.identityNode');
+        // this.notifyPath('nodeData.identityNode');
         this.$.getChildren.generateRequest();
       },
 

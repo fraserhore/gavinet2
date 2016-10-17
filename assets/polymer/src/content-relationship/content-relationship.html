@@ -45,7 +45,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
             </paper-toolbar>
             <paper-listbox selected-item="{{selectedNode}}">
               <template is="dom-repeat" items="[[nodes]]">
-                <paper-item value="[[item.identityNode]]">[[item.identityNode.properties.name]]<paper-button><iron-icon icon="chevron-right" on-tap="_openFolder"></iron-icon><paper-button></paper-item>
+                <paper-item value="[[item.identityNode]]" style="display: flex; justify-content: space-between;"><span>[[item.identityNode.properties.name]]</span><paper-button style="justify-content: flex-end;"><span></span><iron-icon icon="chevron-right" on-tap="_openFolder"></iron-icon></paper-button></paper-item>
               </template>
             </paper-listbox>
           </section>

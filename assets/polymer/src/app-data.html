@@ -38,6 +38,21 @@
                     if (!key) {
                         throw('_data_changed: app-data element requires key');
                     }
+
+                    // if there is no new value or old value the element must 
+                    // have just been created so try to get the value from one 
+                    // of the other instances. Then the notify is not required.
+                    if(!newvalue && !oldvalue) {
+                        for (var i = 0; i < instances.length; i++) {
+                            if (instances[i].key == key) {
+                                if(instances[i].instance.data) {
+                                    this.data = instances[i].instance.data;
+                                    return;
+                                }
+                            }
+                        }
+                        return;
+                    }
                     vars.set(key, newvalue);
                     // notify the instances with the correct key
                     for (var i = 0; i < instances.length; i++) {

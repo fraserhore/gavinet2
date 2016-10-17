@@ -55,7 +55,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
             },
 
             observers: [
-                '_identityNodeChanged(app.identityNode)'
+                //'_identityNodeChanged(app.identityNode)'
             ],
 
             _identityNodeChanged: function() {
@@ -120,7 +120,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
                     this.$.template.appendChild(el);
                     this.currentViewTemplate = viewTemplateOverride;
                 } else {
-                    this.$.template.firstChild.notifyPath('app.identityNode');
+                    //this.$.template.firstChild.notifyPath('app.identityNode');
                     this.$.template.firstChild.refresh();
                 }
             },

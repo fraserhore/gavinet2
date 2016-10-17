@@ -678,20 +678,28 @@ module.exports = {
     * @param {object} res - HTTP response object
     * @param {object} req.id - Node ID of the content object for which to get related content objects
     */
-    getRelated: function(req, res) {
-        var query =  'MATCH (a)-[r]-(b), (b)-[:VERSION {to:9007199254740991}]->(c)'
+    getRelated: function(options, done) {
+        var query =  'MATCH (a)-[r]-(identityNode), (identityNode)-[version:VERSION {to:9007199254740991}]->(versionNode)'
                     +' WHERE a.uuid = {id} AND NOT (a)-[r:VERSION|:CREATED|:CONTAINS]->(b) AND NOT (a)<-[r:VERSION|:CREATED|:CONTAINS]-(b)'
-                    +' RETURN b as identityNode, r as relationship, c as versionNode'
-        var params = {
-            "id": req.param('id')
-        };
-        var cb = function(err, data) {
-            return res.json(data);
-        }
-        db.cypher({
-            query: query,
-            params: params
-        }, cb);
+                    +' RETURN r as relationship, identityNode, version, versionNode'
+        return session
+            .run(query, options)
+            .then(result => {
+                session.close();
+                var record = result.records[0];
+                return done({
+                    'relationship': record.get('relationship'),
+                    'identityNode': record.get('identityNode'), 
+                    'version': record.get('version'),
+                    'versionNode': record.get('versionNode')
+                });
+            })
+            .catch(error => {
+                session.close();
+                console.log(error);
+                return done(error);
+                throw error;
+            });
     },
 
     /** Get content types */

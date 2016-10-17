@@ -106,7 +106,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         <!-- <iron-selector selected="[[path]]" attr-for-selected="name" class="drawer-list" role="navigation">
           <a name="view1" href="/{{app.lang}}/root/content">root/content</a>
         </iron-selector> -->
-        <content-left-menu app="{{app}}"></content-left-menu>
+        <content-left-menu></content-left-menu>
       </app-drawer>
 
       <!-- Main content -->
@@ -126,7 +126,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
         <div class="card">
 
-          <content-full name="view1" app="{{app}}" view-template="content-full"></content-full>
+          <content-full name="view1" view-template="content-full"></content-full>
           <register-login name="register-login"></register-login>
 
         </div>
@@ -139,42 +139,29 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       is: 'gavinet-app',
 
       properties: {
-        app: {
-          type: Object,
-          value: function() { return {}; },
-          notify: true,
-          reflectToAttribute: true,
-          observer: '_appChanged'
-        },
         path: {
           type: String,
           reflectToAttribute: true,
           observer: '_pathChanged'
-        },
-        test: Object
+        }
       },
 
       observers: [
-        '_routePathChanged(routeData.path)',
-        '_identityNodeChanged(app.identityNode)'
+        '_routePathChanged(routeData.path)'
       ],
 
       _identityNodeChanged: function() {
        // console.log('identityNode changed');
       },
 
-      _appChanged: function() {
-       // console.log('app changed');
-      },
-
       _updatedNodeData: function() {
         // console.log(this.nodeData);
-        this.set('app.identityNode', this.nodeData.identityNode);
-        this.set('app.version', this.nodeData.version);
-        this.set('app.versionNode', this.nodeData.versionNode);
-        this.set('app.authorNode', this.nodeData.authorNode);
-        this.set('app.lang', this.nodeData.lang);
-        this.set('app.schema', this.nodeData.schema);
+        // this.set('app.identityNode', this.nodeData.identityNode);
+        // this.set('app.version', this.nodeData.version);
+        // this.set('app.versionNode', this.nodeData.versionNode);
+        // this.set('app.authorNode', this.nodeData.authorNode);
+        // this.set('app.lang', this.nodeData.lang);
+        // this.set('app.schema', this.nodeData.schema);
         // this.set('app', this.nodeData);
         this.set('nodeData', this.nodeData);
       },

@@ -9,6 +9,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 -->
 
 <link rel="import" href="/polymer/bower_components/polymer/polymer.html">
+<link rel="import" href="/polymer/src/app-data.html">
 
 <dom-module id="content-left-menu">
   <template>
@@ -40,10 +41,12 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
     }
     </style>
 
+    <app-data key="nodeData" data="{{nodeData}}"></app-data>
+
     <iron-ajax
         id="getSiblings"
         auto
-        url="/content/getSiblings/{{app.identityNode.properties.uuid}}"
+        url="/content/getSiblings/{{nodeData.identityNode.properties.uuid}}"
         params=''
         handle-as="json"
         last-response="{{siblingNodes}}"
@@ -52,20 +55,20 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       <iron-ajax
         id="getParent"
         auto
-        url="/content/getParent/{{app.identityNode.properties.uuid}}"
+        url="/content/getParent/{{nodeData.identityNode.properties.uuid}}"
         params=''
         handle-as="json"
         last-response="{{parentNode}}"
         debounce-duration="300"></iron-ajax>
 
-    <h3><a href="/{{app.lang}}/[[parentNode.parentNode.properties.uuid]]">[[parentNode.parentNode.properties.name]]</a></h3>
+    <h3><a href="/{{nodeData.lang}}/[[parentNode.parentNode.properties.uuid]]">[[parentNode.parentNode.properties.name]]</a></h3>
     <paper-menu>
       <template is="dom-repeat" items="[[siblingNodes]]">
         <template is="dom-if" if="{{item.urlAlias}}">
-          <a href="/{{app.lang}}{{item.urlAlias}}">[[item.siblingNode.properties.name]]</a>
+          <a href="/{{nodeData.lang}}{{item.urlAlias}}">[[item.siblingNode.properties.name]]</a>
         </template>
         <template is="dom-if" if="{{!item.urlAlias}}">
-          <a href="/{{app.lang}}/{{item.siblingNode.properties.uuid}}">[[item.siblingNode.properties.name]]</a>
+          <a href="/{{nodeData.lang}}/{{item.siblingNode.properties.uuid}}">[[item.siblingNode.properties.name]]</a>
         </template>
       </template>
     </paper-menu>

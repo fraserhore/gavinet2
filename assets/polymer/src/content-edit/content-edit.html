@@ -102,6 +102,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
             return {};
           },
           notify: true,
+          reflectToAttribute: true,
           observer: '_formDataChanged'
         },
         data: {
@@ -127,12 +128,12 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       // },
 
       _dataSchemaChanged: function() {
-        //console.log(this.formData);
+        console.log(this.dataSchema);
 
       },
 
       _formDataChanged: function() {
-        //console.log(this.formData);
+        console.log('form data changed');
       },
 
       _submit: function() {
@@ -220,6 +221,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
             }
           }
         };
+        console.log(this.formData);
       },
 
       _toArray: function(obj) {

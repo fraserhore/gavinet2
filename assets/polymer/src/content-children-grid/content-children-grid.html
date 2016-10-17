@@ -9,6 +9,8 @@
       }
     </style>
 
+    <app-data key="nodeData" data="{{nodeData}}"></app-data>
+
     <iron-ajax
       id="getChildren"
       auto
@@ -44,7 +46,7 @@
             <tr>
               <td>
                 <h4>
-                  <a href="/{{app.lang}}/{{item.identityNode.properties.uuid}}">[[item.identityNode.properties.name]]</a>
+                  <a href="/{{nodeData.lang}}/{{item.identityNode.properties.uuid}}">[[item.identityNode.properties.name]]</a>
                 </h4>
               </td>
               <td>{{item.versionNode.properties.description}}</td>

@@ -491,19 +491,10 @@ module.exports = {
     * @param {object} req.id - Node ID of the content object for which to get related content objects
     */
     getRelated: function(req, res) {
-        var query =  'MATCH (a)-[r]-(b), (b)-[:VERSION {to:9007199254740991}]->(c)'
-                    +' WHERE a.uuid = {id} AND NOT (a)-[r:VERSION|:CREATED|:CONTAINS]->(b) AND NOT (a)<-[r:VERSION|:CREATED|:CONTAINS]-(b)'
-                    +' RETURN b as identityNode, r as relationship, c as versionNode'
-        var params = {
+        var options = {
             "id": req.param('id')
         };
-        var cb = function(err, data) {
-            return res.json(data);
-        }
-        db.cypher({
-            query: query,
-            params: params
-        }, cb);
+        ContentService.getChildren(options, function(done){return res.json(done)});
     },
 
     /** Get content types */
@@ -630,7 +621,7 @@ module.exports = {
                 "identityNamePattern": req.body.identityNamePattern ? req.body.identityNamePattern : 'childversion.' + (req.body.properties.name ? 'name' : req.body.properties.title ? 'title' : req.body.properties.term ? 'term' : req.body.properties.identifier ? 'identifier' : 'name')
             };
         console.log(options);
-        ContentService.create(options, function(done){return res.json(done)});       
+        //ContentService.create(options, function(done){return res.json(done)});       
     },
 
     /**
