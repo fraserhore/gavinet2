@@ -18,6 +18,8 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       }
     </style>
 
+    <app-data key="formData" data="{{formData}}"></app-data>
+
     <iron-ajax
       id="getNodes"
       auto
@@ -53,10 +55,10 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
             <paper-input name="search" label="Search"></paper-input>
           </section>
           <section id="relationship">
-            <input is="iron-input" name="referenceNodeId" type="hidden" value="{{referenceNodeId}}"></input>
+            <input is="iron-input" name="referenceNodeId" type="hidden" value="{{nodeData.identityNode.properties.uuid}}"></input>
             <paper-input name="relationshipName" label="Relationship Name" value="{{relationshipName}}"></paper-input>
-            <paper-dropdown-menu label="Direction" selected-item="{{selectedDirection}}">
-              <paper-menu class="dropdown-content">
+            <paper-dropdown-menu label="Direction">
+              <paper-menu attr-for-selected="value" selected="{{selectedDirection}}" class="dropdown-content">
                 <paper-item value="outbound">Outbound</paper-item>
                 <paper-item value="inbound">Inbound</paper-item>
               </paper-menu>
@@ -67,7 +69,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       </paper-dialog-scrollable>
       <div class="buttons">
         <paper-button dialog-dismiss>Cancel</paper-button>
-        <paper-button on-click="_confirmSelection" disabled?="{{selectedNode}}">Add</paper-button>
+        <paper-button on-click="_addRelationship" disabled?="{{selectedNode}}">Add</paper-button>
       </div>
     </paper-dialog>
 
@@ -80,29 +82,17 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       is: 'content-relationship',
 
       properties: {
-        referenceNodeId: {
-          type: String,
-          value: '',
-          notify: true,
-          reflectToAttribute: true
-        },
         relationshipName: {
           type: String,
           value: "RELATED_TO",
           notify: true,
           reflectToAttribute: true
         },
-        relatedNode: {
+        nodeData: {
           type: Object,
           value: function() {
             return {};
           },
-          notify: true,
-          reflectToAttribute: true
-        },
-        relatedNodeId: {
-          type: String,
-          value: '',
           notify: true,
           reflectToAttribute: true
         },
@@ -112,12 +102,14 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
           notify: true,
           reflectToAttribute: true
         },
-        direction: {
-          type: String,
-          value: "outbound",
+        formData: {
+          type: Object,
+          value: function() {
+            return {};
+          },
           notify: true,
           reflectToAttribute: true
-        }
+          }
       },
 
       ready: function() {
@@ -137,10 +129,17 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         this.parentNodeId = this.previousParentNodeId || this.parentNodeId;
       },
 
-      _confirmSelection: function(event) {
-        this.relatedNodeId = this.selectedNode.value.properties.uuid;
-        this.relatedNode = this.selectedNode.value;
+      _addRelationship: function() {
+        var relationship = {
+          "referenceNodeId": this.referenceNodeId,
+          "relationshipName": this.relationshipName,
+          "direction": this.selectedDirection || 'outbound',
+          "relatedNode": this.selectedNode.value,
+          "relatedNodeId": this.selectedNode.value.properties.uuid
+        };
+        this.push('formData.relationships', relationship);
         this.$.relationshipDialog.close();
+        console.log(relationship);
       }
 
 

@@ -31,6 +31,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       params='{"contenttype": formData.contenttype}'
       handle-as="json"
       last-response="{{dataSchema}}"
+      on-response="_dataSchemaResponse"
       debounce-duration="300"></iron-ajax>
 
     <iron-ajax id="postData"
@@ -52,18 +53,20 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
     </paper-dropdown-menu>
     <!-- Create an identity node name using the pattern defined in the schema -->
     <paper-input name="identityNamePattern" label="identityNamePattern" value="{{formData.identityNamePattern}}"></paper-input>
-    <template is="dom-repeat" items="{{_toArray(dataSchema.properties)}}">
-      <template is="dom-if" if="{{_eq(item.object.type, 'string')}}">
-        <paper-input name="properties[[[item.key]]]" label="{{item.object.title}}" value="[[_getFormDataProperty(item.key)]]" on-value-changed="_updateProperty"></paper-input>
+    <template id="repeatProperties" is="dom-repeat" items="{{_toArray(dataSchema.properties)}}" as="property">
+      <template is="dom-if" if="{{_eq(property.object.type, 'string')}}">
+        <paper-input name="properties[[[property.key]]]" label="{{property.object.title}}" value="[[_getFormDataProperty(property.key)]]" on-value-changed="_updateProperty"></paper-input>
       </template>
-      <template is="dom-if" if="{{_eq(item.object.type, 'relationship')}}">
+      <template is="dom-if" if="{{_eq(property.object.type, 'relationship')}}">
         <br/>
-        <label>{{item.object.title}}</label>
-        <template is="dom-repeat" items="{{formData.relationships}}">
-          <paper-item>-[{{item.relationshipName}}]-> {{item.relatedNode.properties.name}}</paper-item>
+        <label>{{property.object.title}}</label>
+        <template id="repeatRelationships" is="dom-repeat" items="{{formData.relationships}}" as="relationship">
+          <template is="dom-if" if="_eq(property.key, relationship.relationshipName)">
+            <paper-item>-[{{relationship.relationshipName}}]-> {{relationship.relatedNode.properties.name}}</paper-item>
+          </template>
         </template>
-        <paper-button raised on-click="openDialog" data-dialog="relationshipDialog">Add [[item.object.title]]</paper-button>
-        <content-relationship id="relationshipDialog" reference-node-id=""  relationship-name="{{item.object.identifier}}" direction="{{item.object.direction}}" parent-node-id="353d78b2-7879-4703-898e-66c0fa4014f3" related-node-id="{{relatedNodeId}}" related-node="{{relatedNode}}" on-related-node-changed="_addRelationship"></content-relationship>
+        <paper-button raised on-click="openDialog" data-dialog="relationshipDialog{{index}}">Add [[property.object.title]]</paper-button>
+        <content-relationship id="relationshipDialog{{index}}" form-data="{{formData}}" node-data="{{nodeData}}"  relationship-name="{{property.object.identifier}}" direction="{{property.object.direction}}" parent-node-id="353d78b2-7879-4703-898e-66c0fa4014f3" related-node-id="{{relatedNodeId}}" related-node="{{relatedNode}}"></content-relationship>
       </template>
     </template>
 
@@ -127,13 +130,14 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       //   }
       // },
 
+
       _dataSchemaChanged: function() {
-        console.log(this.dataSchema);
+        // console.log(this.dataSchema);
 
       },
 
       _formDataChanged: function() {
-        console.log('form data changed');
+        // console.log('form data changed');
       },
 
       _submit: function() {
@@ -159,23 +163,10 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         }
         var id = button.getAttribute('data-dialog');
         var dialog = Polymer.dom(this.root).querySelector('#'+id);
-        console.log(dialog);
+        //console.log(dialog);
         if (dialog) {
           dialog.open();
         }
-      },
-
-      _addRelationship: function(event) {
-        if(!event.model.item) return;
-        //console.log(event.model.item.object);
-        var relationship = {
-          "referenceNodeId": this.formData.id,
-          "relationshipName": event.model.item.object.identifier,
-          "direction": event.model.item.object.direction,
-          "relatedNode": this.relatedNode,
-          "relatedNodeId": this.relatedNodeId
-        };
-        this.push('formData.relationships', relationship);
       },
 
       _updateContentType: function(event) {
@@ -185,13 +176,19 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
           // could add a change listener to formData.contenttype to handle the following
           this.$.getContentTypeSchema.params = {"contenttype": selectedItem.value};
           this.$.getContentTypeSchema.generateRequest();
-          this._initFormData();
+          //this._initFormData();
         }
+      },
+
+      _dataSchemaResponse: function() {
+        // console.log(this.dataSchema);
+        this._initFormData();
       },
 
       _initFormData: function() {
         // Configure the formData properties and relationships based on the dataSchema if they are not already provided
-        var dataSchemaKeys = Object.keys(this.dataSchema);
+        var dataSchemaKeys = Object.keys(this.dataSchema.properties);
+        // console.log(this.dataSchemaKeys);
         if(!this.formData.properties) {
           this.formData.properties = {};
         }
@@ -201,7 +198,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         for (var i = 0; i < dataSchemaKeys.length; i++) {
           var key = dataSchemaKeys[i];
           if(!this.formData.properties[key]) {
-            switch(this.dataSchema[key].type) {
+            switch(this.dataSchema.properties[key].type) {
               case 'String':
                 this.formData.properties[key] = '';
                 break;
@@ -221,7 +218,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
             }
           }
         };
-        console.log(this.formData);
+        // console.log(this.formData);
       },
 
       _toArray: function(obj) {
@@ -262,7 +259,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       },
 
       _postDataResponse: function(event) {
-        console.log(event);
+        // console.log(event);
         this.fire('contentEdited', {action: this.formData.action});
       }
 
