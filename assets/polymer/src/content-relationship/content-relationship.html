@@ -18,6 +18,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       }
     </style>
 
+    <app-data key="nodeData" data="{{nodeData}}"></app-data>
     <app-data key="formData" data="{{formData}}"></app-data>
 
     <iron-ajax
@@ -131,7 +132,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
       _addRelationship: function() {
         var relationship = {
-          "referenceNodeId": this.referenceNodeId,
+          "referenceNodeId": this.nodeData.identityNode.properties.uuid,
           "relationshipName": this.relationshipName,
           "direction": this.selectedDirection || 'outbound',
           "relatedNode": this.selectedNode.value,

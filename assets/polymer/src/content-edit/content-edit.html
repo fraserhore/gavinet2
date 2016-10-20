@@ -117,6 +117,14 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         }
       },
 
+      observers: [
+          '_relationshipsChanged(formData.relationships)'
+      ],
+
+      _relationshipsChanged: function() {
+        console.log('test');
+      },
+
       ready: function() {
         
       },
@@ -155,15 +163,16 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
       openDialog: function(event) {
         var button = event.target;
-        while (!button.hasAttribute('data-dialog') && button !== document.body) {
+        //console.dir(event.target);
+        //event.target.nextElementSibling.open();
+        while (!button.dataDialog && button !== document.body) {
           button = button.parentElement;
         }
-        if (!button.hasAttribute('data-dialog')) {
+        if (!button.dataDialog) {
           return;
         }
-        var id = button.getAttribute('data-dialog');
+        var id = button.dataDialog;
         var dialog = Polymer.dom(this.root).querySelector('#'+id);
-        //console.log(dialog);
         if (dialog) {
           dialog.open();
         }
