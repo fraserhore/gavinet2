@@ -139,6 +139,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
           "relatedNodeId": this.selectedNode.value.properties.uuid
         };
         this.push('formData.relationships', relationship);
+        this.notifyPath('formData.relationships');
         this.$.relationshipDialog.close();
         console.log(relationship);
       }
