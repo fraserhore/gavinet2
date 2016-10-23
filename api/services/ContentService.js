@@ -774,7 +774,8 @@ module.exports = {
         var session = driver.session();
         var query =     'MATCH (contentTypeIdentity:ContentType)-[:VERSION {to:9007199254740991}]->(contentTypeVersion:Version {identifier:{contenttype}}),'
                     + ' (contentTypeIdentity)-[:PROPERTY|RELATIONSHIP|CONTAINS {to:9007199254740991}]->(propertyIdentity)-[:VERSION {to:9007199254740991}]->(propertyVersion:Version)'
-                    + ' RETURN contentTypeIdentity, contentTypeVersion, collect(propertyIdentity) as propertyIdentities, collect(propertyVersion) as propertyVersions'
+                    + ' OPTIONAL MATCH (propertyIdentity)-[:ENUM]->(enumItemsParent)'
+                    + ' RETURN contentTypeIdentity, contentTypeVersion, collect(propertyIdentity) as propertyIdentities, collect(propertyVersion) as propertyVersions, enmumItemsParent'
 
         return session
             .run(query, options)

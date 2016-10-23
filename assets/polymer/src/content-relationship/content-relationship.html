@@ -9,6 +9,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 -->
 
 <link rel="import" href="/polymer/bower_components/polymer/polymer.html">
+<link rel="import" href="/polymer/src/app-data.html">
 
 <dom-module id="content-relationship">
   <template>
@@ -31,7 +32,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       debounce-duration="300"></iron-ajax>
 
     <paper-dialog id="relationshipDialog" entry-animation="scale-up-animation" exit-animation="fade-out-animation" autoFitOnAttach="true">
-      <h2>Add [[item.object.title]]</h2>
+      <h2>Add</h2>
       <paper-dialog-scrollable>
 
         <paper-tabs selected="{{selected}}">
@@ -89,14 +90,6 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
           notify: true,
           reflectToAttribute: true
         },
-        nodeData: {
-          type: Object,
-          value: function() {
-            return {};
-          },
-          notify: true,
-          reflectToAttribute: true
-        },
         parentNodeId: {
           type: String,
           value: '',
@@ -139,9 +132,8 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
           "relatedNodeId": this.selectedNode.value.properties.uuid
         };
         this.push('formData.relationships', relationship);
-        this.notifyPath('formData.relationships');
         this.$.relationshipDialog.close();
-        console.log(relationship);
+        //console.log(relationship);
       }
 
 

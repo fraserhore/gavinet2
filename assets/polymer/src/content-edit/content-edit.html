@@ -62,11 +62,11 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         <label>{{property.object.title}}</label>
         <template id="repeatRelationships" is="dom-repeat" items="{{formData.relationships}}" as="relationship">
           <template is="dom-if" if="_eq(property.key, relationship.relationshipName)">
-            <paper-item>-[{{relationship.relationshipName}}]-> {{relationship.relatedNode.properties.name}}</paper-item>
+            <paper-item>-{{property.key}}[{{relationship.relationshipName}}]-> {{relationship.relatedNode.properties.name}}</paper-item>
           </template>
         </template>
         <paper-button raised on-click="openDialog" data-dialog="relationshipDialog{{index}}">Add [[property.object.title]]</paper-button>
-        <content-relationship id="relationshipDialog{{index}}" form-data="{{formData}}" node-data="{{nodeData}}"  relationship-name="{{property.object.identifier}}" direction="{{property.object.direction}}" parent-node-id="353d78b2-7879-4703-898e-66c0fa4014f3" related-node-id="{{relatedNodeId}}" related-node="{{relatedNode}}"></content-relationship>
+        <content-relationship id="relationshipDialog{{index}}" form-data="{{formData}}" relationship-name="{{property.object.identifier}}" direction="{{property.object.direction}}" parent-node-id="{{property.object.enumItemsParent}}" related-node-id="{{relatedNodeId}}" related-node="{{relatedNode}}"></content-relationship>
       </template>
     </template>
 
@@ -260,6 +260,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       },
 
       _eq: function(a, b) {
+        // console.log(a +' = '+b);
         return a === b;
       },
 
