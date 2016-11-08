@@ -57,6 +57,12 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       <template is="dom-if" if="{{_eq(property.object.type, 'string')}}">
         <paper-input name="properties[[[property.key]]]" label="{{property.object.title}}" value="[[_getFormDataProperty(property.key)]]" on-value-changed="_updateProperty"></paper-input>
       </template>
+      <template is="dom-if" if="{{_eq(property.object.type, 'boolean')}}">
+        <paper-toggle-button name="properties[[[property.key]]]" label="{{property.object.title}}" value="[[_getFormDataProperty(property.key)]]" on-value-changed="_updateProperty"></paper-toggle-button>
+      </template>
+      <template is="dom-if" if="{{_eq(property.object.type, 'integer')}}">
+        <paper-input name="properties[[[property.key]]]" label="{{property.object.title}}" value="[[_getFormDataProperty(property.key)]]" on-value-changed="_updateProperty"></paper-input>
+      </template>
       <template is="dom-if" if="{{_eq(property.object.type, 'relationship')}}">
         <br/>
         <label>{{property.object.title}}</label>
@@ -140,12 +146,12 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
 
       _dataSchemaChanged: function() {
-        // console.log(this.dataSchema);
+        //console.log(this.dataSchema);
 
       },
 
       _formDataChanged: function() {
-        // console.log('form data changed');
+         console.log('form data changed');
       },
 
       _submit: function() {
@@ -163,7 +169,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
       openDialog: function(event) {
         var button = event.target;
-        //console.dir(event.target);
+        console.dir(event.target);
         //event.target.nextElementSibling.open();
         while (!button.dataDialog && button !== document.body) {
           button = button.parentElement;
@@ -194,7 +200,16 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         this._initFormData();
       },
 
+      _init: function() {
+        console.log('init');
+        console.log(this.formData);
+        this.$.getContentTypeSchema.params = {"contenttype": this.formData.contenttype};
+        this.$.getContentTypeSchema.generateRequest();
+      },
+
       _initFormData: function() {
+        console.log(this.dataSchema);
+        if(!this.dataSchema.properties) return;
         // Configure the formData properties and relationships based on the dataSchema if they are not already provided
         var dataSchemaKeys = Object.keys(this.dataSchema.properties);
         // console.log(this.dataSchemaKeys);
@@ -254,8 +269,9 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       },
 
       _updateProperty: function(event) {
-        if(!event.model.item) return;
-        this.set(['formData', 'properties', event.model.item.key], event.detail.value);
+        console.log(event.model.property.key);
+        if(!event.detail.value) return;
+        this.set(['formData', 'properties', event.model.property.key], event.detail.value);
         //this.formData.properties[event.model.item.key] = event.detail.value;
       },
 
@@ -269,7 +285,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       },
 
       _postDataResponse: function(event) {
-        // console.log(event);
+        console.log(event);
         this.fire('contentEdited', {action: this.formData.action});
       }
 

@@ -544,7 +544,7 @@ module.exports = {
 
     /** Get content type schema */
     getContentTypeSchema: function(req, res) {
-        var options = {"contenttype": req.param('contenttype')};
+        var options = {"contentType": req.param('contenttype')};
         ContentService.getContentTypeSchema(options, function(done){return res.json(done)});
     },
 
@@ -621,7 +621,7 @@ module.exports = {
                 "identityNamePattern": req.body.identityNamePattern ? req.body.identityNamePattern : 'childversion.' + (req.body.properties.name ? 'name' : req.body.properties.title ? 'title' : req.body.properties.term ? 'term' : req.body.properties.identifier ? 'identifier' : 'name')
             };
         console.log(options);
-        //ContentService.create(options, function(done){return res.json(done)});       
+        ContentService.create(options, function(done){return res.json(done)});       
     },
 
     /**
@@ -655,71 +655,13 @@ module.exports = {
     * update content object (new versionNode)
     */
     update: function(req, res) {
-        var properties = req.body.properties,
-            relationships = req.body.relationships,
-            matchRelated = '',
-            whereRelated = '',
-            createRelationships = '',
-            identityNamePattern = req.body.identityNamePattern ? req.body.identityNamePattern : 'newversion.' + (properties.name ? 'name' : properties.title ? 'title' : properties.term ? 'term' : properties.identifier ? 'identifier' : '');
-        
-        if(relationships) {
-            for (var i = relationships.length - 1; i >= 0; i--) {
-                console.log(relationships[i]);
-                var relationshipName = relationships[i].relationshipName.toUpperCase(),
-                    direction = relationships[i].direction,
-                    inboundSymbol = direction === 'inbound' ? '<' : '',
-                    outboundSymbol = direction === 'outbound' ? '>' : '',
-                    relatedNode = relationships[i].relatedNode,
-                    relatedNodeId = relatedNode.properties.uuid,
-                    relatedIdentifier = 'node' + relatedNodeId;
-
-                matchRelated += ', (' + relatedIdentifier + ')';
-                whereRelated += ' AND id(' + relatedIdentifier + ') = ' + relatedNodeId;
-                createRelationships += ' CREATE (identitynode)' + inboundSymbol + '-[:' + relationshipName + ' {from:timestamp(), to:9007199254740991}]-' + outboundSymbol + '(' + relatedIdentifier + ')';
+        var options = {
+                "lang": req.body.lang,
+                "properties": req.body.properties,
+                "relationships": req.body.relationships
             };
-        }
-
-        var query = 
-            // UPDATE (CONTENT) - Add a Version node
-              ' MATCH (identitynode)-[currentversionrelationship:VERSION {to:9007199254740991}]->(currentversion)' + matchRelated
-            + ' WHERE id(identitynode) = {id} AND currentversionrelationship.lang = {lang}' + whereRelated
-            // Update the current version relationship to end validity
-            + ' SET currentversionrelationship.to = timestamp()'
-            // Create the new version relationship and node
-            + ' CREATE identitynode-[newversionrelationship:VERSION {from:timestamp(), to:9007199254740991}]->(newversion:Version)'
-            + createRelationships
-            // Set new version relationship properties
-            + ' SET newversionrelationship.versionNumber = toInt(currentversionrelationship.versionNumber) + 1'
-            + ' SET newversionrelationship.versionName = {versionName}'
-            + ' SET newversionrelationship.lang = currentversionrelationship.lang'
-            // Set new version node properties
-            + ' SET newversion = {properties}'
-            //... update more newversion properties
-            // Update the identity node
-            + ' SET identitynode.name = ' + identityNamePattern
-            // Create a previous relationship from the new version to the previous version
-            + ' CREATE newversion-[:PREVIOUS]->currentversion'
-            // Return the affected nodes
-            + ' RETURN identitynode,currentversion,newversion';
-        var params = {
-            "id": parseInt(req.body.id),
-            "lang": req.body.lang,
-            "versionName": req.body.versionName,
-            "identityNamePattern": req.body.identityNamePattern,
-            "properties": req.body.properties
-        };
-        console.log(properties);
-        console.log(relationships);
-        console.log(query);
-        var cb = function(err, data) {
-            //console.log(err);
-            //console.log(data);
-            return res.json(data);
-        };
-        db.cypher({
-            query: query, 
-            params: params
-        }, cb);
+        console.log(options);
+        ContentService.update(options, function(done){return res.json(done)});       
     },
 
     /**

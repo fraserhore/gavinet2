@@ -772,31 +772,40 @@ module.exports = {
     /** Get content type schema */
     getContentTypeSchema: function(options, done) {
         var session = driver.session();
-        var query =     'MATCH (contentTypeIdentity:ContentType)-[:VERSION {to:9007199254740991}]->(contentTypeVersion:Version {identifier:{contenttype}}),'
-                    + ' (contentTypeIdentity)-[:PROPERTY|RELATIONSHIP|CONTAINS {to:9007199254740991}]->(propertyIdentity)-[:VERSION {to:9007199254740991}]->(propertyVersion:Version)'
-                    + ' OPTIONAL MATCH (propertyIdentity)-[:ENUM]->(enumItemsParent)'
-                    + ' RETURN contentTypeIdentity, contentTypeVersion, collect(propertyIdentity) as propertyIdentities, collect(propertyVersion) as propertyVersions, enmumItemsParent'
-
+        var query =   'MATCH (contentTypeIdentity:ContentType)-[contentTypeVersionRelationship:VERSION {to:9007199254740991}]->(contentTypeVersion:Version {identifier:{contentType}})'
+                    +' MATCH (contentTypeIdentity)-[:PROPERTY|RELATIONSHIP|CONTAINS {to:9007199254740991}]->(propertyIdentity)-[propertyVersionRelationship:VERSION {to:9007199254740991}]->(propertyVersion:Version)'
+                    +' MATCH (contentTypeIdentity)-[:INSTANCE_OF]->(instanceType)-[:VERSION {to:9007199254740991}]->(instanceVersion:Version)'
+                    +' OPTIONAL MATCH (propertyIdentity)-[:ENUM]->(enumItemsParent)'
+                    +' OPTIONAL MATCH (contentTypeIdentity)-[:URL_ALIAS]->(urlAliasIdentity)'
+                    +' CALL apoc.map.setKey(contentTypeVersion, "versionRelationship", contentTypeVersionRelationship) yield value as contentTypeVersionObject'
+                    +' CALL apoc.map.setKey(contentTypeIdentity, "version", contentTypeVersionObject) yield value as contentTypeObject'
+                    +' CALL apoc.map.setKey(contentTypeObject, "contentType2", instanceVersion.identifier) yield value as contentTypeObject2'
+                    +' CALL apoc.map.setKey(contentTypeObject2, "urlAlias", urlAliasIdentity.name) yield value as contentTypeObject3'
+                    +' CALL apoc.map.setKey(propertyVersion, "versionRelationship", propertyVersionRelationship) yield value as propertyVersionObject'
+                    +' CALL apoc.map.setKey(propertyIdentity, "version", propertyVersionObject) yield value as property'
+                    +' CALL apoc.map.setKey(property, "enumItemsParent", enumItemsParent.uuid) yield value as property2'
+                    +' CALL apoc.map.setKey(property2, "urlAlias", urlAliasIdentity.name) yield value as property3'
+                    +' WITH contentTypeObject3, collect(property3) as properties'
+                    +' CALL apoc.map.setKey(contentTypeObject3, "properties", properties) yield value as contentTypeObject4'
+                    +' RETURN contentTypeObject4 as contentType'
         return session
             .run(query, options)
             .then(result => {
                 var record = result.records[0];
-                //console.log(data);
                 if(!record) return;
 
-                var contentTypeVersion = record.get('contentTypeVersion'),
-                    contentTypeVersionProperties = contentTypeVersion.properties,
-                    propertyVersions = record.get('propertyVersions'),
-                    schema = contentTypeVersionProperties;
+                var contentType = record.get('contentType'),
+                    properties = contentType.properties,
+                    propertiesTemp = {};
 
-                schema["properties"] = {};
-
-                for (var i = 0; i < propertyVersions.length; i++) {
-                    schema.properties[propertyVersions[i].properties.identifier] = propertyVersions[i].properties;
+                for (var i = 0; i < properties.length; i++) {
+                    propertiesTemp[properties[i].version.identifier] = properties[i].version;
                 };
 
+                contentType.properties = propertiesTemp;
+
                 session.close();
-                return done(schema);
+                return done(contentType);
             })
             .catch(error => {
                 session.close();
@@ -953,6 +962,7 @@ module.exports = {
             .then(result => {
                 session.close();
                 var record = result.records[0];
+                console.log(record.get('childidentity'));
                 console.log(record.get('childversion'));
                 return done({
                     'parent': record.get('parent'),
@@ -1001,15 +1011,15 @@ module.exports = {
     /**
     * update content object (new versionNode)
     */
-    update: function(req, res) {
-        var properties = req.body.properties,
-            relationships = req.body.relationships,
-            matchRelated = '',
-            whereRelated = '',
-            createRelationships = '',
-            identityNamePattern = req.body.identityNamePattern ? req.body.identityNamePattern : 'newversion.' + (properties.name ? 'name' : properties.title ? 'title' : properties.term ? 'term' : properties.identifier ? 'identifier' : '');
-        
-        if(relationships) {
+    update: function(options, done) {
+        var session = driver.session();
+        var properties = options.properties,
+            relationships = options.relationships
+            relationshipsStatement = '';
+        if(relationships.length) {
+            var matchRelated = ' MATCH ',
+                whereRelated = ' WHERE ',
+                createRelationships = '';
             for (var i = relationships.length - 1; i >= 0; i--) {
                 console.log(relationships[i]);
                 var relationshipName = relationships[i].relationshipName.toUpperCase(),
@@ -1019,54 +1029,93 @@ module.exports = {
                     relatedNode = relationships[i].relatedNode,
                     relatedNodeId = relatedNode.properties.uuid,
                     relatedIdentifier = 'node' + relatedNodeId;
-
-                matchRelated += ', (' + relatedIdentifier + ')';
-                whereRelated += ' AND id(' + relatedIdentifier + ') = ' + relatedNodeId;
-                createRelationships += ' CREATE (identityNode)' + inboundSymbol + '-[:' + relationshipName + ' {from:timestamp(), to:9007199254740991}]-' + outboundSymbol + '(' + relatedIdentifier + ')';
+                
+                matchRelated += '(' + relatedIdentifier + ')';
+                whereRelated += relatedIdentifier + '.uuid = ' + relatedNodeId;
+                if(i) {
+                    matchRelated += ', ';
+                    whereRelated += ', ';
+                } 
+                createRelationships += ' CREATE (identitynode)' + inboundSymbol + '-[:' + relationshipName + ' {from:timestamp(), to:9007199254740991}]-' + outboundSymbol + '(' + relatedIdentifier + ')';
+                //console.log(matchRelated);
             };
+            relationshipsStatement = ' WITH identitynode, currentversion, newversion, urlAliasIdentity, newUrlAliasVersion, author' 
+                                     + matchRelated
+                                     + whereRelated 
+                                     + createRelationships;
         }
-
+        //console.log(options);
         var query = 
-            // UPDATE (CONTENT) - Add a Version node
-              ' MATCH (identityNode)-[currentversionrelationship:VERSION {to:9007199254740991}]->(currentversion)' + matchRelated
-            + ' WHERE identityNode.uuid = {id} AND currentversionrelationship.lang = {lang}' + whereRelated
-            // Update the current version relationship to end validity
-            + ' SET currentversionrelationship.to = timestamp()'
-            // Create the new version relationship and node
-            + ' CREATE identityNode-[newversionrelationship:VERSION {from:timestamp(), to:9007199254740991}]->(newversion:Version)'
-            + createRelationships
-            // Set new version relationship properties
-            + ' SET newversionrelationship.versionNumber = toInt(currentversionrelationship.versionNumber) + 1'
-            + ' SET newversionrelationship.versionName = {versionName}'
-            + ' SET newversionrelationship.lang = currentversionrelationship.lang'
-            // Set new version node properties
-            + ' SET newversion = {properties}'
-            //... update more newversion properties
-            // Update the identity node
-            + ' SET identityNode.name = ' + identityNamePattern
-            // Create a previous relationship from the new version to the previous version
-            + ' CREATE newversion-[:PREVIOUS]->currentversion'
-            // Return the affected nodes
-            + ' RETURN identityNode,currentversion,newversion';
-        var params = {
-            "id": parseInt(req.body.id),
-            "lang": req.body.lang,
-            "versionName": req.body.versionName,
-            "identityNamePattern": req.body.identityNamePattern,
-            "properties": req.body.properties
-        };
-        console.log(properties);
-        console.log(relationships);
-        console.log(query);
-        var cb = function(err, data) {
-            //console.log(err);
-            //console.log(data);
-            return res.json(data);
-        };
-        db.cypher({
-            query: query, 
-            params: params
-        }, cb);
+                    // UPDATE (CONTENT) - Add a Version node
+                      ' MATCH (identitynode)-[currentversionrelationship:VERSION {to:9007199254740991}]->(currentversion)'
+                    + ' WHERE identitynode.uuid = {id} AND currentversionrelationship.lang = {lang}'
+                    // Update the current version relationship to end validity
+                    + ' SET currentversionrelationship.to = timestamp()'
+                    // Create the new version relationship and node
+                    + ' CREATE identitynode-[newversionrelationship:VERSION {from:timestamp(), to:9007199254740991}]->(newversion:Version)'
+                    // Set new version relationship properties
+                    + ' SET newversionrelationship.versionNumber = toInt(currentversionrelationship.versionNumber) + 1'
+                    + ' SET newversionrelationship.versionName = {versionName}'
+                    + ' SET newversionrelationship.lang = currentversionrelationship.lang'
+                    // Set new version node properties
+                    + ' SET newversion = {properties}'
+                    //... update more newversion properties
+                    // Update the identity node
+                    + ' SET identitynode.name = ' + identityNamePattern
+                    // Create a previous relationship from the new version to the previous version
+                    + ' CREATE newversion-[:PREVIOUS]->currentversion'
+
+                    // Create new URL alias version
+                    // Match path from root to parent so we can use it later to create the URL alias.
+                    +' MATCH p = (a:Root)-[:CONTAINS*]->(identitynode)'
+                    +' MATCH (identitynode)-[:URL_ALIAS {to:9007199254740991}]->(urlAliasIdentity:Identity:UrlAlias)'
+                    +       '-[currentUrlAliasVersionRelationship:VERSION {to:9007199254740991}]->(currentUrlAliasVersion:Version)'
+                    +' SET currentUrlAliasVersionRelationship.to = timestamp()'
+                    +' CREATE (urlAliasIdentity)-[:VERSION {from:timestamp(), to:9007199254740991, lang:{lang}}]->(newUrlAliasVersion:Version)'
+                    +' SET newUrlAliasVersion.versionNumber = toInt(currentUrlAliasVersion.versionNumber) + 1'
+                    +' CREATE newUrlAliasVersion-[:PREVIOUS]->currentUrlAliasVersion'
+
+                    +' WITH identitynode, currentversion, newversion, urlAliasIdentity, newUrlAliasVersion, reduce(urlAlias = "", n IN nodes(p)| urlAlias + "/" + replace(n.name," ", "-") + "/" + replace(newversion.name," ", "-")) AS urlAlias'
+                    +' MATCH (author)'
+                    +' WHERE author.uuid = {authorId}'
+                    // Create relationshps from author to version nodes
+                    +' CREATE (author)-[:CREATED {timestamp:timestamp()}]->(newversion)'
+                    +' CREATE (author)-[:CREATED {timestamp:timestamp()}]->(newUrlAliasVersion)'
+                    // Set URL Alias
+                    +' SET newUrlAliasVersion.urlAlias = urlAlias'
+                    // Set uuids
+                    +' WITH identitynode, currentversion, newversion, urlAliasIdentity, newUrlAliasVersion, author'
+                    +' CALL apoc.create.uuids(2) YIELD uuid'
+                    +' WITH identitynode, currentversion, newversion, urlAliasIdentity, newUrlAliasVersion, author, collect(uuid) as uuids'
+                    +' SET newversion.uuid = uuids[0]'
+                    +' SET newUrlAliasVersion.uuid = uuids[1]'
+
+                    // Create relationships if there are any
+                    +  relationshipsStatement
+
+                    // Return results
+                    +' RETURN identitynode, currentversion, newversion, urlAliasIdentity, newUrlAliasVersion, author';
+        return session
+            .run(query, options)
+            .then(result => {
+                session.close();
+                var record = result.records[0];
+                console.log(record.get('childversion'));
+                return done({
+                    'parent': record.get('parent'),
+                    'identityNode': record.get('childidentity'), 
+                    'versionNode': record.get('childversion'),
+                    'authorNode': record.get('author'),
+                    'urlAliasIdentity': record.get('urlAliasIdentity'),
+                    'urlAliasVersion': record.get('urlAliasVersion')
+                });
+            })
+            .catch(error => {
+                session.close();
+                console.log(error);
+                return done(error);
+                throw error;
+            });
     },
 
     /**

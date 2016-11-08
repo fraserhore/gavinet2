@@ -144,7 +144,11 @@
                 this.set('formData.id', identityNode.properties.uuid);
                 this.set('formData.versionName', '');
                 this.set('formData.properties', versionNode.properties);
-                //this.set('formData.relationships', relationships);               
+                this.set('formData.contenttype', identityNode.properties.contentType);
+                console.log(identityNode);
+                //this.set('formData.relationships', relationships);
+                //this.notifyPath('formData.properties');    
+                this.$.contentEdit._init();
                 this.$.editDialog.open();
                 // this.$.editDialog.refit(); this didn't work. need to try something else.
             },
