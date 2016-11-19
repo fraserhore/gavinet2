@@ -96,7 +96,7 @@
       delete: function(event) {
         this.$.deleteRequest.url = "/content/delete";
         this.$.deleteRequest.params = {"id": event.model.item.identityNode._id};
-        console.log(deleteRequest);
+        //console.log(deleteRequest);
         this.$.deleteRequest.generateRequest();
       },
 
@@ -106,7 +106,7 @@
       },
 
       refresh: function() {
-        console.log(this.$.getChildren.url);
+        //console.log(this.$.getChildren.url);
         this.$.getChildren.generateRequest();
       },
 

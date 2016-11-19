@@ -209,6 +209,572 @@ module.exports = {
             });
     },
 
+    /** Get child content objects */
+    getContent: function(options, done) {
+        var session = driver.session();
+        var params = {
+            "id": options.id,
+            "lang": options.lang
+        };
+        var versionMatch = "";
+
+        if(options.versionName) {
+            versionMatch = " AND version.name = " + options.versionName;
+        } else if(options.versionValidityDate) {
+            versionMatch = " AND version.from <= " + options.versionValidityDate + " AND version.to >= " + options.versionValidityDate;
+        } else {
+            versionMatch = " AND version.to = 9007199254740991";
+        }
+        //console.log(versionMatch);
+        var query =   'MATCH (identityNode)-[version:VERSION]->(versionNode), (authorNode)-[created:CREATED]->(identityNode)'
+                    +' WHERE identityNode.uuid = {id} AND version.lang = {lang}'
+                    +  versionMatch
+                    +' RETURN identityNode, version, versionNode, authorNode';
+
+        return session
+            .run(query, params)
+            .then(result => {
+                session.close();
+                var record = result.records[0];
+                return done({
+                    'identityNode': record.get('identityNode'), 
+                    'version': record.get('version'),
+                    'versionNode': record.get('versionNode'),
+                    'authorNode': record.get('authorNode')
+                });
+            })
+            .catch(error => {
+                session.close();
+                console.log(error);
+                return done(error);
+                throw error;
+            });
+    },
+
+    /** Get child content objects */
+    getChildren: function(options, done) {
+        var session = driver.session();
+        var params = {
+            "id": options.id,
+            "lang": options.lang
+        };
+        var versionMatch = "";
+
+        if(options.versionName) {
+            versionMatch = " AND version.name = " + options.versionName;
+        } else if(options.versionValidityDate) {
+            versionMatch = " AND version.from <= " + options.versionValidityDate + " AND version.to >= " + options.versionValidityDate;
+        } else {
+            versionMatch = " AND parentChildRel.to = 9007199254740991 AND version.to = 9007199254740991";
+        }
+        var query =   'MATCH (parentNode)-[parentChildRel:CONTAINS]->(identityNode)-[version:VERSION]->(versionNode), (authorNode)-[created:CREATED]->(identityNode)'
+                    +' WHERE parentNode.uuid = {id} AND version.lang = {lang}'
+                    +  versionMatch
+                    +' OPTIONAL MATCH (identityNode)-[:URL_ALIAS]->(urlAliasIdentity)-[urlAliasVersionRel:VERSION {to:9007199254740991}]->(urlAliasVersion)'
+                    +' RETURN identityNode, version, versionNode, authorNode, urlAliasVersion.urlAlias as urlAlias';
+        return session
+            .run(query, params)
+            .then(result => {
+                var children = [];
+                result.records.forEach(function(record) {
+                    children.push({
+                        'identityNode': record.get('identityNode'), 
+                        'version': record.get('version'),
+                        'versionNode': record.get('versionNode'),
+                        'authorNode': record.get('authorNode'),
+                        'urlAlias': record.get('urlAlias')
+                    });
+                });
+                session.close();
+                return done(children);
+            })
+            .catch(error => {
+                session.close();
+                console.log(error);
+                return done(error);
+                throw error;
+            });      
+    },
+
+    /** Get related content objects 
+    * @param {object} req - HTTP request object
+    * @param {object} res - HTTP response object
+    * @param {object} req.id - Node ID of the content object for which to get related content objects
+    */
+    getRelated: function(options, done) {
+        var query =  'MATCH (a)-[r]-(identityNode), (identityNode)-[version:VERSION {to:9007199254740991}]->(versionNode)'
+                    +' WHERE a.uuid = {id} AND NOT (a)-[r:VERSION|:CREATED|:CONTAINS]->(b) AND NOT (a)<-[r:VERSION|:CREATED|:CONTAINS]-(b)'
+                    +' RETURN r as relationship, identityNode, version, versionNode'
+        return session
+            .run(query, options)
+            .then(result => {
+                session.close();
+                var record = result.records[0];
+                return done({
+                    'relationship': record.get('relationship'),
+                    'identityNode': record.get('identityNode'), 
+                    'version': record.get('version'),
+                    'versionNode': record.get('versionNode')
+                });
+            })
+            .catch(error => {
+                session.close();
+                console.log(error);
+                return done(error);
+                throw error;
+            });
+    },
+
+    /** Get content types */
+    getContentTypes: function(req, res) {
+
+        var query =  'MATCH (a:ContentType)-[:VERSION {to:9007199254740991}]->(b:Version)'
+                    +' RETURN a as contentTypeIdentity, b as contentTypeVersion'
+        var params = {
+            "id": ''
+        };
+        var cb = function(err, data) {
+            //console.log(data);
+            return res.json(data);
+        }
+        db.cypher({
+            query: query,
+            params: params
+        }, cb);
+    },
+
+    /** Get parent */
+    getParent: function(req, res) {
+
+        var query =  'MATCH (identityNode)<-[r:CONTAINS {to:9007199254740991}]-(parentNode)'
+                    +' WHERE identityNode.uuid = {id}'
+                    +' RETURN parentNode'
+        var params = {
+            "id": req.param('id')
+        };
+        var cb = function(err, data) {
+            //console.log(data);
+            return res.json(data[0]);
+        }
+        db.cypher({
+            query: query,
+            params: params
+        }, cb);
+    },
+
+    /** Get siblings */
+    getSiblings: function(options, done) {
+        var session = driver.session();
+        var query =  ' MATCH (identityNode)<-[r:CONTAINS]-(parent)'
+                    +' WHERE identityNode.uuid = {id} AND r.to = 9007199254740991'
+                    +' WITH parent'
+                    +' MATCH (parent)-[parentChildRel:CONTAINS]->(siblingNode)-[:URL_ALIAS]->(urlAliasIdentity)-[urlAliasVersionRel:VERSION]->(urlAliasVersion)'
+                    +' WHERE parentChildRel.to = 9007199254740991 AND urlAliasVersionRel.to = 9007199254740991'
+                    +' RETURN siblingNode, urlAliasVersion.urlAlias as urlAlias';
+        return session
+            .run(query, options)
+            .then(result => {
+                var siblings = [];
+                result.records.forEach(function(record) {
+                    siblings.push({
+                        'siblingNode': record.get('siblingNode'), 
+                        'urlAlias': record.get('urlAlias')
+                    });
+                });
+                session.close();
+                return done(siblings);
+            })
+            .catch(error => {
+                session.close();
+                console.log(error);
+                return done(error);
+                throw error;
+            });        
+    },
+
+    /** Get content type schema */
+    getContentTypeSchema: function(options, done) {
+        var session = driver.session();
+        var query =   'MATCH (contentTypeIdentity:ContentType)-[contentTypeVersionRelationship:VERSION {to:9007199254740991}]->(contentTypeVersion:Version {identifier:{contentType}})'
+                    +' MATCH (contentTypeIdentity)-[:PROPERTY|RELATIONSHIP|CONTAINS {to:9007199254740991}]->(propertyIdentity)-[propertyVersionRelationship:VERSION {to:9007199254740991}]->(propertyVersion:Version)'
+                    +' MATCH (contentTypeIdentity)-[:INSTANCE_OF]->(instanceType)-[:VERSION {to:9007199254740991}]->(instanceVersion:Version)'
+                    +' OPTIONAL MATCH (propertyIdentity)-[:ENUM]->(enumItemsParent)'
+                    +' OPTIONAL MATCH (contentTypeIdentity)-[:URL_ALIAS]->(urlAliasIdentity)'
+                    +' CALL apoc.map.setKey(contentTypeVersion, "versionRelationship", contentTypeVersionRelationship) yield value as contentTypeVersionObject'
+                    +' CALL apoc.map.setKey(contentTypeIdentity, "version", contentTypeVersionObject) yield value as contentTypeObject'
+                    +' CALL apoc.map.setKey(contentTypeObject, "contentType2", instanceVersion.identifier) yield value as contentTypeObject2'
+                    +' CALL apoc.map.setKey(contentTypeObject2, "urlAlias", urlAliasIdentity.name) yield value as contentTypeObject3'
+                    +' CALL apoc.map.setKey(propertyVersion, "versionRelationship", propertyVersionRelationship) yield value as propertyVersionObject'
+                    +' CALL apoc.map.setKey(propertyIdentity, "version", propertyVersionObject) yield value as property'
+                    +' CALL apoc.map.setKey(property, "enumItemsParent", enumItemsParent.uuid) yield value as property2'
+                    +' CALL apoc.map.setKey(property2, "urlAlias", urlAliasIdentity.name) yield value as property3'
+                    +' WITH contentTypeObject3, collect(property3) as properties'
+                    +' CALL apoc.map.setKey(contentTypeObject3, "properties", properties) yield value as contentTypeObject4'
+                    +' RETURN contentTypeObject4 as contentType'
+        return session
+            .run(query, options)
+            .then(result => {
+                var record = result.records[0];
+                if(!record) return;
+
+                var contentType = record.get('contentType'),
+                    properties = contentType.properties,
+                    propertiesTemp = {};
+
+                for (var i = 0; i < properties.length; i++) {
+                    propertiesTemp[properties[i].version.identifier] = properties[i].version;
+                    propertiesTemp[properties[i].version.identifier]['enumItemsParent'] = properties[i].enumItemsParent;
+                };
+
+                contentType.properties = propertiesTemp;
+
+                session.close();
+                return done(contentType);
+            })
+            .catch(error => {
+                session.close();
+                console.log(error);
+                return done(error);
+                throw error;
+            });        
+    },
+
+    /**
+     * Create new content object (identityNode and versionNode)
+     */
+    create: function(options, done) {
+        var session = driver.session();
+        var properties = options.properties,
+            relationships = options.relationships
+            relationshipsStatement = '';
+        if(relationships.length) {
+            var matchRelated = ' MATCH ',
+                whereRelated = ' WHERE ',
+                createRelationships = '';
+            for (var i = relationships.length - 1; i >= 0; i--) {
+                console.log(relationships[i]);
+                var relationshipName = relationships[i].relationshipName.toUpperCase(),
+                    direction = relationships[i].direction,
+                    inboundSymbol = direction === 'inbound' ? '<' : '',
+                    outboundSymbol = direction === 'outbound' ? '>' : '',
+                    relatedNode = relationships[i].relatedNode,
+                    relatedNodeId = relatedNode.properties.uuid,
+                    relatedIdentifier = 'node' + relatedNodeId.replace(/-/g, '');
+                
+                matchRelated += '(' + relatedIdentifier + ')';
+                whereRelated += relatedIdentifier + '.uuid = "' + relatedNodeId + '"';
+                if(i) {
+                    matchRelated += ', ';
+                    whereRelated += ', ';
+                } 
+                createRelationships += ' CREATE (childidentity)' + inboundSymbol + '-[:' + relationshipName + ' {from:timestamp(), to:9007199254740991}]-' + outboundSymbol + '(' + relatedIdentifier + ')';
+                //console.log(matchRelated);
+            };
+            relationshipsStatement = ' WITH parent, childidentity, childversion, urlAliasIdentity, urlAliasVersion, author' 
+                                     + matchRelated
+                                     + whereRelated 
+                                     + createRelationships;
+        }
+        //console.log(options);
+        var query =  // Match path from root to parent so we can use it later to create the URL alias.
+					 ' MATCH p = (a:Root)-[:CONTAINS*]->(parent)'
+					// Match on parent uuid and author uuid
+                    +' WHERE parent.uuid = {parentId}'
+                    // Create new identity and version
+                    +' CREATE (parent)-[:CONTAINS {from:timestamp(), to:9007199254740991, versionNumber:1, versionName:"Initial"}]->'
+                    +       '(childidentity:Identity:ContentObject {contentType:{contenttype}})'
+                    +       '-[:VERSION {from:timestamp(), to:9007199254740991, versionNumber:1, versionName:"Initial", lang:{lang}}]->'
+                    +       '(childversion:Version)'
+                    // Create URL alias identity and version
+                    +' CREATE (childidentity)-[:URL_ALIAS {from:timestamp(), to:9007199254740991, versionNumber:1, versionName:"Initial"}]->'
+                    +       '(urlAliasIdentity:Identity:UrlAlias {contentType:"urlAlias"})'
+                    +       '-[:VERSION {from:timestamp(), to:9007199254740991, versionNumber:1, versionName:"Initial", lang:{lang}}]->'
+                    +       '(urlAliasVersion:Version)'
+                    // Set properties
+                    +' SET childidentity:' + ContentService.pascalize(options.contenttype) 
+                    +' SET childversion = {properties}'
+                    +' SET childidentity.name = ' + options.identityNamePattern
+
+                    +' WITH parent, childidentity, childversion, urlAliasIdentity, urlAliasVersion, reduce(urlAlias = "", n IN nodes(p)| urlAlias + "/" + replace(n.name," ", "-") + "/" + replace(childversion.name," ", "-")) AS urlAlias'
+                    +' MATCH (author)'
+                    +' WHERE author.uuid = {authorId}'
+                    // Create relationshps from author to identity nodes and version nodes
+                    +' CREATE (author)-[:CREATED {timestamp:timestamp()}]->(childidentity)'
+                    +' CREATE (author)-[:CREATED {timestamp:timestamp()}]->(childversion)'
+                    +' CREATE (author)-[:CREATED {timestamp:timestamp()}]->(urlAliasIdentity)'
+                    +' CREATE (author)-[:CREATED {timestamp:timestamp()}]->(urlAliasVersion)'
+                    // Set URL Alias
+                    +' SET urlAliasIdentity.name = urlAlias'
+                    +' SET urlAliasVersion.urlAlias = urlAlias'
+                    // Set uuids
+                    +' WITH parent, childidentity, childversion, urlAliasIdentity, urlAliasVersion, author'
+                    +' CALL apoc.create.uuids(4) YIELD uuid'
+                    +' WITH parent, childidentity, childversion, urlAliasIdentity, urlAliasVersion, author, collect(uuid) as uuids'
+                    +' SET childidentity.uuid = uuids[0]'
+                    +' SET childversion.uuid = uuids[1]'
+                    +' SET urlAliasIdentity.uuid = uuids[2]'
+                    +' SET urlAliasVersion.uuid = uuids[3]'
+
+                    // Create relationships if there are any
+                    +  relationshipsStatement
+
+                    // Create relationship to content type
+                    +' WITH parent, childidentity, childversion, urlAliasIdentity, urlAliasVersion, author'
+                    +' MATCH (contentType:ContentType)-[:VERSION {to:9007199254740991}]->(contentTypeVersion)'
+                    +' WHERE contentTypeVersion.identifier = {contenttype}'
+                    +' CREATE (childidentity)-[:INSTANCE_OF]->(contentType)'
+
+                    // Return results
+                    +' RETURN parent, childidentity, childversion, urlAliasIdentity, urlAliasVersion, author';
+        
+        return session
+            .run(query, options)
+            .then(result => {
+                session.close();
+                var record = result.records[0];
+                console.log(record.get('childidentity'));
+                console.log(record.get('childversion'));
+                return done({
+                    'parent': record.get('parent'),
+                    'identityNode': record.get('childidentity'), 
+                    'versionNode': record.get('childversion'),
+                    'authorNode': record.get('author'),
+                    'urlAliasIdentity': record.get('urlAliasIdentity'),
+                    'urlAliasVersion': record.get('urlAliasVersion')
+                });
+            })
+            .catch(error => {
+                session.close();
+                console.log(error);
+                return done(error);
+                throw error;
+            });
+    },
+
+    /**
+     * Create new relationship
+     */
+    createRelationship: function(req, res) {
+        //console.log(req.body);
+        var query =   'MATCH (from), (to)'
+                    +' WHERE id(from)={fromId} AND id(to)={toId}'
+                    +' CREATE from-[r:' 
+                    + req.body.relationshipName.split(' ').join('_').toUpperCase()
+                    + ' {from:timestamp(), to:9007199254740991, versionNumber:1, versionName:"Initial"}]->to'
+                    +' RETURN from, r, to';
+        var params = {
+            "fromId": req.body.direction === 'Inbound' ? parseInt(req.body.relatedNodeId) : parseInt(req.body.referenceNodeId),
+            "relationshipName": req.body.relationshipName.split(' ').join('_').toUpperCase(),
+            "toId": req.body.direction === 'Outbound' ? parseInt(req.body.relatedNodeId) : parseInt(req.body.referenceNodeId)
+        };
+        var cb = function(err, data) {
+            //console.log(err);
+            //console.log(data);
+            return res.json(data);
+        };
+        db.cypher({
+            query: query, 
+            params: params
+        }, cb);
+    },
+
+    /**
+    * update content object (new versionNode)
+    */
+    update: function(options, done) {
+        var session = driver.session();
+        var properties = options.properties,
+            relationships = options.relationships
+            relationshipsStatement = '';
+        
+        if(relationships.length) {
+            var matchRelated = ' MATCH ',
+                whereRelated = ' WHERE ',
+                createRelationships = '';
+            for (var i = relationships.length - 1; i >= 0; i--) {
+                console.log(relationships[i]);
+                var relationshipName = relationships[i].relationshipName.toUpperCase(),
+                    direction = relationships[i].direction,
+                    inboundSymbol = direction === 'inbound' ? '<' : '',
+                    outboundSymbol = direction === 'outbound' ? '>' : '',
+                    relatedNode = relationships[i].relatedNode,
+                    relatedNodeId = relatedNode.properties.uuid,
+                    relatedIdentifier = 'node' + relatedNodeId.replace(/-/g, '');   
+                matchRelated += '(' + relatedIdentifier + ')';
+                whereRelated += relatedIdentifier + '.uuid = "' + relatedNodeId + '"';
+                if(i) {
+                    matchRelated += ', ';
+                    whereRelated += ', ';
+                } 
+                createRelationships += ' CREATE (identitynode)' + inboundSymbol + '-[:' + relationshipName + ' {from:timestamp(), to:9007199254740991}]-' + outboundSymbol + '(' + relatedIdentifier + ')';
+            };
+            relationshipsStatement = ' WITH identitynode, currentversion, newversion, urlAliasIdentity, newUrlAliasVersion, author' 
+                                     + matchRelated
+                                     + whereRelated 
+                                     + createRelationships;
+        }
+        //console.log(options);
+        var query = // UPDATE (CONTENT) - Add a Version node
+                      ' MATCH (identitynode)-[currentversionrelationship:VERSION {to:9007199254740991}]->(currentversion)'
+                    + ' WHERE identitynode.uuid = {id} AND currentversionrelationship.lang = {lang}'
+                    // Update the current version relationship to end validity
+                    + ' SET currentversionrelationship.to = timestamp()'
+                    // Create the new version relationship and node
+                    + ' CREATE (identitynode)-[newversionrelationship:VERSION {from:timestamp(), to:9007199254740991}]->(newversion:Version)'
+                    // Set new version relationship properties
+                    + ' SET newversionrelationship.versionNumber = toInt(currentversionrelationship.versionNumber) + 1'
+                    + ' SET newversionrelationship.versionName = {versionName}'
+                    + ' SET newversionrelationship.lang = currentversionrelationship.lang'
+                    // Set new version node properties
+                    + ' SET newversion = {properties}'
+                    //... update more newversion properties
+                    // Update the identity node
+                    + ' SET identitynode.name = ' + options.identityNamePattern
+                    // Create a previous relationship from the new version to the previous version
+                    + ' CREATE (newversion)-[:PREVIOUS]->(currentversion)'
+                    // Create new URL alias version
+                    // Match path from root to parent so we can use it later to create the URL alias.
+                    +' WITH identitynode, currentversion, newversion'
+                    +' MATCH p = (a:Root)-[:CONTAINS*]->(identitynode)'
+                    +' MATCH (identitynode)-[:URL_ALIAS {to:9007199254740991}]->(urlAliasIdentity:Identity:UrlAlias)'
+                    +       '-[currentUrlAliasVersionRelationship:VERSION {to:9007199254740991}]->(currentUrlAliasVersion:Version)'
+                    +' SET currentUrlAliasVersionRelationship.to = timestamp()'
+                    +' MERGE (urlAliasIdentity)-[newUrlAliasVersionRelationship:VERSION {from:timestamp(), to:9007199254740991, lang:{lang}}]->(newUrlAliasVersion:Version)'
+                    +' SET newUrlAliasVersionRelationship.versionNumber = toInt(currentUrlAliasVersionRelationship.versionNumber) + 1'
+                    +' CREATE (newUrlAliasVersion)-[:PREVIOUS]->(currentUrlAliasVersion)'
+                    +' WITH identitynode, currentversion, newversion, urlAliasIdentity, newUrlAliasVersion, reduce(urlAlias = "", n IN nodes(p)| urlAlias + "/" + replace(n.name," ", "-") + "/" + replace(newversion.name," ", "-")) AS urlAlias'
+                    +' MATCH (author)'
+                    +' WHERE author.uuid = {authorId}'
+                    // Create relationshps from author to version nodes
+                    +' CREATE (author)-[:CREATED {timestamp:timestamp()}]->(newversion)'
+                    +' CREATE (author)-[:CREATED {timestamp:timestamp()}]->(newUrlAliasVersion)'
+                    // Set URL Alias
+                    +' SET urlAliasIdentity.name = urlAlias'
+                    +' SET newUrlAliasVersion.urlAlias = urlAlias'
+                    // Set uuids
+                    +' WITH identitynode, currentversion, newversion, urlAliasIdentity, newUrlAliasVersion, author'
+                    +' CALL apoc.create.uuids(2) YIELD uuid'
+                    +' WITH identitynode, currentversion, newversion, urlAliasIdentity, newUrlAliasVersion, author, collect(uuid) as uuids'
+                    +' SET newversion.uuid = uuids[0]'
+                    +' SET newUrlAliasVersion.uuid = uuids[1]'
+                    // Create relationships if there are any
+                    +  relationshipsStatement
+                    // Return results
+                    +' RETURN identitynode, currentversion, newversion, urlAliasIdentity, newUrlAliasVersion, author';
+
+        return session
+            .run(query, options)
+            .then(result => {
+                session.close();
+                var record = result.records[0];
+                console.log(record.get('newversion'));
+                return done({
+                    'identityNode': record.get('identitynode'), 
+                    'versionNode': record.get('newversion'),
+                    'authorNode': record.get('author'),
+                    'urlAliasIdentity': record.get('urlAliasIdentity'),
+                    'urlAliasVersion': record.get('newUrlAliasVersion')
+                });
+            })
+            .catch(error => {
+                session.close();
+                console.log(error);
+                return done(error);
+                throw error;
+            });
+    },
+
+    /**
+     * Delete a content object (end version validity)
+     */
+    delete: function(req, res) {
+
+        var query =  'MATCH (child)<-[relationship:CONTAINS {to:9007199254740991}]-(parent)'
+                    +' WHERE child.uuid = {id}'
+                    +' SET relationship.to = timestamp()'
+                    +' RETURN parent, child';
+        var params = {
+            "id": req.param('id')
+        };
+        
+        var cb = function(err, data) {
+            console.log(err);
+            console.log("delete: "+req.param('id'));
+            console.log(data);
+            return res.json(data);
+        };
+        db.cypher({
+            query: query, 
+            params: params
+        }, cb);
+    },
+
+    /** Move a content object (end validity of old location relationship and create new location relationship) */
+    move: function(req, res) {
+
+    },
+
+    /** Add content object to an additional location (create new location relationship) */
+    addLocation: function(req, res) {
+
+    },
+
+
+
+    /** Get child content objects */
+    getProcess: function(req, res) {
+        var params = {
+            "id": req.param('id'),
+            "lang": req.param('lang') || "en-gb"
+        };
+        var versionMatch = "";
+
+        if(req.param('versionName')) {
+            var versionName = req.param('versionName');
+            versionMatch = " AND versionRel.versionName = " + versionName + " AND mxCellVersionRel.versionName = " + versionName;
+        } else if(req.param('versionValidityDate')) {
+            var versionValidityDate = parseInt(req.param('versionValidityDate'));
+            versionMatch = " AND versionRel.from <= " + versionValidityDate + " AND versionRel.to >= " + versionValidityDate + " AND mxCellVersionRel.from <= " + versionValidityDate + " AND mxCellVersionRel.to >= " + versionValidityDate;
+        } else {
+            versionMatch = " AND parentChildRel.to = 9007199254740991 AND versionRel.to = 9007199254740991 AND mxCellParentChildRel.to = 9007199254740991 AND mxCellVersionRel.to = 9007199254740991";
+        }
+        var query =   'MATCH (parentNode)-[parentChildRel:CONTAINS]->(identityNode)-[versionRel:VERSION]->(versionNode), (authorNode)-[createdRel:CREATED]->(identityNode)'
+                    +' MATCH (parentNode)-[mxCellParentChildRel:CONTAINS]->(mxCellIdentityNode:MxCell)<-[:HAS_MXCELL]-(identityNode)'
+                    +' MATCH (mxCellIdentityNode)-[mxCellVersionRel:VERSION]->(mxCellVersionNode)'
+                    +' WHERE parentNode.uuid = {id} AND versionRel.lang = {lang}'
+                    +  versionMatch
+                    +' RETURN '
+                    +' {'
+                    +' id: id(parentNode),'
+                    +' name: parentNode.name,'
+                    +' contentType: parentNode.contentType,'
+                    +' children: collect({'
+                    +'     id: id(identityNode),'
+                    +'     name: identityNode.name,'
+                    +'     contentType: identityNode.contentType,'
+                    +'     properties: versionNode,'
+                    +'     mxCell: {'
+                    +'         id: id(mxCellIdentityNode),'
+                    +'         name: mxCellIdentityNode.name,'
+                    +'         properties: mxCellVersionNode'
+                    +'     }'
+                    +' })'
+                    +' } AS result';
+        console.log(query);
+        var cb = function(err, data) {
+            if(err) {
+                console.log(err);
+            } else if(data[0]) {
+                console.log(data[0].result.children);
+                return res.json(data[0].result.children);
+            }
+        };
+        db.cypher({
+            query: query,
+            params: params
+        }, cb);
+    },
+
     /**
      * Create new content object (identityNode and versionNode)
      */
@@ -587,571 +1153,6 @@ module.exports = {
     },
 
 
-    /** Get child content objects */
-    getContent: function(options, done) {
-        var session = driver.session();
-        var params = {
-            "id": options.id,
-            "lang": options.lang
-        };
-        var versionMatch = "";
-
-        if(options.versionName) {
-            versionMatch = " AND version.name = " + options.versionName;
-        } else if(options.versionValidityDate) {
-            versionMatch = " AND version.from <= " + options.versionValidityDate + " AND version.to >= " + options.versionValidityDate;
-        } else {
-            versionMatch = " AND version.to = 9007199254740991";
-        }
-        //console.log(versionMatch);
-        var query =   'MATCH (identityNode)-[version:VERSION]->(versionNode), (authorNode)-[created:CREATED]->(identityNode)'
-                    +' WHERE identityNode.uuid = {id} AND version.lang = {lang}'
-                    +  versionMatch
-                    +' RETURN identityNode, version, versionNode, authorNode';
-
-        return session
-            .run(query, params)
-            .then(result => {
-                session.close();
-                var record = result.records[0];
-                return done({
-                    'identityNode': record.get('identityNode'), 
-                    'version': record.get('version'),
-                    'versionNode': record.get('versionNode'),
-                    'authorNode': record.get('authorNode')
-                });
-            })
-            .catch(error => {
-                session.close();
-                console.log(error);
-                return done(error);
-                throw error;
-            });
-    },
-
-    /** Get child content objects */
-    getChildren: function(options, done) {
-        var session = driver.session();
-        var params = {
-            "id": options.id,
-            "lang": options.lang
-        };
-        var versionMatch = "";
-
-        if(options.versionName) {
-            versionMatch = " AND version.name = " + options.versionName;
-        } else if(options.versionValidityDate) {
-            versionMatch = " AND version.from <= " + options.versionValidityDate + " AND version.to >= " + options.versionValidityDate;
-        } else {
-            versionMatch = " AND parentChildRel.to = 9007199254740991 AND version.to = 9007199254740991";
-        }
-        var query =   'MATCH (parentNode)-[parentChildRel:CONTAINS]->(identityNode)-[version:VERSION]->(versionNode), (authorNode)-[created:CREATED]->(identityNode)-[:URL_ALIAS]->(urlAliasIdentity)-[urlAliasVersionRel:VERSION]->(urlAliasVersion)'
-                    +' WHERE parentNode.uuid = {id} AND version.lang = {lang} AND urlAliasVersionRel.to = 9007199254740991'
-                    +  versionMatch
-                    +' RETURN identityNode, version, versionNode, authorNode, urlAliasVersion.urlAlias as urlAlias';
-        return session
-            .run(query, params)
-            .then(result => {
-                var children = [];
-                result.records.forEach(function(record) {
-                    children.push({
-                        'identityNode': record.get('identityNode'), 
-                        'version': record.get('version'),
-                        'versionNode': record.get('versionNode'),
-                        'authorNode': record.get('authorNode'),
-                        'urlAlias': record.get('urlAlias')
-                    });
-                });
-                session.close();
-                return done(children);
-            })
-            .catch(error => {
-                session.close();
-                console.log(error);
-                return done(error);
-                throw error;
-            });      
-    },
-
-    /** Get related content objects 
-    * @param {object} req - HTTP request object
-    * @param {object} res - HTTP response object
-    * @param {object} req.id - Node ID of the content object for which to get related content objects
-    */
-    getRelated: function(options, done) {
-        var query =  'MATCH (a)-[r]-(identityNode), (identityNode)-[version:VERSION {to:9007199254740991}]->(versionNode)'
-                    +' WHERE a.uuid = {id} AND NOT (a)-[r:VERSION|:CREATED|:CONTAINS]->(b) AND NOT (a)<-[r:VERSION|:CREATED|:CONTAINS]-(b)'
-                    +' RETURN r as relationship, identityNode, version, versionNode'
-        return session
-            .run(query, options)
-            .then(result => {
-                session.close();
-                var record = result.records[0];
-                return done({
-                    'relationship': record.get('relationship'),
-                    'identityNode': record.get('identityNode'), 
-                    'version': record.get('version'),
-                    'versionNode': record.get('versionNode')
-                });
-            })
-            .catch(error => {
-                session.close();
-                console.log(error);
-                return done(error);
-                throw error;
-            });
-    },
-
-    /** Get content types */
-    getContentTypes: function(req, res) {
-
-        var query =  'MATCH (a:ContentType)-[:VERSION {to:9007199254740991}]->(b:Version)'
-                    +' RETURN a as contentTypeIdentity, b as contentTypeVersion'
-        var params = {
-            "id": ''
-        };
-        var cb = function(err, data) {
-            //console.log(data);
-            return res.json(data);
-        }
-        db.cypher({
-            query: query,
-            params: params
-        }, cb);
-    },
-
-    /** Get parent */
-    getParent: function(req, res) {
-
-        var query =  'MATCH (identityNode)<-[r:CONTAINS {to:9007199254740991}]-(parentNode)'
-                    +' WHERE identityNode.uuid = {id}'
-                    +' RETURN parentNode'
-        var params = {
-            "id": req.param('id')
-        };
-        var cb = function(err, data) {
-            //console.log(data);
-            return res.json(data[0]);
-        }
-        db.cypher({
-            query: query,
-            params: params
-        }, cb);
-    },
-
-    /** Get siblings */
-    getSiblings: function(options, done) {
-        var session = driver.session();
-        var query =  ' MATCH (identityNode)<-[r:CONTAINS]-(parent)'
-                    +' WHERE identityNode.uuid = {id} AND r.to = 9007199254740991'
-                    +' WITH parent'
-                    +' MATCH (parent)-[parentChildRel:CONTAINS]->(siblingNode)-[:URL_ALIAS]->(urlAliasIdentity)-[urlAliasVersionRel:VERSION]->(urlAliasVersion)'
-                    +' WHERE parentChildRel.to = 9007199254740991 AND urlAliasVersionRel.to = 9007199254740991'
-                    +' RETURN siblingNode, urlAliasVersion.urlAlias as urlAlias';
-        return session
-            .run(query, options)
-            .then(result => {
-                var siblings = [];
-                result.records.forEach(function(record) {
-                    siblings.push({
-                        'siblingNode': record.get('siblingNode'), 
-                        'urlAlias': record.get('urlAlias')
-                    });
-                });
-                session.close();
-                return done(siblings);
-            })
-            .catch(error => {
-                session.close();
-                console.log(error);
-                return done(error);
-                throw error;
-            });        
-    },
-
-    /** Get content type schema */
-    getContentTypeSchema: function(options, done) {
-        var session = driver.session();
-        var query =   'MATCH (contentTypeIdentity:ContentType)-[contentTypeVersionRelationship:VERSION {to:9007199254740991}]->(contentTypeVersion:Version {identifier:{contentType}})'
-                    +' MATCH (contentTypeIdentity)-[:PROPERTY|RELATIONSHIP|CONTAINS {to:9007199254740991}]->(propertyIdentity)-[propertyVersionRelationship:VERSION {to:9007199254740991}]->(propertyVersion:Version)'
-                    +' MATCH (contentTypeIdentity)-[:INSTANCE_OF]->(instanceType)-[:VERSION {to:9007199254740991}]->(instanceVersion:Version)'
-                    +' OPTIONAL MATCH (propertyIdentity)-[:ENUM]->(enumItemsParent)'
-                    +' OPTIONAL MATCH (contentTypeIdentity)-[:URL_ALIAS]->(urlAliasIdentity)'
-                    +' CALL apoc.map.setKey(contentTypeVersion, "versionRelationship", contentTypeVersionRelationship) yield value as contentTypeVersionObject'
-                    +' CALL apoc.map.setKey(contentTypeIdentity, "version", contentTypeVersionObject) yield value as contentTypeObject'
-                    +' CALL apoc.map.setKey(contentTypeObject, "contentType2", instanceVersion.identifier) yield value as contentTypeObject2'
-                    +' CALL apoc.map.setKey(contentTypeObject2, "urlAlias", urlAliasIdentity.name) yield value as contentTypeObject3'
-                    +' CALL apoc.map.setKey(propertyVersion, "versionRelationship", propertyVersionRelationship) yield value as propertyVersionObject'
-                    +' CALL apoc.map.setKey(propertyIdentity, "version", propertyVersionObject) yield value as property'
-                    +' CALL apoc.map.setKey(property, "enumItemsParent", enumItemsParent.uuid) yield value as property2'
-                    +' CALL apoc.map.setKey(property2, "urlAlias", urlAliasIdentity.name) yield value as property3'
-                    +' WITH contentTypeObject3, collect(property3) as properties'
-                    +' CALL apoc.map.setKey(contentTypeObject3, "properties", properties) yield value as contentTypeObject4'
-                    +' RETURN contentTypeObject4 as contentType'
-        return session
-            .run(query, options)
-            .then(result => {
-                var record = result.records[0];
-                if(!record) return;
-
-                var contentType = record.get('contentType'),
-                    properties = contentType.properties,
-                    propertiesTemp = {};
-
-                for (var i = 0; i < properties.length; i++) {
-                    propertiesTemp[properties[i].version.identifier] = properties[i].version;
-                };
-
-                contentType.properties = propertiesTemp;
-
-                session.close();
-                return done(contentType);
-            })
-            .catch(error => {
-                session.close();
-                console.log(error);
-                return done(error);
-                throw error;
-            });        
-    },
-
-    /** Get child content objects */
-    getProcess: function(req, res) {
-        var params = {
-            "id": req.param('id'),
-            "lang": req.param('lang') || "en-gb"
-        };
-        var versionMatch = "";
-
-        if(req.param('versionName')) {
-            var versionName = req.param('versionName');
-            versionMatch = " AND versionRel.versionName = " + versionName + " AND mxCellVersionRel.versionName = " + versionName;
-        } else if(req.param('versionValidityDate')) {
-            var versionValidityDate = parseInt(req.param('versionValidityDate'));
-            versionMatch = " AND versionRel.from <= " + versionValidityDate + " AND versionRel.to >= " + versionValidityDate + " AND mxCellVersionRel.from <= " + versionValidityDate + " AND mxCellVersionRel.to >= " + versionValidityDate;
-        } else {
-            versionMatch = " AND parentChildRel.to = 9007199254740991 AND versionRel.to = 9007199254740991 AND mxCellParentChildRel.to = 9007199254740991 AND mxCellVersionRel.to = 9007199254740991";
-        }
-        var query =   'MATCH (parentNode)-[parentChildRel:CONTAINS]->(identityNode)-[versionRel:VERSION]->(versionNode), (authorNode)-[createdRel:CREATED]->(identityNode)'
-                    +' MATCH (parentNode)-[mxCellParentChildRel:CONTAINS]->(mxCellIdentityNode:MxCell)<-[:HAS_MXCELL]-(identityNode)'
-                    +' MATCH (mxCellIdentityNode)-[mxCellVersionRel:VERSION]->(mxCellVersionNode)'
-                    +' WHERE parentNode.uuid = {id} AND versionRel.lang = {lang}'
-                    +  versionMatch
-                    +' RETURN '
-                    +' {'
-                    +' id: id(parentNode),'
-                    +' name: parentNode.name,'
-                    +' contentType: parentNode.contentType,'
-                    +' children: collect({'
-                    +'     id: id(identityNode),'
-                    +'     name: identityNode.name,'
-                    +'     contentType: identityNode.contentType,'
-                    +'     properties: versionNode,'
-                    +'     mxCell: {'
-                    +'         id: id(mxCellIdentityNode),'
-                    +'         name: mxCellIdentityNode.name,'
-                    +'         properties: mxCellVersionNode'
-                    +'     }'
-                    +' })'
-                    +' } AS result';
-        console.log(query);
-        var cb = function(err, data) {
-            if(err) {
-                console.log(err);
-            } else if(data[0]) {
-                console.log(data[0].result.children);
-                return res.json(data[0].result.children);
-            }
-        };
-        db.cypher({
-            query: query,
-            params: params
-        }, cb);
-    },
-
-
-    /**
-     * Create new content object (identityNode and versionNode)
-     */
-    create: function(options, done) {
-        var session = driver.session();
-        var properties = options.properties,
-            relationships = options.relationships
-            relationshipsStatement = '';
-        if(relationships.length) {
-            var matchRelated = ' MATCH ',
-                whereRelated = ' WHERE ',
-                createRelationships = '';
-            for (var i = relationships.length - 1; i >= 0; i--) {
-                console.log(relationships[i]);
-                var relationshipName = relationships[i].relationshipName.toUpperCase(),
-                    direction = relationships[i].direction,
-                    inboundSymbol = direction === 'inbound' ? '<' : '',
-                    outboundSymbol = direction === 'outbound' ? '>' : '',
-                    relatedNode = relationships[i].relatedNode,
-                    relatedNodeId = relatedNode.properties.uuid,
-                    relatedIdentifier = 'node' + relatedNodeId;
-                
-                matchRelated += '(' + relatedIdentifier + ')';
-                whereRelated += relatedIdentifier + '.uuid = ' + relatedNodeId;
-                if(i) {
-                    matchRelated += ', ';
-                    whereRelated += ', ';
-                } 
-                createRelationships += ' CREATE (childidentity)' + inboundSymbol + '-[:' + relationshipName + ' {from:timestamp(), to:9007199254740991}]-' + outboundSymbol + '(' + relatedIdentifier + ')';
-                //console.log(matchRelated);
-            };
-            relationshipsStatement = ' WITH parent, childidentity, childversion, urlAliasIdentity, urlAliasVersion, author' 
-                                     + matchRelated
-                                     + whereRelated 
-                                     + createRelationships;
-        }
-        //console.log(options);
-        var query =  // Match path from root to parent so we can use it later to create the URL alias.
-					 ' MATCH p = (a:Root)-[:CONTAINS*]->(parent)'
-					// Match on parent uuid and author uuid
-                    +' WHERE parent.uuid = {parentId}'
-                    // Create new identity and version
-                    +' CREATE (parent)-[:CONTAINS {from:timestamp(), to:9007199254740991, versionNumber:1, versionName:"Initial"}]->'
-                    +       '(childidentity:Identity:ContentObject {contentType:{contenttype}})'
-                    +       '-[:VERSION {from:timestamp(), to:9007199254740991, versionNumber:1, versionName:"Initial", lang:{lang}}]->'
-                    +       '(childversion:Version)'
-                    // Create URL alias identity and version
-                    +' CREATE (childidentity)-[:URL_ALIAS {from:timestamp(), to:9007199254740991, versionNumber:1, versionName:"Initial"}]->'
-                    +       '(urlAliasIdentity:Identity:UrlAlias {contentType:"urlAlias"})'
-                    +       '-[:VERSION {from:timestamp(), to:9007199254740991, versionNumber:1, versionName:"Initial", lang:{lang}}]->'
-                    +       '(urlAliasVersion:Version)'
-                    // Set properties
-                    +' SET childidentity:' + ContentService.pascalize(options.contenttype) 
-                    +' SET childversion = {properties}'
-                    +' SET childidentity.name = ' + options.identityNamePattern
-
-                    +' WITH parent, childidentity, childversion, urlAliasIdentity, urlAliasVersion, reduce(urlAlias = "", n IN nodes(p)| urlAlias + "/" + replace(n.name," ", "-") + "/" + replace(childversion.name," ", "-")) AS urlAlias'
-                    +' MATCH (author)'
-                    +' WHERE author.uuid = {authorId}'
-                    // Create relationshps from author to identity nodes and version nodes
-                    +' CREATE (author)-[:CREATED {timestamp:timestamp()}]->(childidentity)'
-                    +' CREATE (author)-[:CREATED {timestamp:timestamp()}]->(childversion)'
-                    +' CREATE (author)-[:CREATED {timestamp:timestamp()}]->(urlAliasIdentity)'
-                    +' CREATE (author)-[:CREATED {timestamp:timestamp()}]->(urlAliasVersion)'
-                    // Set URL Alias
-                    +' SET urlAliasIdentity.name = urlAlias'
-                    +' SET urlAliasVersion.urlAlias = urlAlias'
-                    // Set uuids
-                    +' WITH parent, childidentity, childversion, urlAliasIdentity, urlAliasVersion, author'
-                    +' CALL apoc.create.uuids(4) YIELD uuid'
-                    +' WITH parent, childidentity, childversion, urlAliasIdentity, urlAliasVersion, author, collect(uuid) as uuids'
-                    +' SET childidentity.uuid = uuids[0]'
-                    +' SET childversion.uuid = uuids[1]'
-                    +' SET urlAliasIdentity.uuid = uuids[2]'
-                    +' SET urlAliasVersion.uuid = uuids[3]'
-
-                    // Create relationships if there are any
-                    +  relationshipsStatement
-
-                    // Create relationship to content type
-                    +' WITH parent, childidentity, childversion, urlAliasIdentity, urlAliasVersion, author'
-                    +' MATCH (contentType:ContentType)-[:VERSION {to:9007199254740991}]->(contentTypeVersion)'
-                    +' WHERE contentTypeVersion.identifier = {contenttype}'
-                    +' CREATE (childidentity)-[:INSTANCE_OF]->(contentType)'
-
-                    // Return results
-                    +' RETURN parent, childidentity, childversion, urlAliasIdentity, urlAliasVersion, author';
-        return session
-            .run(query, options)
-            .then(result => {
-                session.close();
-                var record = result.records[0];
-                console.log(record.get('childidentity'));
-                console.log(record.get('childversion'));
-                return done({
-                    'parent': record.get('parent'),
-                    'identityNode': record.get('childidentity'), 
-                    'versionNode': record.get('childversion'),
-                    'authorNode': record.get('author'),
-                    'urlAliasIdentity': record.get('urlAliasIdentity'),
-                    'urlAliasVersion': record.get('urlAliasVersion')
-                });
-            })
-            .catch(error => {
-                session.close();
-                console.log(error);
-                return done(error);
-                throw error;
-            });
-    },
-
-    /**
-     * Create new relationship
-     */
-    createRelationship: function(req, res) {
-        //console.log(req.body);
-        var query =   'MATCH (from), (to)'
-                    +' WHERE id(from)={fromId} AND id(to)={toId}'
-                    +' CREATE from-[r:' 
-                    + req.body.relationshipName.split(' ').join('_').toUpperCase()
-                    + ' {from:timestamp(), to:9007199254740991, versionNumber:1, versionName:"Initial"}]->to'
-                    +' RETURN from, r, to';
-        var params = {
-            "fromId": req.body.direction === 'Inbound' ? parseInt(req.body.relatedNodeId) : parseInt(req.body.referenceNodeId),
-            "relationshipName": req.body.relationshipName.split(' ').join('_').toUpperCase(),
-            "toId": req.body.direction === 'Outbound' ? parseInt(req.body.relatedNodeId) : parseInt(req.body.referenceNodeId)
-        };
-        var cb = function(err, data) {
-            //console.log(err);
-            //console.log(data);
-            return res.json(data);
-        };
-        db.cypher({
-            query: query, 
-            params: params
-        }, cb);
-    },
-
-    /**
-    * update content object (new versionNode)
-    */
-    update: function(options, done) {
-        var session = driver.session();
-        var properties = options.properties,
-            relationships = options.relationships
-            relationshipsStatement = '';
-        if(relationships.length) {
-            var matchRelated = ' MATCH ',
-                whereRelated = ' WHERE ',
-                createRelationships = '';
-            for (var i = relationships.length - 1; i >= 0; i--) {
-                console.log(relationships[i]);
-                var relationshipName = relationships[i].relationshipName.toUpperCase(),
-                    direction = relationships[i].direction,
-                    inboundSymbol = direction === 'inbound' ? '<' : '',
-                    outboundSymbol = direction === 'outbound' ? '>' : '',
-                    relatedNode = relationships[i].relatedNode,
-                    relatedNodeId = relatedNode.properties.uuid,
-                    relatedIdentifier = 'node' + relatedNodeId;
-                
-                matchRelated += '(' + relatedIdentifier + ')';
-                whereRelated += relatedIdentifier + '.uuid = ' + relatedNodeId;
-                if(i) {
-                    matchRelated += ', ';
-                    whereRelated += ', ';
-                } 
-                createRelationships += ' CREATE (identitynode)' + inboundSymbol + '-[:' + relationshipName + ' {from:timestamp(), to:9007199254740991}]-' + outboundSymbol + '(' + relatedIdentifier + ')';
-                //console.log(matchRelated);
-            };
-            relationshipsStatement = ' WITH identitynode, currentversion, newversion, urlAliasIdentity, newUrlAliasVersion, author' 
-                                     + matchRelated
-                                     + whereRelated 
-                                     + createRelationships;
-        }
-        //console.log(options);
-        var query = 
-                    // UPDATE (CONTENT) - Add a Version node
-                      ' MATCH (identitynode)-[currentversionrelationship:VERSION {to:9007199254740991}]->(currentversion)'
-                    + ' WHERE identitynode.uuid = {id} AND currentversionrelationship.lang = {lang}'
-                    // Update the current version relationship to end validity
-                    + ' SET currentversionrelationship.to = timestamp()'
-                    // Create the new version relationship and node
-                    + ' CREATE identitynode-[newversionrelationship:VERSION {from:timestamp(), to:9007199254740991}]->(newversion:Version)'
-                    // Set new version relationship properties
-                    + ' SET newversionrelationship.versionNumber = toInt(currentversionrelationship.versionNumber) + 1'
-                    + ' SET newversionrelationship.versionName = {versionName}'
-                    + ' SET newversionrelationship.lang = currentversionrelationship.lang'
-                    // Set new version node properties
-                    + ' SET newversion = {properties}'
-                    //... update more newversion properties
-                    // Update the identity node
-                    + ' SET identitynode.name = ' + identityNamePattern
-                    // Create a previous relationship from the new version to the previous version
-                    + ' CREATE newversion-[:PREVIOUS]->currentversion'
-
-                    // Create new URL alias version
-                    // Match path from root to parent so we can use it later to create the URL alias.
-                    +' MATCH p = (a:Root)-[:CONTAINS*]->(identitynode)'
-                    +' MATCH (identitynode)-[:URL_ALIAS {to:9007199254740991}]->(urlAliasIdentity:Identity:UrlAlias)'
-                    +       '-[currentUrlAliasVersionRelationship:VERSION {to:9007199254740991}]->(currentUrlAliasVersion:Version)'
-                    +' SET currentUrlAliasVersionRelationship.to = timestamp()'
-                    +' CREATE (urlAliasIdentity)-[:VERSION {from:timestamp(), to:9007199254740991, lang:{lang}}]->(newUrlAliasVersion:Version)'
-                    +' SET newUrlAliasVersion.versionNumber = toInt(currentUrlAliasVersion.versionNumber) + 1'
-                    +' CREATE newUrlAliasVersion-[:PREVIOUS]->currentUrlAliasVersion'
-
-                    +' WITH identitynode, currentversion, newversion, urlAliasIdentity, newUrlAliasVersion, reduce(urlAlias = "", n IN nodes(p)| urlAlias + "/" + replace(n.name," ", "-") + "/" + replace(newversion.name," ", "-")) AS urlAlias'
-                    +' MATCH (author)'
-                    +' WHERE author.uuid = {authorId}'
-                    // Create relationshps from author to version nodes
-                    +' CREATE (author)-[:CREATED {timestamp:timestamp()}]->(newversion)'
-                    +' CREATE (author)-[:CREATED {timestamp:timestamp()}]->(newUrlAliasVersion)'
-                    // Set URL Alias
-                    +' SET newUrlAliasVersion.urlAlias = urlAlias'
-                    // Set uuids
-                    +' WITH identitynode, currentversion, newversion, urlAliasIdentity, newUrlAliasVersion, author'
-                    +' CALL apoc.create.uuids(2) YIELD uuid'
-                    +' WITH identitynode, currentversion, newversion, urlAliasIdentity, newUrlAliasVersion, author, collect(uuid) as uuids'
-                    +' SET newversion.uuid = uuids[0]'
-                    +' SET newUrlAliasVersion.uuid = uuids[1]'
-
-                    // Create relationships if there are any
-                    +  relationshipsStatement
-
-                    // Return results
-                    +' RETURN identitynode, currentversion, newversion, urlAliasIdentity, newUrlAliasVersion, author';
-        return session
-            .run(query, options)
-            .then(result => {
-                session.close();
-                var record = result.records[0];
-                console.log(record.get('childversion'));
-                return done({
-                    'parent': record.get('parent'),
-                    'identityNode': record.get('childidentity'), 
-                    'versionNode': record.get('childversion'),
-                    'authorNode': record.get('author'),
-                    'urlAliasIdentity': record.get('urlAliasIdentity'),
-                    'urlAliasVersion': record.get('urlAliasVersion')
-                });
-            })
-            .catch(error => {
-                session.close();
-                console.log(error);
-                return done(error);
-                throw error;
-            });
-    },
-
-    /**
-     * Delete a content object (end version validity)
-     */
-    delete: function(req, res) {
-
-        var query =  'MATCH (child)<-[relationship:CONTAINS {to:9007199254740991}]-(parent)'
-                    +' WHERE child.uuid = {id}'
-                    +' SET relationship.to = timestamp()'
-                    +' RETURN parent, child';
-        var params = {
-            "id": req.param('id')
-        };
-        
-        var cb = function(err, data) {
-            console.log(err);
-            console.log("delete: "+req.param('id'));
-            console.log(data);
-            return res.json(data);
-        };
-        db.cypher({
-            query: query, 
-            params: params
-        }, cb);
-    },
-
-    /** Move a content object (end validity of old location relationship and create new location relationship) */
-    move: function(req, res) {
-
-    },
-
-    /** Add content object to an additional location (create new location relationship) */
-    addLocation: function(req, res) {
-
-    },
 
     // Utilies
     separateWords: function(string, options) {

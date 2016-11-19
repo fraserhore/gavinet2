@@ -111,6 +111,12 @@ module.exports.routes = {
     skipAssets: true
   },  
 
+  '/content/update': {
+    controller: 'Content',
+    action: 'update',
+    skipAssets: true
+  },  
+
   '/content/delete': {
     controller: 'Content',
     action: 'delete',

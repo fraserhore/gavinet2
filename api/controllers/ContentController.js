@@ -656,9 +656,13 @@ module.exports = {
     */
     update: function(req, res) {
         var options = {
-                "lang": req.body.lang,
+                "id": req.body.id,
+                "authorId": req.body.authorId,
+                "lang": req.body.lang || "en-gb",
                 "properties": req.body.properties,
-                "relationships": req.body.relationships
+                "relationships": req.body.relationships,
+                "versionName": req.body.versionName || "",
+                "identityNamePattern": req.body.identityNamePattern ? req.body.identityNamePattern : 'newversion.' + (req.body.properties.name ? 'name' : req.body.properties.title ? 'title' : req.body.properties.term ? 'term' : req.body.properties.identifier ? 'identifier' : 'name')
             };
         console.log(options);
         ContentService.update(options, function(done){return res.json(done)});       
