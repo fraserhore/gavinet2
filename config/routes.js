@@ -57,81 +57,112 @@ module.exports.routes = {
   //   skipAssets: false
   // },
 
-  '/content/getChildren/:id': {
-    controller: 'Content',
+  'GET /content/getChildren/:id': {
+    controller: 'ContentController',
     action: 'getChildren',
-    skipAssets: true
+    skipAssets: true,
+    //swagger path object
+    swagger: {
+        methods: ['GET', 'POST'],
+        summary: ' Get Children ',
+        description: 'Get Children of the current node',
+        produces: [
+            'application/json'
+        ],
+        tags: [
+            'Children'
+        ],
+        responses: {
+            '200': {
+                description: 'List of Children',
+                schema: 'Group', // api/model/Group.js,
+                type: 'array'
+            }
+        },
+        parameters: []
+
+    }
   },
 
-  '/content/getNodeData': {
-    controller: 'Content',
+  'GET /content/getNodeData': {
+    controller: 'ContentController',
     action: 'getNodeData',
     skipAssets: true
   },
 
-  '/content/getContent/:id': {
-    controller: 'Content',
+  'GET /content/getContent/:id': {
+    controller: 'ContentController',
     action: 'getContent',
     skipAssets: true
   },
 
-  '/content/getParent/:id': {
-    controller: 'Content',
+  'GET /content/getParent/:id': {
+    controller: 'ContentController',
     action: 'getParent',
     skipAssets: true
   },
 
-  '/content/getSiblings/:id': {
-    controller: 'Content',
+  'GET /content/getSiblings/:id': {
+    controller: 'ContentController',
     action: 'getSiblings',
     skipAssets: true
   },
 
-  '/content/getViewTemplateOverrides': {
-    controller: 'Content',
+  'GET /content/getViewTemplateOverrides': {
+    controller: 'ContentController',
     action: 'getViewTemplateOverrides',
     skipAssets: true
   },
 
-  '/content/getContentTypeSchema': {
-    controller: 'Content',
+  'GET /content/getContentTypeSchema': {
+    controller: 'ContentController',
     action: 'getContentTypeSchema',
     skipAssets: true
   },  
 
-  '/content/getContentTypes': {
-    controller: 'Content',
+  'GET /content/getContentTypes': {
+    controller: 'ContentController',
     action: 'getContentTypes',
     skipAssets: true
   },  
 
-  '/content/create': {
-    controller: 'Content',
+  'POST /content/create': {
+    controller: 'ContentController',
     action: 'create',
     skipAssets: true
   },  
 
-  '/content/update': {
-    controller: 'Content',
+  'POST /content/update': {
+    controller: 'ContentController',
     action: 'update',
     skipAssets: true
   },  
 
-  '/content/delete': {
-    controller: 'Content',
+  'POST /content/delete': {
+    controller: 'ContentController',
     action: 'delete',
     skipAssets: true
   },  
 
-  'get /login': {
+  'GET /swagger/doc': {
+    controller: 'SwaggerController',
+    action: 'doc',
+    skipAssets: true
+  },
+
+  'GET /docs/api': {
+    skipAssets: true
+  },
+
+  'GET /login': {
        view: 'login'
   },
 
-  'post /login': 'AuthController.login',
+  'POST /login': 'AuthController.login',
 
   '/logout': 'AuthController.logout',
 
-  'get /signup': {
+  'GET /signup': {
     view: 'signup'
   },
 
@@ -139,7 +170,7 @@ module.exports.routes = {
       //view: 'homepage'
       //view: 'index',
       locals:{layout: false,}, // set to false in case layout not set to false in views.js
-      controller: 'Content',
+      controller: 'ContentController',
       action: 'view',
       skipAssets: true
     },
