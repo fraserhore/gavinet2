@@ -9,6 +9,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 -->
 
 <link rel="import" href="../bower_components/polymer/polymer.html">
+<link rel="import" href="../bower_components/iron-ajax/iron-ajax.html">
 <link rel="import" href="../bower_components/app-layout/app-drawer/app-drawer.html">
 <link rel="import" href="../bower_components/app-layout/app-drawer-layout/app-drawer-layout.html">
 <link rel="import" href="../bower_components/app-layout/app-header/app-header.html">
@@ -21,6 +22,8 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 <link rel="import" href="../bower_components/iron-selector/iron-selector.html">
 <link rel="import" href="../bower_components/paper-icon-button/paper-icon-button.html">
 <link rel="import" href="../bower_components/iron-localstorage/iron-localstorage.html">
+<link rel="import" href="content-full/content-full.html">
+<link rel="import" href="content-left-menu/content-left-menu.html">
 <link rel="import" href="app-data.html">
 <link rel="import" href="log-out.html">
 <link rel="import" href="register-login.html">
@@ -126,7 +129,8 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
         <div class="card">
 
-          <content-full name="view1" view-template="content-full"></content-full>
+          <!-- <content-full name="view1" view-template="content-full"></content-full> -->
+          <template-match id="contentFull" view-template="content-full"></template-match>
           <register-login name="register-login"></register-login>
 
         </div>
@@ -147,7 +151,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       ],
 
       _updatedNodeData: function() {
-         // console.log(this.nodeData);
+         console.log(this.nodeData);
         // this.set('app.identityNode', this.nodeData.identityNode);
         // this.set('app.version', this.nodeData.version);
         // this.set('app.versionNode', this.nodeData.versionNode);

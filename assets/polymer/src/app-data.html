@@ -34,7 +34,9 @@
                     }
                 },
                 _data_changed: function(newvalue, oldvalue) {
+                    console.log(newvalue);
                     key = this.getAttribute('key');
+                    console.log(key);
                     if (!key) {
                         throw('_data_changed: app-data element requires key');
                     }

@@ -80,6 +80,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
                     //console.log('ready: no overrides, get them');
                     this.$.getViewTemplateOverrides.generateRequest();
                 }
+                //console.log('viewTemplate: '+this.viewTemplate);
                 this.currentViewTemplate = this.viewTemplate;
             },
 
@@ -92,7 +93,8 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
                     return;
                 }
                 if (!this.nodeData.identityNode) {
-                    //console.log('createElement: no identityNode yet');
+                    console.log('createElement: no identityNode yet');
+                    console.log(this.nodeData);
                     return;
                 }
                 var el,
