@@ -131,7 +131,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         </app-header>
 
         <div class="card">
-          <h3>Node id: [[nodeData.identityNode.properties.uuid]]</h3>
+          <!-- <h3>Node id: [[nodeData.identityNode.properties.uuid]]</h3>
           <h3>You have [[friendCount]] friends!</h3>
           <input id="field" type="text"/>
           <button on-tap="addFriend">Add Friend</button>
@@ -139,7 +139,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
             <template is="dom-repeat" items="[[friends]]" as="friend">
               <li>[[friend]]</li>
             </template>
-          </ul>
+          </ul> -->
           <!-- <content-full name="view1" view-template="content-full"></content-full> -->
           <template-match id="contentFull" view-template="content-full"></template-match>
           <register-login name="register-login"></register-login>
@@ -200,7 +200,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       ],
 
       _updatedNodeData: function() {
-         console.log(this.nodeData);
+        // console.log(this.nodeData);
         // this.set('app.identityNode', this.nodeData.identityNode);
         // this.set('app.version', this.nodeData.version);
         // this.set('app.versionNode', this.nodeData.versionNode);
@@ -208,7 +208,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         // this.set('app.lang', this.nodeData.lang);
         // this.set('app.schema', this.nodeData.schema);
         // this.set('app', this.nodeData);
-        this.set('nodeData', this.nodeData);
+        // this.set('nodeData', this.nodeData);
         this.dispatch('loadNodeDataAction', this.nodeDataResponse);
       },
 

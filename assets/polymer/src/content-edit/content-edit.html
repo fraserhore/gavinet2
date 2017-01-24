@@ -269,8 +269,8 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       },
 
       _updateProperty: function(event) {
-        //console.log(event.model.property.key);
-        if(!event.detail.value) return;
+        //console.log(event.model.property);
+        if(!event.detail.value || !event.model.property) return;
         this.set(['formData', 'properties', event.model.property.key], event.detail.value);
         //this.formData.properties[event.model.item.key] = event.detail.value;
       },

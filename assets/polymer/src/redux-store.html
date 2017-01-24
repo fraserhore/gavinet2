@@ -2,7 +2,8 @@
 
 <script>
     const initialState = {
-        friends: ['Rod', 'Shelby']
+        friends: ['Rod', 'Shelby'],
+        overrides: []
     };
 
     const reducer = (state, action) => {
@@ -15,6 +16,9 @@
 
             case 'LOAD_NODE_DATA' :
                 return Object.assign({}, state, {nodeData: action.nodeData});
+
+            case 'LOAD_OVERRIDES' :
+                return Object.assign({}, state, {overrides: action.overrides});
         }
     };
 

@@ -21,7 +21,7 @@
                 created: function() {
                     key = this.getAttribute('key');
                     if (!key) {
-                        console.log(this);
+                        //console.log(this);
                         throw('app-data element requires key');
                     }
                     instances.push({key:key, instance:this});
@@ -34,9 +34,9 @@
                     }
                 },
                 _data_changed: function(newvalue, oldvalue) {
-                    console.log(newvalue);
+                    //console.log(newvalue);
                     key = this.getAttribute('key');
-                    console.log(key);
+                    //console.log(key);
                     if (!key) {
                         throw('_data_changed: app-data element requires key');
                     }

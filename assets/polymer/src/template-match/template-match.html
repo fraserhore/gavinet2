@@ -8,12 +8,9 @@ Code distributed by Google as part of the polymer project is also
 subject to an additional IP rights grant found at http://polymer.github.io/PATENTS.txt
 -->
 <link rel="import" href="/polymer/bower_components/polymer/polymer.html">
-<link rel="import" href="/polymer/src/app-data.html">
 
 <dom-module id="template-match">
     <template>
-        <app-data key="viewTemplateOverrides" data="{{viewTemplateOverrides}}"></app-data>
-        <!-- <app-data key="nodeData" data="{{nodeData}}"></app-data> -->
         <iron-ajax 
             id="getViewTemplateOverrides" 
             url="/content/getViewTemplateOverrides" 
@@ -31,13 +28,19 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         Polymer({
             is: 'template-match',
             behaviors: [ ReduxBehavior ],
+            actions: {
+                loadOverridesAction: function(overrides) {
+                    return {
+                        type: 'LOAD_OVERRIDES',
+                        overrides: overrides
+                    }
+                }
+            },
             properties: {
                 overrides: {
                     type: Object,
-                    value: function() {
-                        return {};
-                    },
-                    notify: true
+                    statePath: 'overrides',
+                    observer: '_appChanged'
                 },
                 app: {
                     type: Object,
@@ -55,21 +58,13 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
                 nodeData: {
                   type: Object,
                   statePath: 'nodeData',
-                  observer: 'appChanged'
+                  observer: '_appChanged'
                 }
-            },
-
-            observers: [
-                //'_identityNodeChanged(app.identityNode)'
-            ],
-
-            _identityNodeChanged: function() {
-                // console.log('identityNode changed');
-                //this.createElement();
             },
 
             _appChanged: function() {
                 console.log('app changed');
+                //console.log(this.nodeData);
                 this.createElement();
             },
 
@@ -77,12 +72,13 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
                 //console.log('update this.viewTemplateOverrides: ');
                 // this.app.viewTemplateOverrides = this.viewTemplateOverrides;
                 //console.log(this.app.viewTemplateOverrides);
-                this.createElement();
+                this.dispatch('loadOverridesAction', this.viewTemplateOverrides);
+                //this.createElement();
             },
 
             ready: function() {
                 // Get view template overrides if they are not already in the app object
-                if (!this.viewTemplateOverrides) {
+                if (!this.overrides.length) {
                     //console.log('ready: no overrides, get them');
                     this.$.getViewTemplateOverrides.generateRequest();
                 }
@@ -92,15 +88,9 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
             createElement: function() {
                 //console.log('create Element starting');
-                if (!this.viewTemplateOverrides) {
-                    //console.log('createElement: no overrides, get them');
-                    //console.log(this.viewTemplateOverrides);
-                    this.$.getViewTemplateOverrides.generateRequest();
-                    return;
-                }
                 if (!this.nodeData) {
-                    console.log('createElement: no identityNode yet');
-                    console.log(this.nodeData);
+                    //console.log('createElement: no identityNode yet');
+                    //console.log(this.nodeData);
                     return;
                 }
                 var el,
@@ -112,8 +102,8 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
                 if(!viewTemplateOverride) {
                     viewTemplateOverride = this.viewTemplate;
                 }
-                // console.log('this.currentViewTemplate: ' + this.currentViewTemplate);
-                // console.log('viewTemplateOverride: ' + viewTemplateOverride);
+                //console.log('this.currentViewTemplate: ' + this.currentViewTemplate);
+                //console.log('viewTemplateOverride: ' + viewTemplateOverride);
 
                 if(this.currentViewTemplate !== viewTemplateOverride || !this.$.template.firstChild) {
                     // Remove the first child if there is one
@@ -122,6 +112,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
                         this.$.template.removeChild(this.$.template.firstChild);
                     }
                     //console.log('creating child');
+                    //console.log('Override: '+viewTemplateOverride);
                     props['app'] = this.app;
                     props['identityNodeId'] = this.nodeData.identityNode.properties.uuid;
                     el = Polymer.Base.create(viewTemplateOverride, props);
@@ -129,28 +120,36 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
                     this.currentViewTemplate = viewTemplateOverride;
                 } else {
                     //this.$.template.firstChild.notifyPath('app.identityNode');
-                    this.$.template.firstChild.refresh();
+                    //this.$.template.firstChild.refresh();
                 }
             },
 
             getViewTemplate: function() {
                 var viewTemplate = this.viewTemplate,
-                    overrides = this.viewTemplateOverrides;
-
+                    overrides = this.overrides;
+                console.log(overrides);
                 var viewTemplateOverride = "";
                 for (var i = 0; i < overrides.length; i++) {
                     var source = overrides[i].Override.properties.source,
                         matchFile = overrides[i].Override.properties.matchFile,
                         contentTypeIdentifier = overrides[i].Override.properties.contentTypeIdentifier,
                         identityNodeId = overrides[i].Override.properties.identityNodeId;
+                    
+                    console.log('viewTemplate: '+viewTemplate);
+                    console.log('source: '+source);
+                    console.log('contentTypeIdentifier: '+contentTypeIdentifier);
+                    console.log('identityNode.contentType: '+this.nodeData.identityNode.properties.contentType);
+                    console.log('matchFile: '+matchFile);
 
-                    if (viewTemplate === source) {
+                    if (viewTemplate === source) {                        
                         if (identityNodeId === this.nodeData.identityNode.properties.uuid ||
                             contentTypeIdentifier === this.nodeData.identityNode.properties.contentType) {
+                            console.log('Match');
                             viewTemplateOverride = matchFile;
                         }
                     }
                 };
+                console.log(viewTemplateOverride);
                 return viewTemplateOverride;
             }
 
