@@ -24,7 +24,8 @@
     "molecules": "PolymerElements/molecules#^1.0.0",
     "gold-elements": "PolymerElements/gold-elements#^1.0.1",
     "moment-element": "^0.4.1",
-    "vaadin-core-elements": "^1.1.2"
+    "vaadin-core-elements": "^1.1.2",
+    "polymer-redux": "^0.3.0"
   },
   "devDependencies": {
     "web-component-tester": "^4.0.0"

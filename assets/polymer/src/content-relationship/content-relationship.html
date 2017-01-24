@@ -19,7 +19,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       }
     </style>
 
-    <app-data key="nodeData" data="{{nodeData}}"></app-data>
+    <!-- <app-data key="nodeData" data="{{nodeData}}"></app-data> -->
     <app-data key="formData" data="{{formData}}"></app-data>
 
     <iron-ajax
@@ -82,7 +82,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
     Polymer({
       is: 'content-relationship',
-
+      behaviors: [ ReduxBehavior ],
       properties: {
         relationshipName: {
           type: String,
@@ -103,7 +103,11 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
           },
           notify: true,
           reflectToAttribute: true
-          }
+        },
+        nodeData: {
+          type: Object,
+          statePath: 'nodeData'
+        }
       },
 
       ready: function() {

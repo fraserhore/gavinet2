@@ -13,7 +13,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 <dom-module id="template-match">
     <template>
         <app-data key="viewTemplateOverrides" data="{{viewTemplateOverrides}}"></app-data>
-        <app-data key="nodeData" data="{{nodeData}}"></app-data>
+        <!-- <app-data key="nodeData" data="{{nodeData}}"></app-data> -->
         <iron-ajax 
             id="getViewTemplateOverrides" 
             url="/content/getViewTemplateOverrides" 
@@ -30,7 +30,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
         Polymer({
             is: 'template-match',
-
+            behaviors: [ ReduxBehavior ],
             properties: {
                 overrides: {
                     type: Object,
@@ -51,6 +51,11 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
                 viewTemplate: {
                     type: String,
                     value: 'content-full'
+                },
+                nodeData: {
+                  type: Object,
+                  statePath: 'nodeData',
+                  observer: 'appChanged'
                 }
             },
 
@@ -64,7 +69,8 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
             },
 
             _appChanged: function() {
-                //console.log('app changed');
+                console.log('app changed');
+                this.createElement();
             },
 
             _updateViewTemplateOverrides: function() {
@@ -92,7 +98,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
                     this.$.getViewTemplateOverrides.generateRequest();
                     return;
                 }
-                if (!this.nodeData.identityNode) {
+                if (!this.nodeData) {
                     console.log('createElement: no identityNode yet');
                     console.log(this.nodeData);
                     return;

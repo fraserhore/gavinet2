@@ -1,0 +1,21 @@
+<link rel="import" href="../bower_components/polymer/polymer.html">
+
+<script>
+    const initialState = {
+        friends: []
+    };
+
+    const reducer = (state, action) => {
+        if(!state) return initialState;
+        switch (action.type) {
+            case 'ADD_FRIEND' : 
+                const friends = state.friends.slice(0);
+                friends.push(action.friend);
+                return Object.assign({}, state, {friends: friends})
+        }
+    };
+
+    const store = Redux.createStore(reducer);
+    const ReduxBehavior = PolymerRedux(store);
+
+</script>

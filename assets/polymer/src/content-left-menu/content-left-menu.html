@@ -9,7 +9,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 -->
 
 <link rel="import" href="/polymer/bower_components/polymer/polymer.html">
-<link rel="import" href="/polymer/src/app-data.html">
+<!-- <link rel="import" href="/polymer/src/app-data.html"> -->
 
 <dom-module id="content-left-menu">
   <template>
@@ -41,7 +41,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
     }
     </style>
 
-    <app-data key="nodeData" data="{{nodeData}}"></app-data>
+    <!-- <app-data key="nodeData" data="{{nodeData}}"></app-data> -->
 
     <iron-ajax
         id="getSiblings"
@@ -80,13 +80,17 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
     Polymer({
       is: 'content-left-menu',
-
+      behaviors: [ ReduxBehavior ],
       properties: {
         app: {
           type: Object,
           value: function() { return {}; },
           notify: true,
           reflectToAttribute: true
+        },
+        nodeData: {
+          type: Object,
+          statePath: 'nodeData'
         }
       },
 

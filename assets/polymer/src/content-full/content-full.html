@@ -1,6 +1,7 @@
 <link rel="import" href="/polymer/bower_components/polymer/polymer.html">
 <link rel="import" href="/polymer/bower_components/iron-localstorage/iron-localstorage.html">
-<link rel="import" href="/polymer/src/app-data.html">
+<!-- <link rel="import" href="/polymer/src/app-data.html"> -->
+<link rel="import" href="../redux-store.html">
 
 <dom-module id="content-full">
     <template>
@@ -10,7 +11,7 @@
         }
         </style>
 
-        <app-data key="nodeData" data="{{nodeData}}"></app-data>
+        <!-- <app-data key="nodeData" data="{{nodeData}}"></app-data> -->
         <!-- <app-data key="formData" data="{{formData}}"></app-data> -->
 
         <iron-ajax id="getContentTypes"
@@ -76,9 +77,13 @@
 
         Polymer({
             is: 'content-full',
-
+            behaviors: [ ReduxBehavior ],
             properties: {
-                storedUser: Object
+                storedUser: Object,
+                nodeData: {
+                  type: Object,
+                  statePath: 'nodeData'
+                }
             },
 
             listeners: {

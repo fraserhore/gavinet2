@@ -9,7 +9,7 @@
       }
     </style>
 
-    <app-data key="nodeData" data="{{nodeData}}"></app-data>
+    <!-- <app-data key="nodeData" data="{{nodeData}}"></app-data> -->
 
     <iron-ajax
       id="getChildren"
@@ -66,7 +66,7 @@
 
     Polymer({
       is: 'content-children-grid',
-
+      behaviors: [ ReduxBehavior ],
       properties: {
         identityNodeId: {
           type: Number,
@@ -78,6 +78,10 @@
           type: Number,
           value: undefined,
           notify: true
+        },
+        nodeData: {
+          type: Object,
+          statePath: 'nodeData'
         }
 
       },
