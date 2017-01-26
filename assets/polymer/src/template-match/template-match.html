@@ -63,7 +63,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
             },
 
             _appChanged: function() {
-                console.log('app changed');
+                //console.log('app changed');
                 //console.log(this.nodeData);
                 this.createElement();
             },
@@ -127,7 +127,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
             getViewTemplate: function() {
                 var viewTemplate = this.viewTemplate,
                     overrides = this.overrides;
-                console.log(overrides);
+                //console.log(overrides);
                 var viewTemplateOverride = "";
                 for (var i = 0; i < overrides.length; i++) {
                     var source = overrides[i].Override.properties.source,
@@ -135,11 +135,11 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
                         contentTypeIdentifier = overrides[i].Override.properties.contentTypeIdentifier,
                         identityNodeId = overrides[i].Override.properties.identityNodeId;
                     
-                    console.log('viewTemplate: '+viewTemplate);
-                    console.log('source: '+source);
-                    console.log('contentTypeIdentifier: '+contentTypeIdentifier);
-                    console.log('identityNode.contentType: '+this.nodeData.identityNode.properties.contentType);
-                    console.log('matchFile: '+matchFile);
+                    // console.log('viewTemplate: '+viewTemplate);
+                    // console.log('source: '+source);
+                    // console.log('contentTypeIdentifier: '+contentTypeIdentifier);
+                    // console.log('identityNode.contentType: '+this.nodeData.identityNode.properties.contentType);
+                    // console.log('matchFile: '+matchFile);
 
                     if (viewTemplate === source) {                        
                         if (identityNodeId === this.nodeData.identityNode.properties.uuid ||
@@ -149,7 +149,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
                         }
                     }
                 };
-                console.log(viewTemplateOverride);
+                //console.log(viewTemplateOverride);
                 return viewTemplateOverride;
             }
 

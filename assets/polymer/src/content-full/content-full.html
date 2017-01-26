@@ -20,24 +20,18 @@
             params=''
             handle-as="json"
             last-response="{{contenttypes}}"
-            debounce-duration="300">
-        </iron-ajax>
-        <iron-ajax 
-            id="getContent" 
+            debounce-duration="300"></iron-ajax>
+        <iron-ajax id="getContent" 
             url="/content/getContent/{{nodeData.identityNode.properties.uuid}}" 
             params={} 
             handle-as="json" 
             last-response="{{content}}" 
             on-response="_refreshContent" 
-            debounce-duration="300">
-        </iron-ajax>
-        <iron-ajax 
-            id="deleteRequest" 
-            url="" h
-            andle-as="json" 
+            debounce-duration="300"></iron-ajax>
+        <iron-ajax id="deleteRequest" 
+            url="" handle-as="json" 
             on-response="deleteResponse" 
-            debounce-duration="300">
-        </iron-ajax>
+            debounce-duration="300"></iron-ajax>
 
         <h1>{{nodeData.identityNode.properties.name}}</h1>
         <div>{{nodeData.versionNode.properties.description}}</div>
