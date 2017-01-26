@@ -22,7 +22,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
     <iron-ajax
       id="getChildren"
       auto
-      url="/content/getProcess/{{identityNodeId}}?versionValidityDate={{versionValidityDate}}"
+      url="/content/getChildren/{{nodeData.identityNode.properties.uuid}}?versionValidityDate={{nodeData.versionValidityDate}}"
       params=''
       handle-as="json"
       last-response="{{children}}"
@@ -73,7 +73,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
     Polymer({
       is: 'content-process-editor',
-
+      behaviors: [ ReduxBehavior ],
       properties: {
         identityNodeId: {
           type: Number,
@@ -85,6 +85,11 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
           type: Number,
           value: undefined,
           notify: true
+        },
+
+        nodeData: {
+          type: Object,
+          statePath: 'nodeData'
         }
 
       },
@@ -148,7 +153,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
       _updateChildren: function(event) {
         //this.main(this.$.graph);
-        this.mxApplication('/polymer-starter-kit/app/elements/mxgraph-import/mxgraph/config/diagrameditor.xml');
+        this.mxApplication('/polymer/src/mxgraph-import/mxgraph/config/diagrameditor.xml');
       },
 
       // Program starts here. Creates a sample graph in the
@@ -165,12 +170,12 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         
 
         // Load the configuration (e.g. stylesheet)
-        // var configReq = mxUtils.load('/polymer-starter-kit/app/elements/mxgraph-import/mxgraph/config/stylesheet.xml'),
+        // var configReq = mxUtils.load('/polymer/src/mxgraph-import/mxgraph/config/stylesheet.xml'),
         //     configRoot = configReq.getDocumentElement(),
         //     configDecoder = new mxCodec(configRoot.ownerDocument);
         // configDecoder.decode(configRoot, graph);
         mxObjectCodec.allowEval = true;
-        var config = mxUtils.load('/polymer-starter-kit/app/elements/mxgraph-import/mxgraph/config/diagrameditor.xml').getDocumentElement();
+        var config = mxUtils.load('/polymer/src/mxgraph-import/mxgraph/config/diagrameditor.xml').getDocumentElement();
         var editor = new mxEditor(config);
         mxObjectCodec.allowEval = false;
 
@@ -799,7 +804,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
           
           // Defines an icon for creating new connections in the connection handler.
           // This will automatically disable the highlighting of the source vertex.
-          mxConnectionHandler.prototype.connectImage = new mxImage('/polymer-starter-kit/app/elements/mxgraph-import/mxgraph/images/connector.gif', 16, 16);
+          mxConnectionHandler.prototype.connectImage = new mxImage('/polymer/src/mxgraph-import/mxgraph/images/connector.gif', 16, 16);
 
           // Create main actions in page
           var node = document.getElementById('mainActions');
