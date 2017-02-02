@@ -11,6 +11,55 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 <link rel="import" href="/polymer/bower_components/polymer/polymer.html">
 <link rel="import" href="../mxgraph-import/mxgraph-import.html">
 
+<link rel="stylesheet" type="text/css" href="styles/grapheditor.css">
+
+<script type="text/javascript">
+  // Parses URL parameters. Supported parameters are:
+  // - lang=xy: Specifies the language of the user interface.
+  // - touch=1: Enables a touch-style user interface.
+  // - storage=local: Enables HTML5 local storage.
+  // - chrome=0: Chromeless mode.
+  var urlParams = (function(url)
+  {
+    var result = new Object();
+    var idx = url.lastIndexOf('?');
+
+    if (idx > 0)
+    {
+      var params = url.substring(idx + 1).split('&');
+      
+      for (var i = 0; i < params.length; i++)
+      {
+        idx = params[i].indexOf('=');
+        
+        if (idx > 0)
+        {
+          result[params[i].substring(0, idx)] = params[i].substring(idx + 1);
+        }
+      }
+    }
+    
+    return result;
+  })(window.location.href);
+
+  // Default resources are included in grapheditor resources
+  mxLoadResources = false;
+</script>
+<script type="text/javascript" src="js/Init.js"></script>
+<script type="text/javascript" src="jscolor/jscolor.js"></script>
+<script type="text/javascript" src="sanitizer/sanitizer.min.js"></script>
+<script type="text/javascript" src="js/EditorUi.js"></script>
+<script type="text/javascript" src="js/Editor.js"></script>
+<script type="text/javascript" src="js/Sidebar.js"></script>
+<script type="text/javascript" src="js/Graph.js"></script>
+<script type="text/javascript" src="js/Shapes.js"></script>
+<script type="text/javascript" src="js/Actions.js"></script>
+<script type="text/javascript" src="js/Menus.js"></script>
+<script type="text/javascript" src="js/Format.js"></script>
+<script type="text/javascript" src="js/Toolbar.js"></script>
+<script type="text/javascript" src="js/Dialogs.js"></script>
+
+
 <dom-module id="content-process-editor">
   <template>
     <style>
@@ -39,33 +88,8 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       on-response="postDataResponse"
       debounce-duration="300"></iron-ajax>
 
-    <iron-ajax
-      id="deleteRequest"
-      url=""
-      handle-as="json"
-      on-response="deleteResponse"
-      debounce-duration="300"></iron-ajax>
 
-
-    <div id="page">
-      <span id="mainActions" style="width:100%;padding-top:8px;padding-left:24px;padding-bottom:8px;"></span>
-      <span id="selectActions" style="width:100%;padding-left:54px;padding-bottom:4px;"></span>
-      <span id="zoomActions" style="width:100%;padding-left:54px;padding-top:4px;"></span>
-      <div id="toolbar"></div>
-      <div id="graph">
-        <!-- Graph Here -->
-        <center id="splash" style="padding-top:230px;">
-            <img src="images/loading.gif">
-        </center>
-      </div>
-      <div id="footer">
-          <p id="status">
-              <!-- Status Here -->Loading...
-          </p>
-          <br/>
-      </div>
-    </div>
-
+    
   </template>
   <script>
   (function() {
@@ -94,936 +118,52 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
       },
 
-      createItem: function(parentId, contentType, properties, versionName, success, error) {
-        this.formData = {};
-        this.set('formData.action', 'create');
-        this.set('formData.authorId', 126);
-        this.set('formData.parentId', parentId);
-        this.set('formData.id', undefined);
-        this.set('formData.lang', 'en-gb');
-        this.set('formData.versionName', versionName);
-        this.set('formData.contenttype', contentType);
-        this.set('formData.properties', properties);
-        // could add a change listener to formData.contenttype to handle the following
-        //this.$.getContentTypeSchema.params = {"contenttype": this.formData.contenttype};
-        //this.$.getContentTypeSchema.generateRequest;
-        //this._initFormData();
-        console.log(this.formData);
-        //response = this.$.postData.generateRequest();
-        //console.log(response);
-        //return success(response);
-      },
-
-      update: function(event) {
-        var identityNode = event.detail.identityNode || this.identityNode,
-            versionNode = event.detail.versionNode || this.versionNode,
-            authorNode = event.detail.authorNode || this.authorNode;
-        this.set('formData.action', 'update');
-        this.set('formData.authorId', authorNode._id);
-        this.set('formData.parentId', undefined);
-        this.set('formData.id', identityNode._id);
-        this.set('formData.lang', 'en-gb');
-        this.set('formData.versionName', '');
-        this.set('formData.contenttype', identityNode.properties.contentType);
-        this.set('formData.properties', versionNode.properties);
-        // could add a change listener to formData.contenttype to handle the following
-        this.$.getContentTypeSchema.params = {"contenttype": this.formData.contenttype};
-        this.$.getContentTypeSchema.generateRequest;
-        this._initFormData();
-        this.$.editDialog.open();
-      },
-
-      delete: function(event) {
-        this.$.deleteRequest.url = "/content/delete";
-        this.$.deleteRequest.params = {"id": event.model.item.identityNode._id};
-        this.$.deleteRequest.generateRequest();
-      },
-
-      postDataResponse: function(event) {
-
-      },
-
-      edit: function(event) {
-        this.fire('edit', event.model.item);
-      },
-
-      refresh: function() {
-        this.$.getChildren.generateRequest();
-      },
-
-      _updateChildren: function(event) {
-        //this.main(this.$.graph);
-        this.mxApplication('/polymer/src/mxgraph-import/mxgraph/config/diagrameditor.xml');
-      },
-
-      // Program starts here. Creates a sample graph in the
-      // DOM node with the specified ID. This function is invoked
-      // from the onLoad event handler of the document (see below).
-      main: function(container) {
-        // Show mxLog for debugging
-        //mxLog.show();
-
-        // Creates the graph inside the given container
-        //var model = new mxGraphModel();
-        //var graph = new mxGraph(container, model);
-        //var model = graph.getModel();
+      ready: function() {
+        var editorUiInit = EditorUi.prototype.init;
         
-
-        // Load the configuration (e.g. stylesheet)
-        // var configReq = mxUtils.load('/polymer/src/mxgraph-import/mxgraph/config/stylesheet.xml'),
-        //     configRoot = configReq.getDocumentElement(),
-        //     configDecoder = new mxCodec(configRoot.ownerDocument);
-        // configDecoder.decode(configRoot, graph);
-        mxObjectCodec.allowEval = true;
-        var config = mxUtils.load('/polymer/src/mxgraph-import/mxgraph/config/diagrameditor.xml').getDocumentElement();
-        var editor = new mxEditor(config);
-        mxObjectCodec.allowEval = false;
-
-        editor.setGraphContainer(container);
-
-        var graph = editor.graph;
-        var model = graph.model;
-
-        // Enables rubberband selection
-        new mxRubberband(graph);
-
-        // Gets the default parent for inserting new cells. This
-        // is normally the first child of the root (ie. layer 0).
-        var parent = graph.getDefaultParent();
-
-        // Adds cells to the model in a single step
-        model.beginUpdate();
-        try
+        EditorUi.prototype.init = function()
         {
-           for (var i = this.children.length - 1; i >= 0; i--) {
-             var child = this.children[i];
-             console.log(child);
-             var contentType = child.contentType;
-             if(contentType !== 'actor') {
-              //continue;
-             }
+          editorUiInit.apply(this, arguments);
+          this.actions.get('export').setEnabled(false);
 
-            var xml = child.mxCell.properties.properties.xml;
-            var doc = mxUtils.parseXml(xml);
-            var codec = new mxCodec(doc);
-            var elt = doc.documentElement;
-            var mxCell = codec.decode(elt);
-            mxCell.setValue(child.name);
-            console.log(mxCell);
-
-            var cell = graph.addCell(mxCell, parent);
-
-            //var cell = graph.insertVertex(parent, child.id, child.name, 20, 20, 80, 30, contentType);
-             //cell.setGeometry({x: 20, y: 20, width: 80, height: 30, relative: false})
-             //console.log(cell.getGeometry());
-
-              // var encoder = new mxCodec();
-              // var node = encoder.encode(cell.getGeometry());
-              // console.log(mxUtils.getXml(node));
-
-              
-
-          };
-
-          console.log(graph);
-
-          //graph.insertEdge(parent, null, '', 6427, 6417);
-        
-          graph.refresh();
-
-        }
-        finally
-        {
-           // Updates the display
-           model.endUpdate();
-        }
-      },
-
-      /**
-     * Constructs a new application (note that this returns an mxEditor
-     * instance).
-     */
-      mxApplication: function(config) {
-          var hideSplash = function() {
-            // Fades-out the splash screen
-            var splash = document.getElementById('splash');
-            if (splash != null) {
-              try {
-                mxEvent.release(splash);
-                mxEffects.fadeOut(splash, 100, true);
-              } catch (e) {
-                splash.parentNode.removeChild(splash);
-              }
-            }
-          };
-          
-          try {
-            if (!mxClient.isBrowserSupported()) {
-              mxUtils.error('Browser is not supported!', 200, false);
-            } else {
-              mxObjectCodec.allowEval = true;
-              var node = mxUtils.load(config).getDocumentElement();
-              var editor = new mxEditor(node);
-              mxObjectCodec.allowEval = false;
-              
-              // Updates the window title after opening new files
-              var title = document.title;
-              var setTitle = function(sender)
-              {
-                document.title = title + ' - ' + sender.getTitle();
-              };
-              
-              editor.addListener(mxEvent.OPEN, setTitle);
-              
-              // Prints the current root in the window title if the
-              // current root of the graph changes (drilling).
-              editor.addListener(mxEvent.ROOT, setTitle);
-              setTitle(editor);
-              
-              // Displays version in statusbar
-              editor.setStatus('mxGraph '+mxClient.VERSION);
-
-              this.init(editor);
-
-              // Shows the application
-              hideSplash();
-            }
-          }
-          catch (e)
+          // Updates action states which require a backend
+          if (!Editor.useLocalStorage)
           {
-            hideSplash();
-
-            // Shows an error message if the editor cannot start
-            mxUtils.alert('Cannot start application: '+e.message);
-            throw e; // for debugging
-          }                             
-          return editor;
-      },
-
-      init: function(editor) {
-        // ON INIT
-        var graph = editor.graph;
-        var model = graph.getModel();
-
-        // Gets the default parent for inserting new cells. This
-        // is normally the first child of the root (ie. layer 0).
-        var parent = graph.getDefaultParent();
-
-        // Adds cells to the model in a single step
-        model.beginUpdate();
-        try {
-           for (var i = this.children.length - 1; i >= 0; i--) {
-             var child = this.children[i];
-             //console.log(child);
-             var contentType = child.contentType;
-             if(contentType !== 'actor') {
-              //continue;
-             }
-
-            var xml = child.mxCell.properties.properties.xml;
-            var doc = mxUtils.parseXml(xml);
-            var codec = new mxCodec(doc);
-            var elt = doc.documentElement;
-            var mxCell = codec.decode(elt);
-            mxCell.setValue({label:child.name});
-            //console.log(mxCell);
-
-            var cell = graph.addCell(mxCell, parent);
-
-            //var cell = graph.insertVertex(parent, child.id, child.name, 20, 20, 80, 30, contentType);
-             //cell.setGeometry({x: 20, y: 20, width: 80, height: 30, relative: false})
-             //console.log(cell.getGeometry());
-
-              // var encoder = new mxCodec();
-              // var node = encoder.encode(cell.getGeometry());
-              // console.log(mxUtils.getXml(node));      
-
-          };
-
-          //graph.insertEdge(parent, null, '', 6427, 6417);
-        
-          graph.refresh();
-
-        } finally {
-           // Updates the display
-           model.endUpdate();
-        }
-
-        // Auto-resizes the container
-        graph.border = 80;
-        graph.getView().translate = new mxPoint(graph.border/2, graph.border/2);
-        //graph.setResizeContainer(true);
-        graph.graphHandler.setRemoveCellsFromParent(true); //?
-
-        //Wrap label text - This property is not working with export as image.
-        //Enables HTML labels as wrapping is only available for those
-        graph.setHtmlLabels(true);
-        // Refresh is necessary to get the labels to wrap
-        graph.refresh();
-      
-        // Edit Mode
-        if (graph.isEnabled()) {
-
-          var sharepointXMLProperty = 'GraphXML',
-            root,
-            mxGraphMainParent,
-            changes,
-            i,
-            option,
-            node,
-            buttons,
-            select,
-            items,
-            currentItemId,
-            itemGuid;
-            
-          // Enables rubberband selection
-          //new mxRubberband(graph);
-
-          /*******************************************************************
-          Set the id of the Sharepoint Parent Item that contains the graph.
-          All vertices (e.g. activities) added to the graph will have their
-          spParentIDs set to the id of the parent cell in the graph,
-          so the first cell added to the graph will have the current Sharepoint
-          item's ID added to its spParentIDs.
-           ********************************************************************/
-          mxGraphMainParent = graph.model.getCell('1');
-          mxGraphMainParent.setAttribute('id', this.identityNodeId);
-
-          /*******************************************************************
-          Listen for changes to the graph in order to create new Sharepoint
-          items when certain shapes are added, update these Sharepoint
-          items when the corresponding shapes are changed, and delete these
-          Sharepoint items when the corresponding shapes are deleted
-           ********************************************************************/
-          var self = this;
-          model.addListener(mxEvent.CHANGE, function (sender, evt) {
-            changes = evt.getProperty('edit').changes;
-            for (i = 0; i < changes.length; i++) {
-              var change = changes[i];
-              /*******************************************************************
-              // Vertex has been added to the graph or its parent has changed
-               ********************************************************************/
-              if (change instanceof mxChildChange && change.child.vertex === 1 && change.parent !== null) {
-                var child = change.child,
-                    childTagName = child.value.tagName,
-                    contentType = child.getAttribute('contentType'),
-                    childId = child.getAttribute('id'),
-                    parent = change.parent,
-                    parentId = parent.getAttribute('id'),
-                    parentTagName = parent.value.tagName,
-                    parentStyle = parent.style,
-                    parentName = parent.getAttribute('label'),
-                    previous = change.previous,
-                    properties = {};
-
-                if(parentId === undefined) {
-                  parentId = self.identityNodeId;
-                }
-                console.log(child);
-                //For Roles - Old Swimlanes
-                // if (childTagName === "Role" && previous === null) {
-                //   PromptSelectRoleOrCreate(function (pObjectId) {
-                //     child.setAttribute('id', pObjectId)
-                //   }, editor, graph, child, contentType);
-                  
-                //   return;
-                // }
-                
-                //For Off Page References
-                // if (childTagName === "OffPageReference" && previous === null) {
-                //   PromptSelectActivities(function (pObjectId) {
-                //     child.setAttribute('id', pObjectId)
-                //   }, editor, graph, child, contentType);
-                  
-                //   return;
-                // }
-                
-                // Vertex has been added to the graph (i.e. it is new)
-                if (previous === null) {
-                  // Clear attributes except for label and contentType
-                  var attributes = child.value.attributes,
-                      attributesCount = attributes.length,
-                      i2 = 0;
-                  properties = {};
-                  for (; i2 < attributesCount; i2 += 1) {
-                    var attributeName = attributes[i2].nodeName;
-                    if (attributeName !== 'label' && attributeName !== 'contentType') {
-                      child.setAttribute(attributes[i2].nodeName, '');
-                    }
-                    graph.refresh();
-                    properties[attributes[i2].nodeName] = attributes[i2].nodeValue;
-                    if(attributeName === 'label') {
-                      properties['title'] = attributes[i2].nodeValue;
-                    }
-                  }
-
-                  // If child has an contentType create an associated Sharepoint list item
-                  if (contentType) {
-                    console.log(properties);
-                    // If an item A is dropped inside of activity B, use activity
-                    // B's id as item A's spParentIDs value. Otherwise use the
-                    // main parent id (i.e. the activity the current page represents)
-                    if (parentTagName === 'Activity') {
-                      //child.setAttribute('spParentIDs', parentId);
-                      //properties['ParentIDs'] = parentId.toString();
-                    } else {
-                      //child.setAttribute('spParentIDs', currentItemId);
-                      //properties['ParentIDs'] = currentItemId.toString();
-                    }
-
-                    // If the item is dropped into a Role Swimlane, add the
-                    // id of the Role into the item's Responsible property
-                    if (parentStyle === "swimlane" || parentTagName === 'Role') {
-                      
-                      //Changed the ID to the name of the swimlane/role
-                      //Fraser asked on 02/09/2015 to change back to ID
-                      //child.setAttribute('spResponsible', parentId);
-                      //properties['Responsible'] = parentId.toString();
-                    }
-                    //If object dropped is a role (Swimlane)
-
-                    /*******************************************************************
-                    Create a Sharepoint list item
-                     ********************************************************************/
-                    self.createItem(parentId, contentType, properties, "",
-                      //Success callback
-                      function (item) {
-                        child.setAttribute('id', item._Id);
-                        
-                        //keeps href only for images
-                        //if (childTagName === "Image")
-                          //child.setAttribute('href', webAbsoluteUrl + '/Lists/' + listName.replace(" ", "%20") + '/DispForm.aspx?ID=' + listItem.Id);
-                      },
-                      function (error) {
-                        console.log(error);
-                        return;
-                      });
-                  }
-                }
-                // Vertex has a new parent
-                else {
-                  var previousTagName = previous.value.tagName;
-
-                  // If child has an contentType update its spParentIDs and/or spResponsible
-                  // attributes and the associated Sharepoint list item's corresponding properties
-                  if (contentType) {
-                    // If an item A is dropped inside of activity B, add activity
-                    // B's id to item A's spParentIDs value. If the previous parent
-                    // was an Activity, remove its id from A's spParentIDs, otherwise
-                    // remove the main parent id
-                    if (parentTagName === 'Activity') {
-                      // convert child's spParentIDs into an array
-                      var childSpParentIDs = child.getAttribute('spParentIDs');
-                      if (childSpParentIDs) {
-                        var childSpParentIDsNoSpaces = childSpParentIDs.replace(' ', ''),
-                        childSpParentIDsArray = childSpParentIDsNoSpaces.split(','),
-                        previousId,
-                        indexOfId = -1;
-                        if (previousTagName === 'Activity') {
-                          previousId = previous.getAttribute('id');
-                          indexOfId = childSpParentIDsArray.indexOf(previousId);
-                        } else {
-                          indexOfId = childSpParentIDsArray.indexOf(currentItemId);
-                        }
-                        if (indexOfId !== -1) {
-                          childSpParentIDsArray.splice(indexOfId, 1);
-                        }
-                        childSpParentIDsArray.push(parentId);
-                        childSpParentIDs = childSpParentIDsArray.toString();
-                      } else {
-                        childSpParentIDs = parentId.toString();
-                      }
-                      child.setAttribute('spParentIDs', childSpParentIDs);
-                      properties['ParentIDs'] = childSpParentIDs;
-                    }
-
-                    // If the new parent is a Role Swimlane, add the id
-                    // of the Role into the item's Responsible property and
-                    // remove the previous parent's id if it was also a Role
-                    else if (parentTagName === 'Role') {
-                      // Convert child's spResponsible ids into an array
-                      var childSpResponsible = child.getAttribute('spResponsible');
-                      if (childSpResponsible) {
-                        var childSpResponsibleNoSpaces = childSpResponsible.replace(' ', ''),
-                        childSpResponsibleArray = childSpResponsibleNoSpaces.split(','),
-                        previousId,
-                        indexOfId = -1;
-                        if (previousTagName === 'Role') {
-                          previousId = previous.getAttribute('id');
-                          indexOfId = childSpResponsibleArray.indexOf(previousId);
-                        }
-                        if (indexOfId !== -1) {
-                          childSpResponsibleArray.splice(indexOfId, 1);
-                        }
-                        childSpResponsibleArray.push(parentId);
-                        childSpResponsible = childSpResponsibleArray.toString();
-                      } else {
-                        childSpResponsible = parentId;
-                      }
-                      //child.setAttribute('spResponsible', parentName);
-                      //properties['Responsible'] = parentName;
-                      
-                      child.setAttribute('spResponsible', childSpResponsible);
-                      properties['Responsible'] = childSpResponsible.toString();
-                    }
-                    else //clear Parent cause it was dropped in the layer 
-                    {
-                      child.setAttribute('spResponsible', "");
-                      properties['Responsible'] = "";
-                    }
-                    /********************************************************
-                    Update the Sharepoint list item
-                     ********************************************************/
-                    if (properties && childId) {
-                      properties['__metadata'] = {
-                        "type" : spDataType
-                      };
-                      UpdateListItem(webAbsoluteUrl, listName, childId, properties);
-                    }
-                  }
-
-                  // If the previous parent was an activity and it no longer has
-                  // children, remove the group style
-                  if (previous.children.length === 0 && previousTagName === 'Activity') {
-                    var previousStyle = previous.style,
-                    previousStyleSlicePosition = previousStyle.indexOf('Group');
-                    if (previousStyleSlicePosition !== -1) {
-                      previous.setStyle(previousStyle.slice(0, previousStyleSlicePosition) + previousStyle.slice(previousStyleSlicePosition + 5));
-                      graph.refresh();
-                    }
-                  }
-                }
-
-                // If the new parent is an Activity, change its style to the group style if it isn't already.
-                if (parentStyle && parentTagName === 'Activity') {
-                  var parentStyleSlicePosition = parentStyle.indexOf(';'),
-                  parentBaseStyle = parentStyleSlicePosition !== -1 ? parentStyle.slice(0, parentStyleSlicePosition) : parentStyle,
-                  parentStyleAttributes = parentStyleSlicePosition !== -1 ? parentStyle.slice(parentStyleSlicePosition) : '';
-                  if (parentBaseStyle.slice(-5) !== 'Group') {
-                    parent.setStyle(parentBaseStyle + 'Group' + parentStyleAttributes);
-                    graph.refresh();
-                  }
-                }
-              }
-
-              /*******************************************************************
-              // Vertex attribute values have changed
-               ********************************************************************/
-              if (change instanceof mxCellAttributeChange || change instanceof mxValueChange) {
-                var changedCell = change.cell,
-                changedCellContentType = changedCell.getAttribute('contentType'),
-                changedAttribute = change instanceof mxValueChange ? 'label' : change.attribute;
-
-                console.log(change);
-
-                // BUG FIX
-                // if the element is an image and the href attribute has changed,
-                // replace the image url in the style property with the value of the href attribute
-                if (changedAttribute === 'href' && changedCell.value.tagName === 'Image') {
-                  var url = change.value,
-                  style = changedCell.style,
-                  styleSlicePosition = style.indexOf('image='),
-                  styleSlice1 = style.slice(0, styleSlicePosition),
-                  styleSlice2 = style.slice(styleSlicePosition),
-                  styleSlicePosition2 = styleSlice2.indexOf(';'),
-                  styleSlice3 = styleSlicePosition2 !== -1 ? styleSlice2.slice(styleSlicePosition2 + 1) : '';
-                  changedCell.setStyle(styleSlice1 + 'image=' + url + ';' + styleSlice3);
-                  graph.refresh();
-                }
-
-                // If the changed cell has a contentType update the corresponding Sharepoint list item
-                if (changedCellContentType) {
-                  var changedCellId = changedCell.getAttribute('id'),
-                      //properties = {},
-                      properties = changedCell.attributes;
-                  //properties[changedAttribute] = change.value;
-
-                  /*************************************************************
-                  Update the corresponding Sharepoint List item
-                   ********************************************************************/
-                  UpdateListItem(webAbsoluteUrl, listName, changedCellId, properties);
-                }
-              }
-            }
-          });
-
-          /*******************************************************************
-          Graph cells have been removed
-           ********************************************************************/
-          graph.addListener(mxEvent.REMOVE_CELLS, function (sender, evt) {
-            //alert('This object will be deleted.');
-            for (i = 0; i < evt.properties.cells.length; i++) {
-               if (evt.properties.cells[i].value.nodeName !== "Connector") {
-                 var itemId = evt.properties.cells[i].getAttribute('id');
-                 
-                 
-                 // var confirm = confirm('This object will be deleted.');
-                 
-                 // if(confirm){
-                  /*******************************************************************
-                  Delete Sharepoint list items
-                  ********************************************************************/
-                  if (itemId) {
-                    deleteListItem(itemId, listName, webAbsoluteUrl,
-                      function (success) {
-                        console.log(success);
-                        mxLog.debug(success);
-                      },
-                      function (failure) {
-                        console.log(failure);
-                        mxLog.debug(failure);
-                      });
-                  }
-                 // }
-                 
-              }
-            }             
-          });
-
-          // Allows new connections but no dangling edges
-          graph.setConnectable(true);
-          graph.setAllowDanglingEdges(false);
-
-          // Clones the source if new connection has no target
-          graph.connectionHandler.setCreateTarget(true);
-          
-          // End-states are no valid sources
-          var previousIsValidSource = graph.isValidSource;    
-          graph.isValidSource = function(cell) {
-            if (previousIsValidSource.apply(graph, arguments)) {
-              var style = model.getStyle(cell);
-              
-              return style == null ||
-                !(style == 'end' ||
-                style.indexOf('end') == 0);
-            }
-            return false;
-          };
-          
-          // Start-states are no valid targets, we do not
-          // perform a call to the superclass function because
-          // this would call isValidSource
-          // Note: All states are start states in
-          // the example below, so we use the state
-          // style below
-          graph.isValidTarget = function(cell) {
-            var style = model.getStyle(cell);
-            
-            var swimlane = graph.isSwimlane(cell);
-            //Always returning false
-            
-            if(style === "swimlane")
-              return false;
-              
-            return !model.isEdge(cell) &&
-              !graph.isSwimlane(cell) &&
-              (style == null ||
-              !(style == 'state' ||
-              style.indexOf('state') == 0));
-          };
-          
-          // Allows dropping cells into new lanes and
-          // lanes into new pools, but disallows dropping
-          // cells on edges to split edges
-          graph.setDropEnabled(true);
-          graph.setSplitEnabled(false);
-          
-          // Returns true for valid drop operations
-          graph.isValidDropTarget = function(target, cells, evt) {
-            if (graph.isSplitEnabled() && graph.isSplitTarget(target, cells, evt)) {
-              return true;
-            }
-            
-            var lane = false;
-            var pool = false;
-            var cell = false;
-            
-            // Checks if any lanes or pools are selected
-            for (var i = 0; i < cells.length; i++) {
-              var tmp = model.getParent(cells[i]);
-              lane = lane || this.isPool(tmp);
-              pool = pool || this.isPool(cells[i]);
-              cell = cell || !(lane || pool);
-            }
-            
-            return !pool &&
-              cell != lane &&
-              ((lane && this.isPool(target)) ||
-              (cell && this.isPool(model.getParent(target))));
-          };
-          
-          // Adds new method for identifying a pool
-          graph.isPool = function(cell) {
-            var parent = model.getParent(cell);
-          
-            return parent != null &&
-              model.getParent(parent) == model.getRoot();
-          };
-          
-          // Changes swimlane orientation while collapsed
-          model.getStyle = function(cell) {
-            var style = mxGraphModel.prototype.getStyle.apply(this, arguments);
-          
-            if (graph.isCellCollapsed(cell)) {
-              if (style != null) {
-                style += ';';
-              } else {
-                style = '';
-              }
-              style += 'horizontal=1;align=left;spacingLeft=14;';
-            }
-            return style;
-          };
-          // Keeps widths on collapse/expand          
-          var foldingHandler = function(sender, evt) {
-            var cells = evt.getProperty('cells');
-            
-            for (var i = 0; i < cells.length; i++) {
-              var geo = model.getGeometry(cells[i]);
-              if (geo.alternateBounds != null) {
-                geo.width = geo.alternateBounds.width;
-              }
-            }
-          };
-          graph.addListener(mxEvent.FOLD_CELLS, foldingHandler);
-
-          // Enables rotation handle
-          mxVertexHandler.prototype.rotationEnabled = true;
-
-          // Enables guides
-          mxGraphHandler.prototype.guidesEnabled = true;
-          
-          // Alt disables guides
-          mxGuide.prototype.isEnabledForEvent = function(evt) {
-            return !mxEvent.isAltDown(evt);
-          };
-          
-          // Enables snapping waypoints to terminals
-          mxEdgeHandler.prototype.snapToTerminals = true;
-          
-          // Defines an icon for creating new connections in the connection handler.
-          // This will automatically disable the highlighting of the source vertex.
-          mxConnectionHandler.prototype.connectImage = new mxImage('/polymer/src/mxgraph-import/mxgraph/images/connector.gif', 16, 16);
-
-          // Create main actions in page
-          var node = document.getElementById('mainActions');
-          var buttons = ['group', 'ungroup', 'cut', 'copy', 'paste', 'delete', 'undo', 'redo', 'print', 'show'];
-          // Only adds image and SVG export if backend is available
-          // NOTE: The old image export in mxEditor is not used, the urlImage is used for the new export.
-          if (editor.urlImage != null) {
-            // Client-side code for image export
-            var exportImage = function(editor) {
-              var graph = editor.graph;
-              var scale = graph.view.scale;
-              var bounds = graph.getGraphBounds();
-              
-                  // New image export
-              var xmlDoc = mxUtils.createXmlDocument();
-              var root = xmlDoc.createElement('output');
-              xmlDoc.appendChild(root);
-              
-                // Renders graph. Offset will be multiplied with state's scale when painting state.
-              var xmlCanvas = new mxXmlCanvas2D(root);
-              xmlCanvas.translate(Math.floor(1 / scale - bounds.x), Math.floor(1 / scale - bounds.y));
-              xmlCanvas.scale(scale);
-              
-              var imgExport = new mxImageExport();
-                imgExport.drawState(graph.getView().getState(graph.model.root), xmlCanvas);
-                
-              // Puts request data together
-              var w = Math.ceil(bounds.width * scale + 2);
-              var h = Math.ceil(bounds.height * scale + 2);
-              var xml = mxUtils.getXml(root);
-              
-              // Requests image if request is valid
-              if (w > 0 && h > 0) {
-                var name = 'export.png';
-                var format = 'png';
-                var bg = '&bg=#FFFFFF';
-                
-                new mxXmlRequest(editor.urlImage, 'filename=' + name + '&format=' + format +
-                      bg + '&w=' + w + '&h=' + h + '&xml=' + encodeURIComponent(xml)).
-                      simulate(document, '_blank');
-              }
-            };
-            
-            editor.addAction('exportImage', exportImage);
-            
-            // Client-side code for SVG export
-            var exportSvg = function(editor) {
-              var graph = editor.graph;
-              var scale = graph.view.scale;
-              var bounds = graph.getGraphBounds();
-
-              // Prepares SVG document that holds the output
-              var svgDoc = mxUtils.createXmlDocument();
-              var root = (svgDoc.createElementNS != null) ?
-              svgDoc.createElementNS(mxConstants.NS_SVG, 'svg') : svgDoc.createElement('svg');
-                
-              if (root.style != null) {
-                root.style.backgroundColor = '#FFFFFF';
-              } else {
-                root.setAttribute('style', 'background-color:#FFFFFF');
-              }
-                
-              if (svgDoc.createElementNS == null) {
-                  root.setAttribute('xmlns', mxConstants.NS_SVG);
-              }
-                
-              root.setAttribute('width', Math.ceil(bounds.width * scale + 2) + 'px');
-              root.setAttribute('height', Math.ceil(bounds.height * scale + 2) + 'px');
-              root.setAttribute('xmlns:xlink', mxConstants.NS_XLINK);
-              root.setAttribute('version', '1.1');
-              
-              // Adds group for anti-aliasing via transform
-              var group = (svgDoc.createElementNS != null) ? svgDoc.createElementNS(mxConstants.NS_SVG, 'g') : svgDoc.createElement('g');
-              group.setAttribute('transform', 'translate(0.5,0.5)');
-              root.appendChild(group);
-              svgDoc.appendChild(root);
-
-              // Renders graph. Offset will be multiplied with state's scale when painting state.
-              var svgCanvas = new mxSvgCanvas2D(group);
-              svgCanvas.translate(Math.floor(1 / scale - bounds.x), Math.floor(1 / scale - bounds.y));
-              svgCanvas.scale(scale);
-                
-              var imgExport = new mxImageExport();
-              imgExport.drawState(graph.getView().getState(graph.model.root), svgCanvas);
-
-              var name = 'export.svg';
-              var xml = encodeURIComponent(mxUtils.getXml(root));
-              
-              new mxXmlRequest(editor.urlEcho, 'filename=' + name + '&format=svg' + '&xml=' + xml).simulate(document, "_blank");
-            };
-            
-            editor.addAction('exportSvg', exportSvg);
-            
-            buttons.push('exportImage');
-            buttons.push('exportSvg');
-          };
-          for (var i = 0; i < buttons.length; i++) {
-            var button = document.createElement('button');
-            mxUtils.write(button, mxResources.get(buttons[i]));
-          
-            var factory = function(name) {
-              return function() {
-                editor.execute(name);
-              };
-            };
-          
-            mxEvent.addListener(button, 'click', factory(buttons[i]));
-            node.appendChild(button);
+            mxUtils.post(OPEN_URL, '', mxUtils.bind(this, function(req)
+            {
+              var enabled = req.getStatus() != 404;
+              this.actions.get('open').setEnabled(enabled || Graph.fileSupport);
+              this.actions.get('import').setEnabled(enabled || Graph.fileSupport);
+              this.actions.get('save').setEnabled(enabled);
+              this.actions.get('saveAs').setEnabled(enabled);
+              this.actions.get('export').setEnabled(enabled);
+            }));
           }
-
-          // Create select actions in page
-          var node = document.getElementById('selectActions');
-          mxUtils.write(node, 'Select: ');
-          mxUtils.linkAction(node, 'All', editor, 'selectAll');
-          mxUtils.write(node, ', ');
-          mxUtils.linkAction(node, 'None', editor, 'selectNone');
-          mxUtils.write(node, ', ');
-          mxUtils.linkAction(node, 'Vertices', editor, 'selectVertices');
-          mxUtils.write(node, ', ');
-          mxUtils.linkAction(node, 'Edges', editor, 'selectEdges');
-
-          // Create zoom actions in page
-          var node = document.getElementById('zoomActions');
-          mxUtils.write(node, 'Zoom: ');
-          mxUtils.linkAction(node, 'In', editor, 'zoomIn');
-          mxUtils.write(node, ', ');
-          mxUtils.linkAction(node, 'Out', editor, 'zoomOut');
-          mxUtils.write(node, ', ');
-          mxUtils.linkAction(node, 'Actual', editor, 'actualSize');
-          mxUtils.write(node, ', ');
-          mxUtils.linkAction(node, 'Fit', editor, 'fit');
-
-        } // end of if edit mode
-        
-        var doubleClick = false;
-        /**********************************************
-         Add listener to go to url on DOUBLE click
-        **********************************************/
-        graph.addListener(mxEvent.DOUBLE_CLICK, function(sender, evt) {
-          // SingleClick = false;
-          doubleClick = true;
-          //selectionChanged(graph, doubleClick);
-        });
-
-        graph.getSelectionModel().addListener(mxEvent.CHANGE, function (sender, evt) {
-          console.log("before single click: doubleClick = " + doubleClick);
-          doubleClick = false;
-          //selectionChanged(graph, doubleClick);
-          doubleClick = false;
-        });
-        //selectionChanged(graph);
-
-        // Applies size changes to siblings and parents
-        var mxsl = new mxSwimlaneManager(graph);
-        mxsl.setHorizontal(true);
-        // Creates a stack depending on the orientation of the swimlane
-        var layout = new mxStackLayout(graph, false);
-        
-        // Makes sure all children fit into the parent swimlane
-        layout.resizeParent = true;
-              
-        // Applies the size to children if parent size changes
-        layout.fill = true;
-        // Only update the size of swimlanes
-        layout.isVertexIgnored = function(vertex) {
-          return !graph.isSwimlane(vertex);
-        }
-        
-        // Keeps the lanes and pools stacked
-        var layoutMgr = new mxLayoutManager(graph);
-        layoutMgr.getLayout = function(cell) {
-          if (!model.isEdge(cell) && model.getChildCount(cell) > 0 &&
-            (model.getParent(cell) == model.getRoot() || graph.isPool(cell)))
-          {
-            layout.fill = graph.isPool(cell);
-            
-            return layout;
-          }
-          
-          return null;
         };
-
-
-        // Crisp rendering in SVG except for connectors, actors, cylinder, ellipses
-        mxShape.prototype.crisp = true;
-        mxActor.prototype.crisp = false;
-        mxCylinder.prototype.crisp = false;
-        mxEllipse.prototype.crisp = false;
-        mxDoubleEllipse.prototype.crisp = false;
-        mxConnector.prototype.crisp = false;
-
         
-                                    
-        // Changes the zoom on mouseWheel events
-        mxEvent.addMouseWheelListener(function (evt, up) {
-          if (!mxEvent.isConsumed(evt)) {
-            if (up) {
-              editor.execute('zoomIn');
-            } else {
-              editor.execute('zoomOut');
-            }
-            mxEvent.consume(evt);
-          }
-        });
+        // Adds required resources (disables loading of fallback properties, this can only
+        // be used if we know that all keys are defined in the language specific file)
+        mxResources.loadDefaultBundle = false;
+        var bundle = mxResources.getDefaultBundle(RESOURCE_BASE, mxLanguage) ||
+          mxResources.getSpecialBundle(RESOURCE_BASE, mxLanguage);
 
-        
-
-      },
-
-      _toArray: function(obj) {
-        if(!obj) return;
-        return Object.keys(obj).map(function(key) {
-            return {
-                name: key,
-                value: obj[key]
-            };
+        // Fixes possible asynchronous requests
+        mxUtils.getAll([bundle, STYLE_PATH + '/default.xml'], function(xhr)
+        {
+          // Adds bundle text to resources
+          mxResources.parse(xhr[0].getText());
+          
+          // Configures the default graph theme
+          var themes = new Object();
+          themes[Graph.prototype.defaultThemeName] = xhr[1].getDocumentElement(); 
+          
+          // Main
+          new EditorUi(new Editor(urlParams['chrome'] == '0', themes));
+        }, function()
+        {
+          document.body.innerHTML = '<center style="margin-top:10%;">Error loading resource files. Please check browser console.</center>';
         });
       }
-
 
     });
   })();
