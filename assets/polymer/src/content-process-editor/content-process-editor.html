@@ -68,25 +68,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       }
     </style>
 
-    <iron-ajax
-      id="getChildren"
-      auto
-      url="/content/getChildren/{{nodeData.identityNode.properties.uuid}}?versionValidityDate={{nodeData.versionValidityDate}}"
-      params=''
-      handle-as="json"
-      last-response="{{children}}"
-      on-response="_updateChildren"
-      debounce-duration="300"></iron-ajax>
-
-    <iron-ajax id="postData"
-      url="/content/{{formData.action}}"
-      content-type="application/json"
-      method="POST"
-      body="{{formData}}"
-      handle-as="json"
-      last-response="{{res}}"
-      on-response="postDataResponse"
-      debounce-duration="300"></iron-ajax>
+    <div id="" class="geEditor"></div>
 
 
     

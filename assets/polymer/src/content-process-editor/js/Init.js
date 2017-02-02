@@ -11,10 +11,14 @@ window.SAVE_URL = window.SAVE_URL || '/save';
 window.OPEN_URL = window.OPEN_URL || '/open';
 window.RESOURCES_PATH = window.RESOURCES_PATH || 'resources';
 window.RESOURCE_BASE = window.RESOURCE_BASE || window.RESOURCES_PATH + '/grapheditor';
-window.STENCIL_PATH = window.STENCIL_PATH || 'stencils';
-window.IMAGE_PATH = window.IMAGE_PATH || 'images';
-window.STYLE_PATH = window.STYLE_PATH || 'styles';
-window.CSS_PATH = window.CSS_PATH || 'styles';
+//window.STENCIL_PATH = window.STENCIL_PATH || 'stencils';
+//window.IMAGE_PATH = window.IMAGE_PATH || 'images';
+//window.STYLE_PATH = window.STYLE_PATH || 'styles';
+//window.CSS_PATH = window.CSS_PATH || 'styles';
+window.STENCIL_PATH = window.STENCIL_PATH || '/polymer/src/content-process-editor/stencils';
+window.IMAGE_PATH = window.IMAGE_PATH || '/polymer/src/content-process-editor/images';
+window.STYLE_PATH = window.STYLE_PATH || '/polymer/src/content-process-editor/styles';
+window.CSS_PATH = window.CSS_PATH || '/polymer/src/content-process-editor/styles';
 window.OPEN_FORM = window.OPEN_FORM || 'open.html';
 
 // Sets the base path, the UI language via URL param and configures the
@@ -25,5 +29,6 @@ window.OPEN_FORM = window.OPEN_FORM || 'open.html';
 // save a GET request. This requires that all resources be present in
 // each properties file since only one file is loaded.
 window.mxBasePath = window.mxBasePath || '../../../src';
-window.mxLanguage = window.mxLanguage || urlParams['lang'];
+// window.mxLanguage = window.mxLanguage || urlParams['lang'];
+window.mxLanguage = window.mxLanguage || urlParams['lang'] || 'en-gb';
 window.mxLanguages = window.mxLanguages || ['de'];
