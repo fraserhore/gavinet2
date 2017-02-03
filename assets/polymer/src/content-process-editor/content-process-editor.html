@@ -68,7 +68,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       }
     </style>
 
-    <div id="" class="geEditor"></div>
+    <div id="graphEditor" class="geEditor"></div>
 
 
     
@@ -125,7 +125,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         
         // Adds required resources (disables loading of fallback properties, this can only
         // be used if we know that all keys are defined in the language specific file)
-        mxResources.loadDefaultBundle = false;
+        mxResources.loadDefaultBundle = true;
         var bundle = mxResources.getDefaultBundle(RESOURCE_BASE, mxLanguage) ||
           mxResources.getSpecialBundle(RESOURCE_BASE, mxLanguage);
 
@@ -140,11 +140,37 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
           themes[Graph.prototype.defaultThemeName] = xhr[1].getDocumentElement(); 
           
           // Main
-          new EditorUi(new Editor(urlParams['chrome'] == '0', themes));
+          var editorUi = new EditorUi(new Editor(urlParams['chrome'] == '0', themes), '');
+          console.dir(editorUi);
+          
+          editorUi.editor.graph.model.addListener(mxEvent.CHANGE, function (sender, evt) {
+            var changes = evt.getProperty('edit').changes;
+            var i;
+            for (i = 0; i < changes.length; i++) {
+              var change = changes[i];
+              console.log(change);
+            }
+          });
+
+
+
+
+
         }, function()
         {
           document.body.innerHTML = '<center style="margin-top:10%;">Error loading resource files. Please check browser console.</center>';
         });
+
+        
+
+        // Graph.model.addListener(mxEvent.CHANGE, function (sender, evt) {
+        //   changes = evt.getProperty('edit').changes;
+        //   for (i = 0; i < changes.length; i++) {
+        //     var change = changes[i];
+        //     console.log(change);
+        //   }
+        // });
+
       }
 
     });

@@ -9,7 +9,8 @@ window.MAX_AREA = window.MAX_AREA || 10000 * 10000;
 window.EXPORT_URL = window.EXPORT_URL || '/export';
 window.SAVE_URL = window.SAVE_URL || '/save';
 window.OPEN_URL = window.OPEN_URL || '/open';
-window.RESOURCES_PATH = window.RESOURCES_PATH || 'resources';
+//window.RESOURCES_PATH = window.RESOURCES_PATH || 'resources';
+window.RESOURCES_PATH = window.RESOURCES_PATH || '/polymer/src/content-process-editor/resources';
 window.RESOURCE_BASE = window.RESOURCE_BASE || window.RESOURCES_PATH + '/grapheditor';
 //window.STENCIL_PATH = window.STENCIL_PATH || 'stencils';
 //window.IMAGE_PATH = window.IMAGE_PATH || 'images';
@@ -28,7 +29,8 @@ window.OPEN_FORM = window.OPEN_FORM || 'open.html';
 // files (the special bundle and the default bundle) is disabled to
 // save a GET request. This requires that all resources be present in
 // each properties file since only one file is loaded.
-window.mxBasePath = window.mxBasePath || '../../../src';
+//window.mxBasePath = window.mxBasePath || '../../../src';
+window.mxBasePath = window.mxBasePath || '';
 // window.mxLanguage = window.mxLanguage || urlParams['lang'];
-window.mxLanguage = window.mxLanguage || urlParams['lang'] || 'en-gb';
+window.mxLanguage = window.mxLanguage || urlParams['lang'];
 window.mxLanguages = window.mxLanguages || ['de'];
