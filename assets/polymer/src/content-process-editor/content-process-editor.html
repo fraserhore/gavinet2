@@ -10,6 +10,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 <link rel="import" href="/polymer/bower_components/polymer/polymer.html">
 <link rel="import" href="../mxgraph-import/mxgraph-import.html">
 <link rel="import" href="../api-gavi-graph.html">
+<!-- <link rel="import" href="../api-sharepoint.html"> -->
 <link rel="stylesheet" type="text/css" href="styles/grapheditor.css">
 <script type="text/javascript">
 // Parses URL parameters. Supported parameters are:
@@ -61,8 +62,10 @@ mxLoadResources = false;
         </style>
 
         <api-gavi-graph id="api"></api-gavi-graph>
+        <!-- <api-sharepoint id="api"></api-sharepoint> -->
 
         <div id="graphEditor" class="geEditor"></div>
+
     </template>
     <script>
     (function() {
@@ -96,10 +99,10 @@ mxLoadResources = false;
             },
 
             actions: {
-                loadChildrenAction: function(children) {
+                loadChildrenAction: function(data) {
                     return {
                         type: 'LOAD_CHILDREN',
-                        children: children
+                        children: data
                     }
                 }
             },
@@ -254,7 +257,9 @@ mxLoadResources = false;
                                     /*******************************************************************
                                     Create a Sharepoint list item
                                     ********************************************************************/
+                                    // Create the item
                                     var request = api.create(properties);
+                                    // Add the id of the newly created item to the mxGraph object. This id is needed for any update actions. The Promise could be added to the api and then this function could return success and failure callbacks.
                                     Promise.all([request.completes])
 						                .then(function (requests) {
 						                    var response = requests[0].response;
@@ -275,20 +280,20 @@ mxLoadResources = false;
 
 						            // 	});
 
-                                    polymerThis.createListItem(webAbsoluteUrl, listName, properties,
-                                        //Success callback
-                                        function(listItem) {
-                                            child.setAttribute('spID', listItem.Id);
+                                    // polymerThis.createListItem(webAbsoluteUrl, listName, properties,
+                                    //     //Success callback
+                                    //     function(listItem) {
+                                    //         child.setAttribute('spID', listItem.Id);
 
-                                            //keeps href only for images
-                                            if (childTagName === "Image")
-                                                child.setAttribute('href', webAbsoluteUrl + '/Lists/' + listName.replace(" ", "%20") + '/DispForm.aspx?ID=' + listItem.Id);
-                                        },
-                                        function(error) {
-                                            console.log(error);
-                                            return;
-                                        }
-                                    );
+                                    //         //keeps href only for images
+                                    //         if (childTagName === "Image")
+                                    //             child.setAttribute('href', webAbsoluteUrl + '/Lists/' + listName.replace(" ", "%20") + '/DispForm.aspx?ID=' + listItem.Id);
+                                    //     },
+                                    //     function(error) {
+                                    //         console.log(error);
+                                    //         return;
+                                    //     }
+                                    // );
 
                                 }
                                 // Vertex has a new parent
@@ -374,7 +379,17 @@ mxLoadResources = false;
                                             properties['__metadata'] = {
                                                 "type": childTagName //child.getAttribute('spDataType')
                                             };
-                                            polymerThis.updateListItem(webAbsoluteUrl, listName, childSpID, properties);
+                                            // Update the item
+		                                    var request = api.update(id, properties);
+		                                    // The Promise could be added to the api and then this function could return success and failure callbacks.
+		                                    Promise.all([request.completes])
+								                .then(function (requests) {
+								                    var response = requests[0].response;
+
+								                    // do whatever you want from here...
+								                    console.log(response);
+								                });
+                                            // polymerThis.updateListItem(webAbsoluteUrl, listName, childSpID, properties);
                                         }
                                     }
 
