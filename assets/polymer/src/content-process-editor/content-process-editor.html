@@ -7,43 +7,37 @@ The complete set of contributors may be found at http://polymer.github.io/CONTRI
 Code distributed by Google as part of the polymer project is also
 subject to an additional IP rights grant found at http://polymer.github.io/PATENTS.txt
 -->
-
 <link rel="import" href="/polymer/bower_components/polymer/polymer.html">
 <link rel="import" href="../mxgraph-import/mxgraph-import.html">
-
+<link rel="import" href="../api-gavi-graph.html">
 <link rel="stylesheet" type="text/css" href="styles/grapheditor.css">
-
 <script type="text/javascript">
-  // Parses URL parameters. Supported parameters are:
-  // - lang=xy: Specifies the language of the user interface.
-  // - touch=1: Enables a touch-style user interface.
-  // - storage=local: Enables HTML5 local storage.
-  // - chrome=0: Chromeless mode.
-  var urlParams = (function(url)
-  {
+// Parses URL parameters. Supported parameters are:
+// - lang=xy: Specifies the language of the user interface.
+// - touch=1: Enables a touch-style user interface.
+// - storage=local: Enables HTML5 local storage.
+// - chrome=0: Chromeless mode.
+var urlParams = (function(url) {
     var result = new Object();
     var idx = url.lastIndexOf('?');
 
-    if (idx > 0)
-    {
-      var params = url.substring(idx + 1).split('&');
-      
-      for (var i = 0; i < params.length; i++)
-      {
-        idx = params[i].indexOf('=');
-        
-        if (idx > 0)
-        {
-          result[params[i].substring(0, idx)] = params[i].substring(idx + 1);
-        }
-      }
-    }
-    
-    return result;
-  })(window.location.href);
+    if (idx > 0) {
+        var params = url.substring(idx + 1).split('&');
 
-  // Default resources are included in grapheditor resources
-  mxLoadResources = false;
+        for (var i = 0; i < params.length; i++) {
+            idx = params[i].indexOf('=');
+
+            if (idx > 0) {
+                result[params[i].substring(0, idx)] = params[i].substring(idx + 1);
+            }
+        }
+    }
+
+    return result;
+})(window.location.href);
+
+// Default resources are included in grapheditor resources
+mxLoadResources = false;
 </script>
 <script type="text/javascript" src="js/Init.js"></script>
 <script type="text/javascript" src="jscolor/jscolor.js"></script>
@@ -58,426 +52,456 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 <script type="text/javascript" src="js/Format.js"></script>
 <script type="text/javascript" src="js/Toolbar.js"></script>
 <script type="text/javascript" src="js/Dialogs.js"></script>
-
-
 <dom-module id="content-process-editor">
-  <template>
-    <style>
-      :host {
-        display: block;
-      }
-    </style>
-
-    <div id="graphEditor" class="geEditor"></div>
-
-
-    
-  </template>
-  <script>
-  (function() {
-    'use strict';
-
-    Polymer({
-      is: 'content-process-editor',
-      behaviors: [ ReduxBehavior ],
-      properties: {
-        identityNodeId: {
-          type: Number,
-          value: 0,
-          notify: true
-        },
-
-        versionValidityDate: {
-          type: Number,
-          value: undefined,
-          notify: true
-        },
-
-        nodeData: {
-          type: Object,
-          statePath: 'nodeData'
+    <template>
+        <style>
+        :host {
+            display: block;
         }
+        </style>
 
-      },
+        <api-gavi-graph id="api"></api-gavi-graph>
 
-      ready: function() {
-      	var polymerThis = this,
-      		currentItemId = 0, // need to set.
-      		webAbsoluteUrl = '',
-      		listName = '';
+        <div id="graphEditor" class="geEditor"></div>
+    </template>
+    <script>
+    (function() {
+        'use strict';
 
-        var editorUiInit = EditorUi.prototype.init;
-        
-        EditorUi.prototype.init = function()
-        {
-          editorUiInit.apply(this, arguments);
-          this.actions.get('export').setEnabled(false);
+        Polymer({
+            is: 'content-process-editor',
+            behaviors: [ReduxBehavior],
+            properties: {
+                identityNodeId: {
+                    type: Number,
+                    value: 0,
+                    notify: true
+                },
 
-          // Updates action states which require a backend
-          if (!Editor.useLocalStorage)
-          {
-            mxUtils.post(OPEN_URL, '', mxUtils.bind(this, function(req)
-            {
-              var enabled = req.getStatus() != 404;
-              this.actions.get('open').setEnabled(enabled || Graph.fileSupport);
-              this.actions.get('import').setEnabled(enabled || Graph.fileSupport);
-              this.actions.get('save').setEnabled(enabled);
-              this.actions.get('saveAs').setEnabled(enabled);
-              this.actions.get('export').setEnabled(enabled);
-            }));
-          }
-        };
-        
-        // Adds required resources (disables loading of fallback properties, this can only
-        // be used if we know that all keys are defined in the language specific file)
-        mxResources.loadDefaultBundle = true;
-        var bundle = mxResources.getDefaultBundle(RESOURCE_BASE, mxLanguage) ||
-          mxResources.getSpecialBundle(RESOURCE_BASE, mxLanguage);
+                versionValidityDate: {
+                    type: Number,
+                    value: undefined,
+                    notify: true
+                },
 
-        // Fixes possible asynchronous requests
-        mxUtils.getAll([bundle, STYLE_PATH + '/default.xml'], function(xhr)
-        {
-          // Adds bundle text to resources
-          mxResources.parse(xhr[0].getText());
-          
-          // Configures the default graph theme
-          var themes = new Object();
-          themes[Graph.prototype.defaultThemeName] = xhr[1].getDocumentElement(); 
-          
-          // Main
-          var editorUi = new EditorUi(new Editor(urlParams['chrome'] == '0', themes), '');
-          var graph = editorUi.editor.graph;
-          
-          // Listen for changes and update the state
-          graph.model.addListener(mxEvent.CHANGE, function (sender, evt) {
-            var changes = evt.getProperty('edit').changes;
-            var i;
-            for (i = 0; i < changes.length; i++) {
-              	var change = changes[i];
-              	console.log(change);
+                nodeData: {
+                    type: Object,
+                    statePath: 'nodeData'
+                },
 
-              	/*******************************************************************
-				// Vertex or Edge has been added to the graph or its parent has changed
-				 ********************************************************************/
-				if (change instanceof mxChildChange && change.parent !== null) {
-					var child = change.child,
-						childTagName = '',
-						attributes = [],
-						childSpContentTypeID = child.getAttribute('spContentTypeID'),
-						childSpID = child.getAttribute('spID'),
-						parent = change.parent,
-						parentSpID = parent.getAttribute('spID'),
-						parentTagName = '',
-						parentStyle = parent.style,
-						parentName = '',
-						previous = change.previous,
-						properties = {};
+                children2: {
+                    type: Object,
+                    statePath: 'children'
+                }
+            },
 
-					if(typeof child.value === 'object' && child.value !== null) {
-						childTagName = child.value.tagName;
-						attributes = child.value.attributes;
-					} else {
-						childTagName = 'mxCell';
-					}
+            actions: {
+                loadChildrenAction: function(children) {
+                    return {
+                        type: 'LOAD_CHILDREN',
+                        children: children
+                    }
+                }
+            },
 
-					if(typeof parent.value === 'object' && parent.value !== null) {
-						parentTagName = parent.value.tagName;
-						parentName = parent.value.attributes[1].nodeValue;
-					} else {
-						parentTagName = 'mxCell';
-						parentName = parent.value;
-					}					
+            ready: function() {
+                var polymerThis = this,
+                    currentItemId = this.nodeData.identityNode.properties.uuid, // need to set.
+                    webAbsoluteUrl = '',
+                    listName = '',
+                    api = this.$.api;
 
-					// New vertex has been added to the graph
-					if (previous === null) {
+                var editorUiInit = EditorUi.prototype.init;
 
-						// If Role (swimlane), promt to select from list of roles
-						if (childTagName === "Role") {
-							PromptSelectRoleOrCreate(function (pObjectId) {
-								child.setAttribute('spID', pObjectId)
-							}, editor, graph, child, childSpContentTypeID);
-							
-							return;
-						}
-						
-						// If Off Page Reference, promt to select Activity
-						if (childTagName === "OffPageReference") {
-							PromptSelectActivities(function (pObjectId) {
-								child.setAttribute('spID', pObjectId)
-							}, editor, graph, child, childSpContentTypeID);
-							
-							return;
-						}
-						// Clear attributes except for label and spContentTypeID
-						var attributesCount = attributes.length,
-							i2 = 0;
-						for (; i2 < attributesCount; i2 += 1) {
-							var attributeName = attributes[i2].nodeName;
+                EditorUi.prototype.init = function() {
+                    editorUiInit.apply(this, arguments);
+                    this.actions.get('export').setEnabled(false);
 
-							if (attributeName === 'label') {
-								child.setAttribute(attributes[i2].nodeName, child.value.nodeName + '_' + Math.floor(Math.random() * (1000 - 0)) + 0);
-							} else if (attributeName !== 'spContentTypeID') {
-								child.setAttribute(attributes[i2].nodeName, '');
-							}
-						}
-						graph.refresh();
+                    // Updates action states which require a backend
+                    if (!Editor.useLocalStorage) {
+                        mxUtils.post(OPEN_URL, '', mxUtils.bind(this, function(req) {
+                            var enabled = req.getStatus() != 404;
+                            this.actions.get('open').setEnabled(enabled || Graph.fileSupport);
+                            this.actions.get('import').setEnabled(enabled || Graph.fileSupport);
+                            this.actions.get('save').setEnabled(enabled);
+                            this.actions.get('saveAs').setEnabled(enabled);
+                            this.actions.get('export').setEnabled(enabled);
+                        }));
+                    }
+                };
 
-						// Create an associated object in the DB
-						properties = {
-							"Title" : child.getAttribute('label'),
-							"ContentTypeId" : childSpContentTypeID,
-							"__metadata" : {
-								"type" : childTagName //child.getAttribute('spDataType')
-							}
-						};
+                // Adds required resources (disables loading of fallback properties, this can only
+                // be used if we know that all keys are defined in the language specific file)
+                mxResources.loadDefaultBundle = true;
+                var bundle = mxResources.getDefaultBundle(RESOURCE_BASE, mxLanguage) ||
+                    mxResources.getSpecialBundle(RESOURCE_BASE, mxLanguage);
 
-						// If an item A is dropped inside of activity B, use activity
-						// B's spID as item A's spParentIDs value. Otherwise use the
-						// main parent id (i.e. the activity the current page represents)
-						if (parentTagName === 'Activity') {
-							child.setAttribute('spParentIDs', parentSpID);
-							properties['ParentIDs'] = parentSpID.toString();
-						} else {
-							child.setAttribute('spParentIDs', currentItemId);
-							properties['ParentIDs'] = currentItemId.toString();
-						}
+                // Fixes possible asynchronous requests
+                mxUtils.getAll([bundle, STYLE_PATH + '/default.xml'], function(xhr) {
+                    // Adds bundle text to resources
+                    mxResources.parse(xhr[0].getText());
 
-						// If the item is dropped into a Role Swimlane, add the
-						// spID of the Role into the item's Responsible property
-						if (parentStyle === "swimlane" || parentTagName === 'Role') {
-							child.setAttribute('spResponsible', parentSpID);
-							properties['Responsible'] = parentSpID.toString();
-						}
+                    // Configures the default graph theme
+                    var themes = new Object();
+                    themes[Graph.prototype.defaultThemeName] = xhr[1].getDocumentElement();
 
+                    // Main
+                    var editorUi = new EditorUi(new Editor(urlParams['chrome'] == '0', themes), '');
+                    var graph = editorUi.editor.graph;
 
-						/*******************************************************************
-						Create a Sharepoint list item
-						********************************************************************/
-						polymerThis.createListItem(webAbsoluteUrl, listName, properties,
-							//Success callback
-							function (listItem) {
-								child.setAttribute('spID', listItem.Id);
-							
-								//keeps href only for images
-								if (childTagName === "Image")
-									child.setAttribute('href', webAbsoluteUrl + '/Lists/' + listName.replace(" ", "%20") + '/DispForm.aspx?ID=' + listItem.Id);
-							},
-							function (error) {
-								console.log(error);
-								return;
-							}
-						);
-						
-					}
-					// Vertex has a new parent
-					else {
-						var previousTagName = '';
+                    // Listen for changes and update the state
+                    graph.model.addListener(mxEvent.CHANGE, function(sender, evt) {
+                        var changes = evt.getProperty('edit').changes;
+                        var i;
+                        for (i = 0; i < changes.length; i++) {
+                            var change = changes[i];
+                            console.log(change);
 
-						if(typeof child.value === 'object') {
-							previousTagName = previous.value.tagName;
-						} else {
-							previousTagName = 'mxCell';
-						}
+                            /*******************************************************************
+							// Vertex or Edge has been added to the graph or its parent has changed
+				 			********************************************************************/
+                            if (change instanceof mxChildChange && change.parent !== null) {
+                                var child = change.child,
+                                    childTagName = '',
+                                    attributes = [],
+                                    childSpContentTypeID = child.getAttribute('spContentTypeID'),
+                                    childSpID = child.getAttribute('spID'),
+                                    parent = change.parent,
+                                    parentSpID = parent.getAttribute('spID'),
+                                    parentTagName = '',
+                                    parentStyle = parent.style,
+                                    parentName = '',
+                                    previous = change.previous,
+                                    properties = {};
 
-						// If child has an spContentTypeID update its spParentIDs and/or spResponsible
-						// attributes and the associated Sharepoint list item's corresponding properties
-						if (childSpContentTypeID) {
-							// If an item A is dropped inside of activity B, add activity
-							// B's spID to item A's spParentIDs value. If the previous parent
-							// was an Activity, remove its spID from A's spParentIDs, otherwise
-							// remove the main parent spID
-							if (parentTagName === 'Activity') {
-								// convert child's spParentIDs into an array
-								var childSpParentIDs = child.getAttribute('spParentIDs');
-								if (childSpParentIDs) {
-									var childSpParentIDsNoSpaces = childSpParentIDs.replace(' ', ''),
-									childSpParentIDsArray = childSpParentIDsNoSpaces.split(','),
-									previousSpID,
-									indexOfSpID = -1;
-									if (previousTagName === 'Activity') {
-										previousSpID = previous.getAttribute('spID');
-										indexOfSpID = childSpParentIDsArray.indexOf(previousSpID);
-									} else {
-										indexOfSpID = childSpParentIDsArray.indexOf(currentItemId);
-									}
-									if (indexOfSpID !== -1) {
-										childSpParentIDsArray.splice(indexOfSpID, 1);
-									}
-									childSpParentIDsArray.push(parentSpID);
-									childSpParentIDs = childSpParentIDsArray.toString();
-								} else {
-									childSpParentIDs = parentSpID.toString();
-								}
-								child.setAttribute('spParentIDs', childSpParentIDs);
-								properties['ParentIDs'] = childSpParentIDs;
-							}
+                                if (typeof child.value === 'object' && child.value !== null) {
+                                    childTagName = child.value.tagName;
+                                    attributes = child.value.attributes;
+                                } else {
+                                    childTagName = 'mxCell';
+                                }
 
-							// If the new parent is a Role Swimlane, add the spID
-							// of the Role into the item's Responsible property and
-							// remove the previous parent's spID if it was also a Role
-							else if (parentTagName === 'Role') {
-								// Convert child's spResponsible ids into an array
-								var childSpResponsible = child.getAttribute('spResponsible');
-								if (childSpResponsible) {
-									var childSpResponsibleNoSpaces = childSpResponsible.replace(' ', ''),
-									childSpResponsibleArray = childSpResponsibleNoSpaces.split(','),
-									previousSpID,
-									indexOfSpID = -1;
-									if (previousTagName === 'Role') {
-										previousSpID = previous.getAttribute('spID');
-										indexOfSpID = childSpResponsibleArray.indexOf(previousSpID);
-									}
-									if (indexOfSpID !== -1) {
-										childSpResponsibleArray.splice(indexOfSpID, 1);
-									}
-									childSpResponsibleArray.push(parentSpID);
-									childSpResponsible = childSpResponsibleArray.toString();
-								} else {
-									childSpResponsible = parentSpID;
-								}
-								//child.setAttribute('spResponsible', parentName);
-								//properties['Responsible'] = parentName;
-								
-								child.setAttribute('spResponsible', childSpResponsible);
-								properties['Responsible'] = childSpResponsible.toString();
-							}
-							else //clear responsible because it was dropped in the layer 
-							{
-								child.setAttribute('spResponsible', "");
-								properties['Responsible'] = "";
-							}
-							/********************************************************
-							Update the Sharepoint list item
-							 ********************************************************/
-							if (properties && childSpID) {
-								properties['__metadata'] = {
-									"type" : childTagName //child.getAttribute('spDataType')
-								};
-								polymerThis.updateListItem(webAbsoluteUrl, listName, childSpID, properties);
-							}
-						}
+                                if (typeof parent.value === 'object' && parent.value !== null) {
+                                    parentTagName = parent.value.tagName;
+                                    parentName = parent.value.attributes[1].nodeValue;
+                                } else {
+                                    parentTagName = 'mxCell';
+                                    parentName = parent.value;
+                                }
 
-						// If the previous parent was an activity and it no longer has
-						// children, remove the group style
-						if (previous.children.length === 0 && previousTagName === 'Activity') {
-							var previousStyle = previous.style,
-							previousStyleSlicePosition = previousStyle.indexOf('Group');
-							if (previousStyleSlicePosition !== -1) {
-								previous.setStyle(previousStyle.slice(0, previousStyleSlicePosition) + previousStyle.slice(previousStyleSlicePosition + 5));
-								graph.refresh();
-							}
-						}
-					}
+                                // New vertex has been added to the graph
+                                if (previous === null) {
 
-					// If the new parent is an Activity, change its style to the group style if it isn't already.
-					if (parentStyle && parentTagName === 'Activity') {
-						var parentStyleSlicePosition = parentStyle.indexOf(';'),
-						parentBaseStyle = parentStyleSlicePosition !== -1 ? parentStyle.slice(0, parentStyleSlicePosition) : parentStyle,
-						parentStyleAttributes = parentStyleSlicePosition !== -1 ? parentStyle.slice(parentStyleSlicePosition) : '';
-						if (parentBaseStyle.slice(-5) !== 'Group') {
-							parent.setStyle(parentBaseStyle + 'Group' + parentStyleAttributes);
-							graph.refresh();
-						}
-					}
-				}
+                                    // If Role (swimlane), promt to select from list of roles
+                                    if (childTagName === "Role") {
+                                        PromptSelectRoleOrCreate(function(pObjectId) {
+                                            child.setAttribute('spID', pObjectId)
+                                        }, editor, graph, child, childSpContentTypeID);
 
-				/*******************************************************************
-				// Vertex attribute values have changed
-				 ********************************************************************/
-				if (change instanceof mxCellAttributeChange || change instanceof mxValueChange) {
-					var changedCell = change.cell,
-					changedCellSpContentTypeID = changedCell.getAttribute('spContentTypeID'),
-					changedAttribute = change instanceof mxValueChange ? 'label' : change.attribute;
+                                        return;
+                                    }
 
-					// BUG FIX
-					// if the element is an image and the href attribute has changed,
-					// replace the image url in the style property with the value of the href attribute
-					if (changedAttribute === 'href' && changedCell.value.tagName === 'Image') {
-						var url = change.value,
-						style = changedCell.style,
-						styleSlicePosition = style.indexOf('image='),
-						styleSlice1 = style.slice(0, styleSlicePosition),
-						styleSlice2 = style.slice(styleSlicePosition),
-						styleSlicePosition2 = styleSlice2.indexOf(';'),
-						styleSlice3 = styleSlicePosition2 !== -1 ? styleSlice2.slice(styleSlicePosition2 + 1) : '';
-						changedCell.setStyle(styleSlice1 + 'image=' + url + ';' + styleSlice3);
-						graph.refresh();
-					}
+                                    // If Off Page Reference, promt to select Activity
+                                    if (childTagName === "OffPageReference") {
+                                        PromptSelectActivities(function(pObjectId) {
+                                            child.setAttribute('spID', pObjectId)
+                                        }, editor, graph, child, childSpContentTypeID);
 
-					// Update the corresponding Sharepoint list item
-					var changedCellSpID = changedCell.getAttribute('spID'),
-					properties = {
-						__metadata : {
-							"type" : 'childTagName' //changedCell.getAttribute('spDataType')
-							}
-					};
-					if (changedAttribute === 'label') {
-						properties['Title'] = change.value;
-					} else if (changedAttribute.substr(0, 2) === 'sp' && changedAttribute !== 'spPersonDays') {
-						if (changedAttribute === 'spDescription')
-							properties['ProcessItemDescription'] = String(change.value);
-						else if (changedAttribute === 'spStatus')
-							properties['spStatus'] = String(change.value);
-						else if (changedAttribute === 'spDuration')
-							properties[durationField] = String(change.value);
-						else
-							properties[changedAttribute.substring(2)] = String(change.value);
-					} else if (changedAttribute === 'spPersonDays') {
-						if (IsNumeric(change.value)) {
-							properties[changedAttribute.substring(2)] = change.value;
-						} else {
-							mxLog.debug("spPersonDays value must be numeric. Ex: '123', '12.3', '-10.3'");
+                                        return;
+                                    }
+                                    // Clear attributes except for label and spContentTypeID
+                                    var attributesCount = attributes.length,
+                                        i2 = 0;
+                                    for (; i2 < attributesCount; i2 += 1) {
+                                        var attributeName = attributes[i2].nodeName;
 
-							return;
-						}
+                                        if (attributeName === 'label') {
+                                            child.setAttribute(attributes[i2].nodeName, child.value.nodeName + '_' + Math.floor(Math.random() * (1000 - 0)) + 0);
+                                        } else if (attributeName !== 'spContentTypeID') {
+                                            child.setAttribute(attributes[i2].nodeName, '');
+                                        }
+                                    }
+                                    graph.refresh();
 
-					}
-					
+                                    // Create an associated object in the DB
+                                    properties = {
+                                        "Title": child.getAttribute('label'),
+                                        "ContentTypeId": childSpContentTypeID,
+                                        "__metadata": {
+                                            "type": childTagName //child.getAttribute('spDataType')
+                                        }
+                                    };
 
-					/*************************************************************
-					Update the corresponding Sharepoint List item
-					 ********************************************************************/
-					polymerThis.updateListItem(webAbsoluteUrl, listName, changedCellSpID, properties);
+                                    // If an item A is dropped inside of activity B, use activity
+                                    // B's spID as item A's spParentIDs value. Otherwise use the
+                                    // main parent id (i.e. the activity the current page represents)
+                                    if (parentTagName === 'Activity') {
+                                        child.setAttribute('spParentIDs', parentSpID);
+                                        properties['ParentIDs'] = parentSpID.toString();
+                                    } else {
+                                        child.setAttribute('spParentIDs', currentItemId);
+                                        properties['ParentIDs'] = currentItemId.toString();
+                                    }
 
-				}
+                                    // If the item is dropped into a Role Swimlane, add the
+                                    // spID of the Role into the item's Responsible property
+                                    if (parentStyle === "swimlane" || parentTagName === 'Role') {
+                                        child.setAttribute('spResponsible', parentSpID);
+                                        properties['Responsible'] = parentSpID.toString();
+                                    }
 
 
+                                    /*******************************************************************
+                                    Create a Sharepoint list item
+                                    ********************************************************************/
+                                    var request = api.create(properties);
+                                    Promise.all([request.completes])
+						                .then(function (requests) {
+						                    var response = requests[0].response;
 
+						                    // do whatever you want from here...
+						                    console.log(response);
+						                });
+						            // Tests - don't work
+						            // request.completes.then(function(response) {
+						            // 		console.log(response);
+						            // 	}, function(response) {
+
+						            // 	});
+						            // Promise.resolve(request.completes)
+						            // 	.then(function(response) {
+						            // 		console.log(response);
+						            // 	}, function(response) {
+
+						            // 	});
+
+                                    polymerThis.createListItem(webAbsoluteUrl, listName, properties,
+                                        //Success callback
+                                        function(listItem) {
+                                            child.setAttribute('spID', listItem.Id);
+
+                                            //keeps href only for images
+                                            if (childTagName === "Image")
+                                                child.setAttribute('href', webAbsoluteUrl + '/Lists/' + listName.replace(" ", "%20") + '/DispForm.aspx?ID=' + listItem.Id);
+                                        },
+                                        function(error) {
+                                            console.log(error);
+                                            return;
+                                        }
+                                    );
+
+                                }
+                                // Vertex has a new parent
+                                else {
+                                    var previousTagName = '';
+
+                                    if (typeof child.value === 'object') {
+                                        previousTagName = previous.value.tagName;
+                                    } else {
+                                        previousTagName = 'mxCell';
+                                    }
+
+                                    // If child has an spContentTypeID update its spParentIDs and/or spResponsible
+                                    // attributes and the associated Sharepoint list item's corresponding properties
+                                    if (childSpContentTypeID) {
+                                        // If an item A is dropped inside of activity B, add activity
+                                        // B's spID to item A's spParentIDs value. If the previous parent
+                                        // was an Activity, remove its spID from A's spParentIDs, otherwise
+                                        // remove the main parent spID
+                                        if (parentTagName === 'Activity') {
+                                            // convert child's spParentIDs into an array
+                                            var childSpParentIDs = child.getAttribute('spParentIDs');
+                                            if (childSpParentIDs) {
+                                                var childSpParentIDsNoSpaces = childSpParentIDs.replace(' ', ''),
+                                                    childSpParentIDsArray = childSpParentIDsNoSpaces.split(','),
+                                                    previousSpID,
+                                                    indexOfSpID = -1;
+                                                if (previousTagName === 'Activity') {
+                                                    previousSpID = previous.getAttribute('spID');
+                                                    indexOfSpID = childSpParentIDsArray.indexOf(previousSpID);
+                                                } else {
+                                                    indexOfSpID = childSpParentIDsArray.indexOf(currentItemId);
+                                                }
+                                                if (indexOfSpID !== -1) {
+                                                    childSpParentIDsArray.splice(indexOfSpID, 1);
+                                                }
+                                                childSpParentIDsArray.push(parentSpID);
+                                                childSpParentIDs = childSpParentIDsArray.toString();
+                                            } else {
+                                                childSpParentIDs = parentSpID.toString();
+                                            }
+                                            child.setAttribute('spParentIDs', childSpParentIDs);
+                                            properties['ParentIDs'] = childSpParentIDs;
+                                        }
+
+                                        // If the new parent is a Role Swimlane, add the spID
+                                        // of the Role into the item's Responsible property and
+                                        // remove the previous parent's spID if it was also a Role
+                                        else if (parentTagName === 'Role') {
+                                            // Convert child's spResponsible ids into an array
+                                            var childSpResponsible = child.getAttribute('spResponsible');
+                                            if (childSpResponsible) {
+                                                var childSpResponsibleNoSpaces = childSpResponsible.replace(' ', ''),
+                                                    childSpResponsibleArray = childSpResponsibleNoSpaces.split(','),
+                                                    previousSpID,
+                                                    indexOfSpID = -1;
+                                                if (previousTagName === 'Role') {
+                                                    previousSpID = previous.getAttribute('spID');
+                                                    indexOfSpID = childSpResponsibleArray.indexOf(previousSpID);
+                                                }
+                                                if (indexOfSpID !== -1) {
+                                                    childSpResponsibleArray.splice(indexOfSpID, 1);
+                                                }
+                                                childSpResponsibleArray.push(parentSpID);
+                                                childSpResponsible = childSpResponsibleArray.toString();
+                                            } else {
+                                                childSpResponsible = parentSpID;
+                                            }
+                                            //child.setAttribute('spResponsible', parentName);
+                                            //properties['Responsible'] = parentName;
+
+                                            child.setAttribute('spResponsible', childSpResponsible);
+                                            properties['Responsible'] = childSpResponsible.toString();
+                                        } else //clear responsible because it was dropped in the layer 
+                                        {
+                                            child.setAttribute('spResponsible', "");
+                                            properties['Responsible'] = "";
+                                        }
+                                        /********************************************************
+                                        Update the Sharepoint list item
+                                         ********************************************************/
+                                        if (properties && childSpID) {
+                                            properties['__metadata'] = {
+                                                "type": childTagName //child.getAttribute('spDataType')
+                                            };
+                                            polymerThis.updateListItem(webAbsoluteUrl, listName, childSpID, properties);
+                                        }
+                                    }
+
+                                    // If the previous parent was an activity and it no longer has
+                                    // children, remove the group style
+                                    if (previous.children.length === 0 && previousTagName === 'Activity') {
+                                        var previousStyle = previous.style,
+                                            previousStyleSlicePosition = previousStyle.indexOf('Group');
+                                        if (previousStyleSlicePosition !== -1) {
+                                            previous.setStyle(previousStyle.slice(0, previousStyleSlicePosition) + previousStyle.slice(previousStyleSlicePosition + 5));
+                                            graph.refresh();
+                                        }
+                                    }
+                                }
+
+                                // If the new parent is an Activity, change its style to the group style if it isn't already.
+                                if (parentStyle && parentTagName === 'Activity') {
+                                    var parentStyleSlicePosition = parentStyle.indexOf(';'),
+                                        parentBaseStyle = parentStyleSlicePosition !== -1 ? parentStyle.slice(0, parentStyleSlicePosition) : parentStyle,
+                                        parentStyleAttributes = parentStyleSlicePosition !== -1 ? parentStyle.slice(parentStyleSlicePosition) : '';
+                                    if (parentBaseStyle.slice(-5) !== 'Group') {
+                                        parent.setStyle(parentBaseStyle + 'Group' + parentStyleAttributes);
+                                        graph.refresh();
+                                    }
+                                }
+                            }
+
+                            /*******************************************************************
+                            // Vertex or Edge attribute values have changed
+                             ********************************************************************/
+                            if (change instanceof mxCellAttributeChange || change instanceof mxValueChange) {
+                                var changedCell = change.cell,
+                                    changedCellSpContentTypeID = changedCell.getAttribute('spContentTypeID'),
+                                    changedAttribute = change instanceof mxValueChange ? 'label' : change.attribute;
+
+                                // BUG FIX
+                                // if the element is an image and the href attribute has changed,
+                                // replace the image url in the style property with the value of the href attribute
+                                if (changedAttribute === 'href' && changedCell.value.tagName === 'Image') {
+                                    var url = change.value,
+                                        style = changedCell.style,
+                                        styleSlicePosition = style.indexOf('image='),
+                                        styleSlice1 = style.slice(0, styleSlicePosition),
+                                        styleSlice2 = style.slice(styleSlicePosition),
+                                        styleSlicePosition2 = styleSlice2.indexOf(';'),
+                                        styleSlice3 = styleSlicePosition2 !== -1 ? styleSlice2.slice(styleSlicePosition2 + 1) : '';
+                                    changedCell.setStyle(styleSlice1 + 'image=' + url + ';' + styleSlice3);
+                                    graph.refresh();
+                                }
+
+                                // Update the corresponding Sharepoint list item
+                                var changedCellSpID = changedCell.getAttribute('spID'),
+                                    properties = {
+                                        __metadata: {
+                                            "type": 'childTagName' //changedCell.getAttribute('spDataType')
+                                        }
+                                    };
+                                if (changedAttribute === 'label') {
+                                    properties['Title'] = change.value;
+                                } else if (changedAttribute.substr(0, 2) === 'sp' && changedAttribute !== 'spPersonDays') {
+                                    if (changedAttribute === 'spDescription')
+                                        properties['ProcessItemDescription'] = String(change.value);
+                                    else if (changedAttribute === 'spStatus')
+                                        properties['spStatus'] = String(change.value);
+                                    else if (changedAttribute === 'spDuration')
+                                        properties[durationField] = String(change.value);
+                                    else
+                                        properties[changedAttribute.substring(2)] = String(change.value);
+                                } else if (changedAttribute === 'spPersonDays') {
+                                    if (IsNumeric(change.value)) {
+                                        properties[changedAttribute.substring(2)] = change.value;
+                                    } else {
+                                        mxLog.debug("spPersonDays value must be numeric. Ex: '123', '12.3', '-10.3'");
+
+                                        return;
+                                    }
+
+                                }
+
+
+                                /*************************************************************
+                                Update the corresponding Sharepoint List item
+                                 ********************************************************************/
+                                polymerThis.updateListItem(webAbsoluteUrl, listName, changedCellSpID, properties);
+
+                            }
+
+
+
+                        }
+                    });
+
+
+
+
+
+                }, function() {
+                    document.body.innerHTML = '<center style="margin-top:10%;">Error loading resource files. Please check browser console.</center>';
+                });
+
+
+
+                // Graph.model.addListener(mxEvent.CHANGE, function (sender, evt) {
+                //   changes = evt.getProperty('edit').changes;
+                //   for (i = 0; i < changes.length; i++) {
+                //     var change = changes[i];
+                //     console.log(change);
+                //   }
+                // });
+
+            },
+
+            _updateChildren: function() {
+            	this.dispatch('loadChildrenAction', this.children);
+            },
+
+            createListItem: function(properties) {
+                console.log('Create: ');
+                console.log(properties);
+            },
+
+            updateListItem: function(properties) {
+                console.log('Update: ');
+                console.log(properties);
             }
-          });
 
-
-
-
-
-        }, function()
-        {
-          document.body.innerHTML = '<center style="margin-top:10%;">Error loading resource files. Please check browser console.</center>';
         });
-
-        
-
-        // Graph.model.addListener(mxEvent.CHANGE, function (sender, evt) {
-        //   changes = evt.getProperty('edit').changes;
-        //   for (i = 0; i < changes.length; i++) {
-        //     var change = changes[i];
-        //     console.log(change);
-        //   }
-        // });
-
-      },
-
-      createListItem: function(webAbsoluteUrl, listName, properties, success, failure) {
-      	console.log('Create: ');
-      	console.log(properties);
-      },
-
-      updateListItem: function(webAbsoluteUrl, listName, changedCellSpID, properties) {
-      	console.log('Update: ');
-      	console.log(properties);
-      }
-
-    });
-  })();
-  </script>
+    })();
+    </script>
 </dom-module>

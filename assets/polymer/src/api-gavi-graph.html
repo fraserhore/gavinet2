@@ -1,0 +1,213 @@
+<link rel="import" href="/polymer/bower_components/polymer/polymer.html">
+
+<dom-module id="api-gavi-graph">
+    <template>
+        <iron-ajax id="ajax"
+            url=""
+            params=""
+            handle-as="json"
+            last-response="{{response}}"
+            on-response="handleResponse"
+            debounce-duration="300"></iron-ajax>
+    </template>
+    
+    <script>
+        (function() {
+            'use strict';
+
+            Polymer({
+                is: 'api-gavi-graph',
+
+                 // Create Operation
+                // webAbsoluteUrl: The url of the site that the list is in
+                // listName: The name of the list you want to get items from
+                // properties: json object with item properties to be updated
+                // success: The function to execute if the call is successful
+                // failure: The function to execute if the call fails
+                create: function(properties) {
+                    var ajax = this.$.ajax;
+                    ajax.url = '/content/getChildren/cdfed35f-4f15-42c5-8376-0403e2ace32d';
+                    ajax.method = 'GET';
+                    console.log(properties);
+                    return ajax.generateRequest();
+                },
+
+
+                // Update Operation
+                // webAbsoluteUrl: The url of the site that the list is in
+                // listName: The name of the list you want to get items from
+                // itemId: the id of the item to update
+                // properties: json object with item properties to be updated
+                Update: function(id, properties) {
+                    if(itemId)
+                    {
+                        mxLog.debug('Updating item ' + itemId);
+                        // first we need to fetch the eTag to ensure we have the most recent value for it
+                        $.ajax({
+                            url: webAbsoluteUrl + "/_api/Web/Lists/getByTitle('" + listName + "')/items('" + itemId + "')",
+                            type: "GET",
+                            headers: { "ACCEPT": "application/json;odata=verbose" },
+                            success: function(data){
+                                // got the eTag
+                                var etag = data.d.__metadata.etag;
+                                //console.log(properties);
+
+                                // set the MERGE verb so we only need to provide the update delta
+                                var requestHeaders = {
+                                    "ACCEPT": "application/json;odata=verbose",
+                                    "content-type": "application/json;odata=verbose",
+                                    "X-RequestDigest": $("#__REQUESTDIGEST").val(),
+                                    "X-HTTP-Method": "MERGE",
+                                    "If-Match": "*"
+                                }
+
+                                $.ajax({
+                                    url: data.d.__metadata.uri,
+                                    type: "POST",
+                                    contentType: "application/json;odata=verbose",
+                                    headers: requestHeaders,
+                                    data: JSON.stringify(properties),
+                                    success: function(data){
+                                        mxLog.debug('Item ' + itemId + ' updated');
+                                    },
+                                    error: function(data, errorStatus, errorThrown ){
+                                        mxLog.debug("Failed to update item " + itemId + " " + errorStatus + " " + errorThrown);
+                                        $('#feedbackUserErrors').html("");
+                                        
+                                        if(errorThrown !== "Conflict")
+                                        {
+                                            var errorReport = "<p>An error occured while saving your modifications. Please reload the page so you can continue to work on this process without losing information.</p>";
+                                                         //+ "<p>Report the following error to support. Failed to update item " + itemId + " " + errorStatus + " " + errorThrown". </p>";
+                                            $('#feedbackUserErrors').html(errorReport);
+                                            var r=confirm("An error occured while saving your modifications. Please reload the page so you can continue to work on this process without losing information.");
+                                            if (r)
+                                            {
+                                                //write redirection code
+                                                window.location.reload();
+                                                // window.location = window.location.href;
+                                            }
+                                        }
+                                    }
+                                });
+                            },
+                            error:  function(data){
+                                mxLog.debug("Failed to update item " + data);
+                                $('#feedbackUserErrors').html("");
+                                var errorReport = "<p>An error occured while saving your modifications. Please reload the page so you can continue to work on this process without losing information.</p>";
+                                             //+ "<p>Report the following error to support. Failed to update item " + itemId + " " + errorStatus + " " + errorThrown". </p>";
+                                $('#feedbackUserErrors').html(errorReport);
+                                var r=confirm("An error occured while saving your modifications. Please reload the page so you can continue to work on this process without losing information.");
+                                if (r)
+                                {
+                                    //write redirection code
+                                    window.location.reload();
+                                    // window.location = window.location.href;
+                                }
+                            }
+                        });
+                    }
+                    else
+                        mxLog.debug("Failed to update item, no ID was passed, please try to update the graph before performing another operation.");
+                },
+
+                // READ SPECIFIC ITEM operation
+                // itemId: The id of the item to get
+                // listName: The name of the list you want to get items from
+                // siteurl: The url of the site that the list is in. 
+                // success: The function to execute if the call is sucesfull
+                // failure: The function to execute if the call fails
+                getWithId: function(id, listName, siteurl, success, failure) {
+                    var url = siteurl + "/_api/web/lists/getbytitle('" + listName + "')/items?$filter=Id eq " + itemId;
+                    $.ajax({
+                        url: url,
+                        method: "GET",
+                        headers: { "Accept": "application/json; odata=verbose" },
+                        success: function (data) {
+                            if (data.d.results.length == 1) {
+                                success(data.d.results[0]);
+                            }
+                            else {
+                                failure("Multiple results obtained for the specified Id value");
+                            }
+                        },
+                        error: function (data) {
+                            failure(data);
+                        }
+                    });
+                },
+
+                // Delete Operation
+                // itemId: the id of the item to delete
+                // listName: The name of the list you want to delete the item from
+                // siteurl: The url of the site that the list is in. 
+                // success: The function to execute if the call is sucesfull
+                // failure: The function to execute if the call fails
+                delete: function(id, success, failure) {
+                    getListItemWithId(itemId, listName, siteUrl, function (data) {
+                        $.ajax({
+                            url: data.__metadata.uri + "/recycle()",
+                            type: "POST",
+                            headers: {
+                                "Accept": "application/json;odata=verbose",
+                                "X-Http-Method": "DELETE",
+                                "X-RequestDigest": $("#__REQUESTDIGEST").val(),
+                                "If-Match": data.__metadata.etag
+                            },
+                            success: function () {
+                                mxLog.debug('Deleted item ' + itemId);
+                            },
+                            error: function () {
+                                failure("Item deleted failure: " + errorThrown);
+                                console.log("Failed to deleted item " + itemId + " " + errorStatus + " " + errorThrown);
+                                $('#feedbackUserErrors').html("");
+                                var errorReport = "<p>An error occured while saving your modifications. Please reload the page so you can continue to work on this process without losing information.</p>";
+                                             //+ "<p>Report the following error to support. Failed to update item " + itemId + " " + errorStatus + " " + errorThrown". </p>";
+                                $('#feedbackUserErrors').html(errorReport);
+                                var r=confirm("An error occured while saving your modifications. Please reload the page so you can continue to work on this process without losing information.");
+                                if (r)
+                                {
+                                    //write redirection code
+                                    window.location.reload();
+                                    // window.location = window.location.href;
+                                }
+                            }
+                        });
+                    },
+                    function (data) {
+                        failure("Item deleted failure: " + data);
+                        console.log("Failed to deleted item " + itemId);
+                   });
+                },
+
+                getAllItems: function(viewFields, filter, rowlimit, orderbyfield, success, error) {
+                    var queryFilter = "&$filter=";
+                    if(filter === "")
+                    {
+                        queryFilter = "";
+                    }
+                    else
+                    {
+                        queryFilter += filter;
+                    }
+                    $.ajax({
+                        url: webAbsoluteUrl + "/_api/Web/Lists/getByTitle('" + listName + "')/items?$select=" + viewFields + "&$expand=ContentType" + queryFilter +"&$orderby=" + orderbyfield + "&$top=" + rowlimit,
+                        type: "GET",
+                        contentType: "application/json;odata=verbose",
+                        headers: {
+                            "Accept": "application/json;odata=verbose"
+                        },
+                        success: function(data) {
+                            //console.log(data.d);
+                            success(data.d);
+                        },
+                        error: function(data){
+                            console.log(data);
+                        }
+                    });
+                }
+
+                
+            });
+        }());
+    </script>
+</dom-module>

@@ -19,6 +19,9 @@
 
             case 'LOAD_OVERRIDES' :
                 return Object.assign({}, state, {overrides: action.overrides});
+
+            case 'LOAD_CHILDREN' :
+                return Object.assign({}, state, {children: action.children});
         }
     };
 
