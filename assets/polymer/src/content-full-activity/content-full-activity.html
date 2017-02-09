@@ -9,6 +9,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 -->
 <link rel="import" href="/polymer/bower_components/polymer/polymer.html">
 <link rel="import" href="../content-process-editor/content-process-editor.html">
+<link rel="import" href="../content-hierarchy-editor/content-hierarchy-editor.html">
 
 <dom-module id="content-full-activity">
     <template>
@@ -57,6 +58,8 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
         <h3>Graph</h3>
         <content-process-editor id="processEditor" identity-node-id="{{nodeData.identityNode.uuid}}" on-edit="update"></content-process-editor>
+        <h3>Hierarchy</h3>
+        <!-- <content-hierarchy-editor id="processEditor" identity-node-id="{{nodeData.identityNode.uuid}}" on-edit="update"></content-hierarchy-editor> -->
         
         <h3>Child Content</h3>
         <!-- <content-children id="contentChildren" identity-node-id="{{nodeData.identityNode.properties.uuid}}" on-edit="update"></content-children> -->
