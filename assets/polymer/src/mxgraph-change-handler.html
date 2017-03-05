@@ -15,16 +15,16 @@
             Polymer({
                 is: 'mxgraph-change-handler',
 
-                handleChange: function(currentItemId, graph, sender, evt) {
-                    console.log('change');
-                    console.log(evt);
+                handleChange: function(currentItemId, authorId, graph, sender, evt) {
+                    //console.log('change');
+                    //console.log(evt);
 
                     var api = this.$.api,
                         changes = evt.getProperty('edit').changes,
                         i;
                     for (i = 0; i < changes.length; i++) {
                         var change = changes[i];
-                        console.log(change);
+                        //console.log(change);
 
                         /*******************************************************************
                         // Vertex or Edge has been added to the graph or its parent has changed
@@ -32,6 +32,7 @@
                         if (change instanceof mxChildChange && change.parent !== null) {
                             var child = change.child,
                                 childTagName = '',
+                                childName = '',
                                 attributes = [],
                                 childSpContentTypeID = child.getAttribute('spContentTypeID'),
                                 childSpID = child.getAttribute('spID'),
@@ -41,26 +42,29 @@
                                 parentStyle = parent.style,
                                 parentName = '',
                                 previous = change.previous,
+                                options, 
                                 properties = {};
 
+                            
                             if (typeof child.value === 'object' && child.value !== null) {
                                 childTagName = child.value.tagName;
                                 attributes = child.value.attributes;
                             } else {
-                                childTagName = 'mxCell';
+                                childTagName = 'mxGraphObject';
+                                childName = child.value;
                             }
 
                             if (typeof parent.value === 'object' && parent.value !== null) {
                                 parentTagName = parent.value.tagName;
                                 parentName = parent.value.attributes[1].nodeValue;
                             } else {
-                                parentTagName = 'mxCell';
+                                parentTagName = 'mxGraphObject';
                                 parentName = parent.value;
                             }
 
                             // New vertex has been added to the graph
                             if (previous === null) {
-
+                                //console.log(child.edge);
                                 // If Role (swimlane), promt to select from list of roles
                                 if (childTagName === "Role") {
                                     PromptSelectRoleOrCreate(function(pObjectId) {
@@ -92,15 +96,28 @@
                                 }
                                 graph.refresh();
 
-                                // Create an associated object in the DB
                                 properties = {
-                                    "Title": child.getAttribute('label'),
-                                    "ContentTypeId": childSpContentTypeID,
-                                    "__metadata": {
-                                        "type": childTagName //child.getAttribute('spDataType')
-                                    }
+                                    "title": child.getAttribute('label') || childName,
+                                    //"mxCell": JSON.stringify(child),
+                                    "mxEdge": child.edge,
+                                    "mxGeometry": JSON.stringify(child.geometry),
+                                    "mxId": child.id,
+                                    "mxObjectId": child.mxObjectId,
+                                    "mxStyle": child.style,
+                                    "mxSource": null,
+                                    "mxTarget": null,
+                                    "mxVertex": child.vertex
                                 };
 
+                                if(child.edge === true) {
+                                    if(child.source !== null) {
+                                        properties['mxSource'] = child.source.id
+                                    }
+                                    if(child.target !== null) {
+                                        properties['mxTarget'] = child.target.id
+                                    }
+                                }
+                                
                                 // If an item A is dropped inside of activity B, use activity
                                 // B's spID as item A's spParentIDs value. Otherwise use the
                                 // main parent id (i.e. the activity the current page represents)
@@ -119,19 +136,28 @@
                                     properties['Responsible'] = parentSpID.toString();
                                 }
 
+                                options = {
+                                    "parentId" : currentItemId, //parent.getAttribute('id') || parent.getAttribute('uuid'),
+                                    "authorId" : authorId, 
+                                    "contenttype" : childTagName,
+                                    "lang" : "en-gb",
+                                    "properties" : properties, 
+                                    "relationships" : "", 
+                                    "identityNamePattern" : ""
+                                };
 
                                 /*******************************************************************
                                 Create a Sharepoint list item
                                 ********************************************************************/
                                 // Create the item
-                                var request = api.create(properties);
+                                var request = api.create(options);
                                 // Add the id of the newly created item to the mxGraph object. This id is needed for any update actions. The Promise could be added to the api and then this function could return success and failure callbacks.
                                 Promise.all([request.completes])
                                     .then(function (requests) {
                                         var response = requests[0].response;
-
+                                        child.setAttribute('id', response.identityNode.properties.uuid)
                                         // do whatever you want from here...
-                                        console.log(response);
+                                        //console.log(response);
                                     });
                                 // Tests - don't work
                                 // request.completes.then(function(response) {
@@ -253,7 +279,7 @@
                                                 var response = requests[0].response;
 
                                                 // do whatever you want from here...
-                                                console.log(response);
+                                                //console.log(response);
                                             });
                                         // polymerThis.updateListItem(webAbsoluteUrl, listName, childSpID, properties);
                                     }

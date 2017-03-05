@@ -531,6 +531,7 @@ module.exports = {
             .run(query, options)
             .then(result => {
                 session.close();
+                console.log(result);
                 var record = result.records[0];
                 console.log(record.get('childidentity'));
                 console.log(record.get('childversion'));

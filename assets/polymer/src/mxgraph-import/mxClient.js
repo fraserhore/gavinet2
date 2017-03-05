@@ -59058,6 +59058,7 @@ mxGraph.prototype.moveCells = function(cells, dx, dy, clone, target, evt, mappin
  */
 mxGraph.prototype.cellsMoved = function(cells, dx, dy, disconnect, constrain, extend)
 {
+	console.log(cells);
 	if (cells != null && (dx != 0 || dy != 0))
 	{
 		extend = (extend != null) ? extend : false;
@@ -59108,7 +59109,7 @@ mxGraph.prototype.cellsMoved = function(cells, dx, dy, disconnect, constrain, ex
 mxGraph.prototype.translateCell = function(cell, dx, dy)
 {
 	var geo = this.model.getGeometry(cell);
-
+	console.log(geo);
 	if (geo != null)
 	{
 		dx = parseFloat(dx);

@@ -65,6 +65,15 @@ mxLoadResources = false;
         <mxgraph-change-handler id="changeHandler"></mxgraph-change-handler>
         <api-gavi-graph id="api"></api-gavi-graph>
         <!-- <api-sharepoint id="api"></api-sharepoint> -->
+        <iron-ajax
+            id="getChildren"
+            auto
+            url="/content/getChildren/{{nodeData.identityNode.properties.uuid}}?versionValidityDate={{nodeData.versionValidityDate}}"
+            params=''
+            handle-as="json"
+            last-response="{{children}}"
+            on-response="_updateChildren"
+            debounce-duration="300"></iron-ajax>
 
         <div id="graphEditor" class="geEditor"></div>
 
@@ -109,11 +118,10 @@ mxLoadResources = false;
                 }
             },
 
-            ready: function() {
+            _updateChildren: function() {
                 var polymerThis = this,
                     currentItemId = this.nodeData.identityNode.properties.uuid, // need to set.
-                    webAbsoluteUrl = '',
-                    listName = '',
+                    authorId = this.nodeData.authorNode.properties.uuid,
                     changeHandler = this.$.changeHandler,
                     api = this.$.api;
 
@@ -154,11 +162,44 @@ mxLoadResources = false;
                     // Main
                     var editorUi = new EditorUi(new Editor(urlParams['chrome'] == '0', themes), '');
                     var graph = editorUi.editor.graph;
+                    var model = graph.getModel();
+
+                    // Add the children to the graph
+
+                    // Gets the default parent for inserting new cells. This
+                    // is normally the first child of the root (ie. layer 0).
+                    var parent = graph.getDefaultParent();
+
+                    // Adds cells to the model in a single step
+                    model.beginUpdate();
+                    try {
+                       for (var i = polymerThis.children.length - 1; i >= 0; i--) {
+                         var child = polymerThis.children[i];
+                         //console.log(child.versionNode.properties.mxVertex);
+                         if(child.versionNode.properties.mxVertex === true) {
+                            var cell = graph.insertVertex(parent, child.identityNode.properties.uuid, "child.versionNode.properties", 20, 20, 80, 30, child.versionNode.properties.mxStyle);
+                             cell.setGeometry(JSON.parse(child.versionNode.properties.mxGeometry));
+                             //console.log(cell);
+                             //console.log(model.getGeometry(cell));   
+                             //console.log(new mxCell());
+                         }
+                         
+
+                         //graph.insertEdge(parent, null, '', 6427, 6417);
+                      };
+
+                      graph.refresh();
+
+                    } finally {
+                       // Updates the display
+                       model.endUpdate();
+                    }
+
 
                     // Listen for changes and update the state
                     graph.model.addListener(mxEvent.CHANGE, function(sender, evt) {
 
-                        changeHandler.handleChange(currentItemId, graph, sender, evt);
+                        changeHandler.handleChange(currentItemId, authorId, graph, sender, evt);
 
                     });
 
@@ -178,7 +219,7 @@ mxLoadResources = false;
 
             },
 
-            _updateChildren: function() {
+            _updateChildren2: function() {
             	this.dispatch('loadChildrenAction', this.children);
             },
 

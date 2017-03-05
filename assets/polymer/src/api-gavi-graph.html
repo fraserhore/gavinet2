@@ -5,6 +5,9 @@
         <iron-ajax id="ajax"
             url=""
             params=""
+            content-type="application/json"
+            method="POST"
+            body=""
             handle-as="json"
             last-response="{{response}}"
             on-response="handleResponse"
@@ -24,11 +27,12 @@
                 // properties: json object with item properties to be updated
                 // success: The function to execute if the call is successful
                 // failure: The function to execute if the call fails
-                create: function(properties) {
+                create: function(options) {
                     var ajax = this.$.ajax;
-                    ajax.url = '/content/getChildren/cdfed35f-4f15-42c5-8376-0403e2ace32d';
-                    ajax.method = 'GET';
-                    console.log(properties);
+                    ajax.url = '/content/create';
+                    ajax.method = 'POST';
+                    ajax.body = options;
+                    //console.log(options);
                     return ajax.generateRequest();
                 },
 
