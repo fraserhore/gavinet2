@@ -315,7 +315,10 @@
                         if (change instanceof mxCellAttributeChange || change instanceof mxValueChange) {
                             var changedCell = change.cell,
                                 changedCellSpContentTypeID = changedCell.getAttribute('spContentTypeID'),
-                                changedAttribute = change instanceof mxValueChange ? 'label' : change.attribute;
+                                changedAttribute = change instanceof mxValueChange ? 'label' : change.attribute,
+                                options;
+
+                            console.log(changedAttribute);
 
                             // BUG FIX
                             // if the element is an image and the href attribute has changed,
@@ -361,11 +364,23 @@
 
                             }
 
+                            options = {
+                                    //"parentId" : currentItemId, //parent.getAttribute('id') || parent.getAttribute('uuid'),
+                                    //"authorId" : authorId, 
+                                    //"contenttype" : childTagName,
+                                    //"lang" : "en-gb",
+                                    //"properties" : properties, 
+                                    //"relationships" : "", 
+                                    //"identityNamePattern" : ""
+                                };
+
 
                             /*************************************************************
                             Update the corresponding Sharepoint List item
                              ********************************************************************/
                             // polymerThis.updateListItem(webAbsoluteUrl, listName, changedCellSpID, properties);
+                            // Create the item
+                            // api.update(options);
                         }
 
 

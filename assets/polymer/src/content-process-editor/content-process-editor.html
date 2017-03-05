@@ -174,18 +174,31 @@ mxLoadResources = false;
                     model.beginUpdate();
                     try {
                        for (var i = polymerThis.children.length - 1; i >= 0; i--) {
-                         var child = polymerThis.children[i];
-                         //console.log(child.versionNode.properties.mxVertex);
-                         if(child.versionNode.properties.mxVertex === true) {
-                            var cell = graph.insertVertex(parent, child.identityNode.properties.uuid, "child.versionNode.properties", 20, 20, 80, 30, child.versionNode.properties.mxStyle);
-                             cell.setGeometry(JSON.parse(child.versionNode.properties.mxGeometry));
-                             //console.log(cell);
-                             //console.log(model.getGeometry(cell));   
-                             //console.log(new mxCell());
-                         }
-                         
+                        var child = polymerThis.children[i],
+                            customAttributes = child.versionNode.properties,
+                            childGeometry = JSON.parse(customAttributes.mxGeometry),
+                            geometry = new mxGeometry(childGeometry.x, childGeometry.y, childGeometry.width, childGeometry.height),
+                            cell;
 
-                         //graph.insertEdge(parent, null, '', 6427, 6417);
+                        customAttributes['label'] = customAttributes.title;
+                        geometry['TRANSLATE_CONTROL_POINTS'] = childGeometry.TRANSLATE_CONTROL_POINTS;
+                        geometry['alternateBounds'] = childGeometry.alternateBounds;
+                        geometry['sourcePoint'] = childGeometry.sourcePoint;
+                        geometry['targetPoint'] = childGeometry.targetPoint;
+                        geometry['points'] = childGeometry.points;
+                        geometry['offset'] = childGeometry.offset;
+                        geometry['relative'] = childGeometry.relative;
+
+                        if(customAttributes.mxVertex === true) {
+                            cell = graph.insertVertex(parent, null, customAttributes.title, 10, 10, 40, 20, customAttributes.mxStyle);
+                        } else {
+                            var source = model.getCell(customAttributes.mxSource),
+                                target = model.getCell(customAttributes.mxTarget);
+                            cell = graph.insertEdge(parent, null, customAttributes.title, source, target, customAttributes.mxStyle);
+                        }
+
+                        cell.setGeometry(geometry);
+                        console.log(cell);
                       };
 
                       graph.refresh();
