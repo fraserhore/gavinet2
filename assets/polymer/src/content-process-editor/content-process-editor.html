@@ -160,7 +160,7 @@ mxLoadResources = false;
                     themes[Graph.prototype.defaultThemeName] = xhr[1].getDocumentElement();
 
                     // Main
-                    var container = document.getElementById('graphEditor');
+                    var container = undefined //polymerThis.$.graphEditor;
                     var editorUi = new EditorUi(new Editor(urlParams['chrome'] == '0', themes), container);
                     var graph = editorUi.editor.graph;
                     var model = graph.getModel();
