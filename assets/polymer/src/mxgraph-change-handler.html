@@ -155,7 +155,7 @@
                                 Promise.all([request.completes])
                                     .then(function (requests) {
                                         var response = requests[0].response;
-                                        child.setAttribute('id', response.identityNode.properties.uuid)
+                                        child.setAttribute('uuid', response.identityNode.properties.uuid)
                                         // do whatever you want from here...
                                         //console.log(response);
                                     });

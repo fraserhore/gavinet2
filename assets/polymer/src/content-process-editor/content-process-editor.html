@@ -160,7 +160,8 @@ mxLoadResources = false;
                     themes[Graph.prototype.defaultThemeName] = xhr[1].getDocumentElement();
 
                     // Main
-                    var editorUi = new EditorUi(new Editor(urlParams['chrome'] == '0', themes), '');
+                    var container = document.getElementById('graphEditor');
+                    var editorUi = new EditorUi(new Editor(urlParams['chrome'] == '0', themes), container);
                     var graph = editorUi.editor.graph;
                     var model = graph.getModel();
 
@@ -175,12 +176,13 @@ mxLoadResources = false;
                     try {
                        for (var i = polymerThis.children.length - 1; i >= 0; i--) {
                         var child = polymerThis.children[i],
+                            contentType = child.identityNode.properties.contentType,
                             customAttributes = child.versionNode.properties,
                             childGeometry = JSON.parse(customAttributes.mxGeometry),
                             geometry = new mxGeometry(childGeometry.x, childGeometry.y, childGeometry.width, childGeometry.height),
                             cell;
 
-                        customAttributes['label'] = customAttributes.title;
+                        customAttributes['label'] = customAttributes.title || '';
                         geometry['TRANSLATE_CONTROL_POINTS'] = childGeometry.TRANSLATE_CONTROL_POINTS;
                         geometry['alternateBounds'] = childGeometry.alternateBounds;
                         geometry['sourcePoint'] = childGeometry.sourcePoint;
@@ -189,12 +191,21 @@ mxLoadResources = false;
                         geometry['offset'] = childGeometry.offset;
                         geometry['relative'] = childGeometry.relative;
 
+                        var doc = mxUtils.createXmlDocument();
+                        var node = doc.createElement(contentType);
+                        node.setAttribute('label', customAttributes.title);
+                        for (var key in customAttributes) {
+                            if (customAttributes.hasOwnProperty(key)) {
+                               node.setAttribute(key, customAttributes[key]);
+                            }
+                        }
+
                         if(customAttributes.mxVertex === true) {
-                            cell = graph.insertVertex(parent, null, customAttributes.title, 10, 10, 40, 20, customAttributes.mxStyle);
+                            cell = graph.insertVertex(parent, null, node, 10, 10, 40, 20, customAttributes.mxStyle);
                         } else {
                             var source = model.getCell(customAttributes.mxSource),
                                 target = model.getCell(customAttributes.mxTarget);
-                            cell = graph.insertEdge(parent, null, customAttributes.title, source, target, customAttributes.mxStyle);
+                            cell = graph.insertEdge(parent, null, node, source, target, customAttributes.mxStyle);
                         }
 
                         cell.setGeometry(geometry);
