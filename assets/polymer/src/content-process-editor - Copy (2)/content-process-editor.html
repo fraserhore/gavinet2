@@ -42,7 +42,18 @@ var urlParams = (function(url) {
 mxLoadResources = false;
 </script>
 <script type="text/javascript" src="js/Init.js"></script>
-
+<script type="text/javascript" src="jscolor/jscolor.js"></script>
+<script type="text/javascript" src="sanitizer/sanitizer.min.js"></script>
+<script type="text/javascript" src="js/EditorUi.js"></script>
+<script type="text/javascript" src="js/Editor.js"></script>
+<script type="text/javascript" src="js/Sidebar.js"></script>
+<script type="text/javascript" src="js/Graph.js"></script>
+<script type="text/javascript" src="js/Shapes.js"></script>
+<script type="text/javascript" src="js/Actions.js"></script>
+<script type="text/javascript" src="js/Menus.js"></script>
+<script type="text/javascript" src="js/Format.js"></script>
+<script type="text/javascript" src="js/Toolbar.js"></script>
+<script type="text/javascript" src="js/Dialogs.js"></script>
 <dom-module id="content-process-editor">
     <template>
         <style>
@@ -120,10 +131,29 @@ mxLoadResources = false;
 
             _updateChildren: function() {
                 var polymerThis = this,
-                    currentItemId = this.nodeData.identityNode.properties.uuid, 
+                    currentItemId = this.nodeData.identityNode.properties.uuid, // need to set.
                     authorId = this.nodeData.authorNode.properties.uuid,
                     changeHandler = this.$.changeHandler,
                     api = this.$.api;
+
+                var editorUiInit = EditorUi.prototype.init;
+
+                EditorUi.prototype.init = function() {
+                    editorUiInit.apply(this, arguments);
+                    this.actions.get('export').setEnabled(false);
+
+                    // Updates action states which require a backend
+                    if (!Editor.useLocalStorage) {
+                        mxUtils.post(OPEN_URL, '', mxUtils.bind(this, function(req) {
+                            var enabled = req.getStatus() != 404;
+                            this.actions.get('open').setEnabled(enabled || Graph.fileSupport);
+                            this.actions.get('import').setEnabled(enabled || Graph.fileSupport);
+                            this.actions.get('save').setEnabled(enabled);
+                            this.actions.get('saveAs').setEnabled(enabled);
+                            this.actions.get('export').setEnabled(enabled);
+                        }));
+                    }
+                };
 
                 // Adds required resources (disables loading of fallback properties, this can only
                 // be used if we know that all keys are defined in the language specific file)
@@ -136,21 +166,14 @@ mxLoadResources = false;
                     // Adds bundle text to resources
                     mxResources.parse(xhr[0].getText());
 
+                    // Configures the default graph theme
+                    var themes = new Object();
+                    themes[Graph.prototype.defaultThemeName] = xhr[1].getDocumentElement();
+
                     // Main
-                    var container = polymerThis.$.graphEditor;
-
-                    //var editorUi = new EditorUi(new Editor(urlParams['chrome'] == '0', themes), container);
-                    //var graph = editorUi.editor.graph;
-
-
-                    mxObjectCodec.allowEval = true;
-                    var config = mxUtils.load('/polymer/src/mxgraph-import/mxgraph/config/diagrameditor.xml').getDocumentElement();
-                    var editor = new mxEditor(node);
-                    mxObjectCodec.allowEval = false;
-
-                    editor.setGraphContainer(container);
-                  
-                    var graph = editor.graph;
+                    var container = undefined //polymerThis.$.graphEditor;
+                    var editorUi = new EditorUi(new Editor(urlParams['chrome'] == '0', themes), container);
+                    var graph = editorUi.editor.graph;
                     var model = graph.getModel();
 
                     // Add the children to the graph
@@ -218,6 +241,31 @@ mxLoadResources = false;
                 }, function() {
                     document.body.innerHTML = '<center style="margin-top:10%;">Error loading resource files. Please check browser console.</center>';
                 });
+
+
+
+                // Graph.model.addListener(mxEvent.CHANGE, function (sender, evt) {
+                //   changes = evt.getProperty('edit').changes;
+                //   for (i = 0; i < changes.length; i++) {
+                //     var change = changes[i];
+                //     console.log(change);
+                //   }
+                // });
+
+            },
+
+            // _updateChildren2: function() {
+            // 	this.dispatch('loadChildrenAction', this.children);
+            // },
+
+            createListItem: function(properties) {
+                //console.log('Create: ');
+                //console.log(properties);
+            },
+
+            updateListItem: function(properties) {
+                //console.log('Update: ');
+                //console.log(properties);
             }
 
         });

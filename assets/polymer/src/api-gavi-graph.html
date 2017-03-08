@@ -55,6 +55,25 @@
 
                 },
 
+                // Update Operation
+                // webAbsoluteUrl: The url of the site that the list is in
+                // listName: The name of the list you want to get items from
+                // itemId: the id of the item to update
+                // properties: json object with item properties to be updated
+                getChildren: function(options) {
+                    if(!options) {
+                        mxLog.debug("Failed to update item, no ID was passed, please try to update the graph before performing another operation.");
+                        return;
+                    }
+                    var ajax = this.$.ajax;
+                    ajax.url = '/content/getChildren/' + options.uuid;
+                    ajax.method = 'GET';
+                    return ajax.generateRequest();
+
+                },
+
+
+
                 // READ SPECIFIC ITEM operation
                 // itemId: The id of the item to get
                 // listName: The name of the list you want to get items from
