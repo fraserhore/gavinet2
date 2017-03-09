@@ -32,7 +32,7 @@
                     ajax.url = '/content/create';
                     ajax.method = 'POST';
                     ajax.body = options;
-                    //console.log(options);
+                    console.log(options);
                     return ajax.generateRequest();
                 },
 
@@ -55,21 +55,24 @@
 
                 },
 
-                // Update Operation
-                // webAbsoluteUrl: The url of the site that the list is in
-                // listName: The name of the list you want to get items from
-                // itemId: the id of the item to update
-                // properties: json object with item properties to be updated
+                // getChildren Operation
+                // Options: 
                 getChildren: function(options) {
                     if(!options) {
-                        mxLog.debug("Failed to update item, no ID was passed, please try to update the graph before performing another operation.");
+                        console.log("Failed to update item, no options were passed, please try to update the graph before performing another operation.");
                         return;
                     }
-                    var ajax = this.$.ajax;
-                    ajax.url = '/content/getChildren/' + options.uuid;
+                    
+                    var lang = options.lang ? options.lang : '',
+                        versionName = options.versionName ? options.versionName : '',
+                        versionValidityDate = options.versionValidityDate ? options.versionValidityDate : '',
+                        ajax = this.$.ajax;
+
+                    // console.log('/content/getChildren/' + options.uuid + '?lang=' + lang + '&versionName=' + versionName + '&versionValidityDate=' + versionValidityDate);
+
+                    ajax.url = '/content/getChildren/' + options.uuid + '?lang=' + lang + '&versionName=' + versionName + '&versionValidityDate=' + versionValidityDate;
                     ajax.method = 'GET';
                     return ajax.generateRequest();
-
                 },
 
 

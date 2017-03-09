@@ -8,6 +8,8 @@ Code distributed by Google as part of the polymer project is also
 subject to an additional IP rights grant found at http://polymer.github.io/PATENTS.txt
 -->
 <link rel="import" href="/polymer/bower_components/polymer/polymer.html">
+<link rel="import" href="../api-gavi-graph.html">
+<!-- <link rel="import" href="../api-sharepoint.html"> -->
 <link rel="import" href="../content-process-editor/content-process-editor.html">
 <link rel="import" href="../content-hierarchy-editor/content-hierarchy-editor.html">
 
@@ -18,6 +20,8 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
             display: block;
         }
         </style>
+        <api-gavi-graph id="api"></api-gavi-graph>
+        <!-- <api-sharepoint id="api"></api-sharepoint> -->
         <iron-ajax id="getContentTypes" 
         	auto url="/content/getContentTypes" 
         	params='' 
@@ -79,6 +83,19 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
                 nodeData: {
                     type: Object,
                     statePath: 'nodeData'
+                },
+                children2: {
+                    type: Object,
+                    statePath: 'children'
+                }
+            },
+
+            actions: {
+                loadChildrenAction: function(children) {
+                    return {
+                        type: 'LOAD_CHILDREN',
+                        children: children
+                    }
                 }
             },
 
@@ -120,8 +137,9 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
                 var today = new Date();
                 this.versionSliderValue = Date.now();
                 this.versionSliderMax = Date.now();
-                this.versionSliderMin = Date.now() - 2629746000; // one day = 86400000, one week = 604800000, One month = 2629746000, one year = 31556952000
+                this.versionSliderMin = Date.now() - 604800000; // one day = 86400000, one week = 604800000, One month = 2629746000, one year = 31556952000
                 // console.log(today.toISOString());
+                this.getChildren();
             },
 
             create: function(event) {
@@ -190,6 +208,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
                 //this.$.contentChildren.firstElementChild.versionValidityDate = event.target.value;
                 this.$.contentChildren.$.template.firstChild.notifyPath('nodeData.versionValidityDate');
                 this.$.contentChildren.$.template.firstChild.refresh();
+                this.getChildren();
             },
 
             _submit: function(event) {
@@ -210,7 +229,25 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
                 }
                 this.$.editDialog.close();
                 this.$.getContent.generateRequest();
+            },
+
+            getChildren: function() {
+                var options = {
+                    "uuid": this.nodeData.identityNode.properties.uuid,
+                    "versionValidityDate": this.versionSliderValue
+                };
+                var request = this.$.api.getChildren(options),
+                    polymerThis = this;
+                Promise.all([request.completes])
+                    .then(function (requests) {
+                        var response = requests[0].response;
+                        polymerThis.dispatch('loadChildrenAction', response);
+                        // do whatever you want from here...
+                        // console.log(response);
+                    });
+                
             }
+
 
         });
     })();

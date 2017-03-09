@@ -13,6 +13,20 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 <link rel="import" href="../api-gavi-graph.html">
 <!-- <link rel="import" href="../api-sharepoint.html"> -->
 <link rel="stylesheet" type="text/css" href="styles/grapheditor.css">
+<script type="text/javascript" src="js/Init.js"></script>
+<script type="text/javascript" src="js/Graph.js"></script>
+<script type="text/javascript" src="js/Editor.js"></script>
+<script type="text/javascript" src="sanitizer/sanitizer.min.js"></script>
+<script type="text/javascript" src="js/EditorUi.js"></script>
+<script type="text/javascript" src="js/Actions.js"></script>
+<script type="text/javascript" src="js/Menus.js"></script>
+<script type="text/javascript" src="js/Sidebar.js"></script>
+<script type="text/javascript" src="js/Toolbar.js"></script>
+<script type="text/javascript" src="js/Shapes.js"></script>
+<script type="text/javascript" src="js/Format.js"></script>
+<script type="text/javascript" src="jscolor/jscolor.js"></script>
+<script type="text/javascript" src="js/Dialogs.js"></script>
+
 <script type="text/javascript">
 // Parses URL parameters. Supported parameters are:
 // - lang=xy: Specifies the language of the user interface.
@@ -41,7 +55,6 @@ var urlParams = (function(url) {
 // Default resources are included in grapheditor resources
 mxLoadResources = false;
 </script>
-<script type="text/javascript" src="js/Init.js"></script>
 
 <dom-module id="content-process-editor">
     <template>
@@ -103,27 +116,14 @@ mxLoadResources = false;
               ],
 
             ready: function() {
-                var options = {
-                    "uuid": this.nodeData.identityNode.properties.uuid,
-                    "versionValidityDate": ""
-                };
-                var request = this.$.api.getChildren(options),
-                    polymerThis = this;
-                Promise.all([request.completes])
-                    .then(function (requests) {
-                        var response = requests[0].response;
-                        polymerThis.dispatch('loadChildrenAction', response);
-                        // do whatever you want from here...
-                        // console.log(response);
-                    });
+                this.createGraph();
             },
 
-            _updateChildren: function() {
+            createGraph: function() {
                 var polymerThis = this,
                     currentItemId = this.nodeData.identityNode.properties.uuid, 
                     authorId = this.nodeData.authorNode.properties.uuid,
-                    changeHandler = this.$.changeHandler,
-                    api = this.$.api;
+                    changeHandler = this.$.changeHandler;
 
                 // Adds required resources (disables loading of fallback properties, this can only
                 // be used if we know that all keys are defined in the language specific file)
@@ -143,26 +143,66 @@ mxLoadResources = false;
                     //var graph = editorUi.editor.graph;
 
 
-                    mxObjectCodec.allowEval = true;
-                    var config = mxUtils.load('/polymer/src/mxgraph-import/mxgraph/config/diagrameditor.xml').getDocumentElement();
-                    var editor = new mxEditor(node);
-                    mxObjectCodec.allowEval = false;
+                    //mxObjectCodec.allowEval = true;
+                    //var config = mxUtils.load('/polymer/src/mxgraph-import/mxgraph/config/diagrameditor.xml').getDocumentElement();
+                    //var editor = new mxEditor(node);
+                    //mxObjectCodec.allowEval = false;
 
-                    editor.setGraphContainer(container);
+                    //editor.setGraphContainer(container);
                   
-                    var graph = editor.graph;
-                    var model = graph.getModel();
+                    //var graph = editor.graph;
 
-                    // Add the children to the graph
+                    polymerThis.graph = new Graph(container);
+                    polymerThis.model = polymerThis.graph.getModel();
+                    polymerThis.editor = new Editor(null, null, null, polymerThis.graph);
+                    //polymerThis.editorUi = new EditorUi(polymerThis.editor, container);
 
-                    // Gets the default parent for inserting new cells. This
-                    // is normally the first child of the root (ie. layer 0).
-                    var parent = graph.getDefaultParent();
+                    // Listen for changes and update the state
+                    polymerThis.graph.model.addListener(mxEvent.CHANGE, function(sender, evt) {
+                        if(!polymerThis.updatingChildren) {
+                            changeHandler.handleChange(currentItemId, authorId, polymerThis.graph, sender, evt);
+                        }
+                    });
 
-                    // Adds cells to the model in a single step
-                    model.beginUpdate();
-                    try {
-                       for (var i = polymerThis.children2.length - 1; i >= 0; i--) {
+                }, function() {
+                    document.body.innerHTML = '<center style="margin-top:10%;">Error loading resource files. Please check browser console.</center>';
+                });
+
+            },
+
+            getChildren: function() {
+                var options = {
+                    "uuid": this.nodeData.identityNode.properties.uuid,
+                    "versionValidityDate": this.versionValidityDate
+                };
+                var request = this.$.api.getChildren(options),
+                    polymerThis = this;
+                Promise.all([request.completes])
+                    .then(function (requests) {
+                        var response = requests[0].response;
+                        polymerThis.dispatch('loadChildrenAction', response);
+                        // do whatever you want from here...
+                        // console.log(response);
+                    });
+            },
+
+            _updateChildren: function() {
+                var polymerThis = this;
+
+                // Gets the default parent for inserting new cells. This
+                // is normally the first child of the root (ie. layer 0).
+                var parent = this.graph.getDefaultParent();
+                // Adds cells to the model in a single step
+                polymerThis.updatingChildren = true;
+                this.model.beginUpdate();
+                try {
+                    var childCells = polymerThis.graph.getChildCells(parent, true, true);
+                    if(childCells.length > 0) {
+                        polymerThis.graph.removeCells(polymerThis.graph.getChildCells(parent, true, true));
+                    }
+                    if(polymerThis.children2.length > 0) {
+                    }
+                    for (var i = polymerThis.children2.length - 1; i >= 0; i--) {
                         var child = polymerThis.children2[i],
                             contentType = child.identityNode.properties.contentType,
                             customAttributes = child.versionNode.properties,
@@ -189,35 +229,24 @@ mxLoadResources = false;
                         }
 
                         if(customAttributes.mxVertex === true) {
-                            cell = graph.insertVertex(parent, null, node, 10, 10, 40, 20, customAttributes.mxStyle);
+                            cell = polymerThis.graph.insertVertex(parent, null, node, 10, 10, 40, 20, customAttributes.mxStyle);
                         } else {
-                            var source = model.getCell(customAttributes.mxSource),
-                                target = model.getCell(customAttributes.mxTarget);
-                            cell = graph.insertEdge(parent, null, node, source, target, customAttributes.mxStyle);
+                            var source = polymerThis.model.getCell(customAttributes.mxSource),
+                                target = polymerThis.model.getCell(customAttributes.mxTarget);
+                            cell = polymerThis.graph.insertEdge(parent, null, node, source, target, customAttributes.mxStyle);
                         }
 
                         cell.setGeometry(geometry);
                         //console.log(cell);
-                      };
+                    };
 
-                      graph.refresh();
-
-                    } finally {
-                       // Updates the display
-                       model.endUpdate();
-                    }
-
-
-                    // Listen for changes and update the state
-                    graph.model.addListener(mxEvent.CHANGE, function(sender, evt) {
-
-                        changeHandler.handleChange(currentItemId, authorId, graph, sender, evt);
-
-                    });
-
-                }, function() {
-                    document.body.innerHTML = '<center style="margin-top:10%;">Error loading resource files. Please check browser console.</center>';
-                });
+                    polymerThis.graph.refresh();
+                    
+                } finally {
+                   // Updates the display
+                   polymerThis.model.endUpdate();
+                }
+                polymerThis.updatingChildren = false;
             }
 
         });
