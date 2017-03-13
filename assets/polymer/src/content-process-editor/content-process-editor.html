@@ -12,9 +12,9 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 <link rel="import" href="../mxgraph-change-handler.html">
 <link rel="import" href="../api-gavi-graph.html">
 <!-- <link rel="import" href="../api-sharepoint.html"> -->
-<link rel="stylesheet" type="text/css" href="styles/grapheditor.css">
+<!-- <link rel="stylesheet" type="text/css" href="styles/grapheditor.css"> -->
 <script type="text/javascript" src="js/Init.js"></script>
-<script type="text/javascript" src="js/Graph.js"></script>
+<!-- <script type="text/javascript" src="js/Graph.js"></script>
 <script type="text/javascript" src="js/Editor.js"></script>
 <script type="text/javascript" src="sanitizer/sanitizer.min.js"></script>
 <script type="text/javascript" src="js/EditorUi.js"></script>
@@ -25,36 +25,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 <script type="text/javascript" src="js/Shapes.js"></script>
 <script type="text/javascript" src="js/Format.js"></script>
 <script type="text/javascript" src="jscolor/jscolor.js"></script>
-<script type="text/javascript" src="js/Dialogs.js"></script>
-
-<script type="text/javascript">
-// Parses URL parameters. Supported parameters are:
-// - lang=xy: Specifies the language of the user interface.
-// - touch=1: Enables a touch-style user interface.
-// - storage=local: Enables HTML5 local storage.
-// - chrome=0: Chromeless mode.
-var urlParams = (function(url) {
-    var result = new Object();
-    var idx = url.lastIndexOf('?');
-
-    if (idx > 0) {
-        var params = url.substring(idx + 1).split('&');
-
-        for (var i = 0; i < params.length; i++) {
-            idx = params[i].indexOf('=');
-
-            if (idx > 0) {
-                result[params[i].substring(0, idx)] = params[i].substring(idx + 1);
-            }
-        }
-    }
-
-    return result;
-})(window.location.href);
-
-// Default resources are included in grapheditor resources
-mxLoadResources = false;
-</script>
+<script type="text/javascript" src="js/Dialogs.js"></script> -->
 
 <dom-module id="content-process-editor">
     <template>
@@ -68,6 +39,7 @@ mxLoadResources = false;
         <api-gavi-graph id="api"></api-gavi-graph>
         <!-- <api-sharepoint id="api"></api-sharepoint> -->
 
+        <div id="toolbar"></div>
         <div id="graphEditor" class="geEditor"></div>
 
     </template>
@@ -125,47 +97,32 @@ mxLoadResources = false;
                     authorId = this.nodeData.authorNode.properties.uuid,
                     changeHandler = this.$.changeHandler;
 
-                // Adds required resources (disables loading of fallback properties, this can only
-                // be used if we know that all keys are defined in the language specific file)
-                mxResources.loadDefaultBundle = true;
-                var bundle = mxResources.getDefaultBundle(RESOURCE_BASE, mxLanguage) ||
-                    mxResources.getSpecialBundle(RESOURCE_BASE, mxLanguage);
+                // Main
+                var container = this.$.graphEditor;
 
-                // Fixes possible asynchronous requests
-                mxUtils.getAll([bundle, STYLE_PATH + '/default.xml'], function(xhr) {
-                    // Adds bundle text to resources
-                    mxResources.parse(xhr[0].getText());
+                //var editorUi = new EditorUi(new Editor(urlParams['chrome'] == '0', themes), container);
+                //var graph = editorUi.editor.graph;
 
-                    // Main
-                    var container = polymerThis.$.graphEditor;
+                //mxObjectCodec.allowEval = true;
+                //var config = mxUtils.load('/polymer/src/mxgraph-import/mxgraph/config/diagrameditor.xml').getDocumentElement();
+                //var editor = new mxEditor(node);
+                //mxObjectCodec.allowEval = false;
 
-                    //var editorUi = new EditorUi(new Editor(urlParams['chrome'] == '0', themes), container);
-                    //var graph = editorUi.editor.graph;
+                //editor.setGraphContainer(container);
+              
+                //var graph = editor.graph;
 
+                this.graph = new mxGraph(container);
+                this.model = this.graph.getModel();
+                this.editor = new mxEditor();
+                //this.editor = new Editor(null, null, null, this.graph);
+                //this.editorUi = new EditorUi(this.editor, container);
 
-                    //mxObjectCodec.allowEval = true;
-                    //var config = mxUtils.load('/polymer/src/mxgraph-import/mxgraph/config/diagrameditor.xml').getDocumentElement();
-                    //var editor = new mxEditor(node);
-                    //mxObjectCodec.allowEval = false;
-
-                    //editor.setGraphContainer(container);
-                  
-                    //var graph = editor.graph;
-
-                    polymerThis.graph = new Graph(container);
-                    polymerThis.model = polymerThis.graph.getModel();
-                    polymerThis.editor = new Editor(null, null, null, polymerThis.graph);
-                    //polymerThis.editorUi = new EditorUi(polymerThis.editor, container);
-
-                    // Listen for changes and update the state
-                    polymerThis.graph.model.addListener(mxEvent.CHANGE, function(sender, evt) {
-                        if(!polymerThis.updatingChildren) {
-                            changeHandler.handleChange(currentItemId, authorId, polymerThis.graph, sender, evt);
-                        }
-                    });
-
-                }, function() {
-                    document.body.innerHTML = '<center style="margin-top:10%;">Error loading resource files. Please check browser console.</center>';
+                // Listen for changes and update the state
+                this.graph.model.addListener(mxEvent.CHANGE, function(sender, evt) {
+                    if(!polymerThis.updatingChildren) {
+                        changeHandler.handleChange(currentItemId, authorId, polymerThis.graph, sender, evt);
+                    }
                 });
 
             },
@@ -200,9 +157,7 @@ mxLoadResources = false;
                     if(childCells.length > 0) {
                         polymerThis.graph.removeCells(polymerThis.graph.getChildCells(parent, true, true));
                     }
-                    if(polymerThis.children2.length > 0) {
-                    }
-                    for (var i = polymerThis.children2.length - 1; i >= 0; i--) {
+                    for (var i = 0; i < polymerThis.children2.length; i++) {
                         var child = polymerThis.children2[i],
                             contentType = child.identityNode.properties.contentType,
                             customAttributes = child.versionNode.properties,
