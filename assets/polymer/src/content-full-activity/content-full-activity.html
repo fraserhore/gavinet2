@@ -16,9 +16,10 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 <dom-module id="content-full-activity">
     <template>
         <style>
-        :host {
-            display: block;
-        }
+            :host {
+                display: block;
+            }
+            
         </style>
         <api-gavi-graph id="api"></api-gavi-graph>
         <!-- <api-sharepoint id="api"></api-sharepoint> -->
@@ -46,7 +47,14 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         <div>Version validity date:
             <moment-element datetime="{{versionSliderValue}}" output-format="MMM DD[,] YYYY"></moment-element>
         </div>
-        <paper-slider id="versionSlider" value="{{versionSliderValue}}" min="{{versionSliderMin}}" max="{{versionSliderMax}}" step="{{versionSliderStep}}" pin on-change="_versionSliderChanged"></paper-slider>
+        <paper-slider id="versionSlider" label="Version validity date" value="{{versionSliderValue}}" min="{{versionSliderMin}}" max="{{versionSliderMax}}" step="{{versionSliderStep}}" pin on-change="_versionSliderChanged"></paper-slider>
+        <paper-dropdown-menu label="Branch" value="{{versionName}}" on-iron-select="_branchChanged">
+          <paper-listbox class="dropdown-content" selected="0">
+            <paper-item>Initial</paper-item>
+            <paper-item>current</paper-item>
+            <paper-item>future</paper-item>
+          </paper-listbox>
+        </paper-dropdown-menu>
         <paper-button raised on-click="update">Edit</paper-button>
         <!-- <paper-button raised on-click="create">New</paper-button> -->
         <paper-dialog id="editDialog" entry-animation="scale-up-animation" exit-animation="fade-out-animation" autoFitOnAttach="true" on-iron-overlay-closed="_dialogClosed">
@@ -212,6 +220,10 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
                 this.getChildren();
             },
 
+            _branchChanged: function(event) {
+                this.getChildren();
+            },
+
             _submit: function(event) {
                 var button = event.target;
                 while (!button.hasAttribute('data-form') && button !== document.body) {
@@ -236,7 +248,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
                 var options = {
                     "uuid": this.nodeData.identityNode.properties.uuid,
                     "versionValidityDate": this.versionSliderValue,
-                    "versionName": "current"
+                    "versionName": this.versionName
                 };
                 var request = this.$.api.getChildren(options),
                     polymerThis = this;

@@ -127,17 +127,28 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
                     //var config = mxUtils.load('/polymer/src/mxgraph-import/mxgraph/config/diagrameditor.xml').getDocumentElement();
                     //var editor = new mxEditor(node);
                     //mxObjectCodec.allowEval = false;
-
                     //editor.setGraphContainer(container);
-                  
                     //var graph = editor.graph;
 
-                    polymerThis.graph = new Graph(container);
+                    //polymerThis.graph = new Graph(container);
+                    //polymerThis.model = polymerThis.graph.getModel();
+                    //polymerThis.editor = new Editor(null, null, polymerThis.graph, polymerThis.model);
+
+                    polymerThis.editor = new mxEditor();
+                    polymerThis.graph = polymerThis.editor.graph;
                     polymerThis.model = polymerThis.graph.getModel();
-                    polymerThis.editor = new Editor(null, null, polymerThis.graph, polymerThis.model);
-                    //polymerThis.editor = new mxEditor();
+
+                    polymerThis.editor.setGraphContainer(container);
+                    
                     //polymerThis.editor = new Editor(null, null, null, polymerThis.graph);
                     //polymerThis.editorUi = new EditorUi(polymerThis.editor, container);
+
+                    var toolbar = new mxDefaultToolbar(polymerThis.$.toolbar, polymerThis.editor);
+                    toolbar.addItem('Copy', null, 'copy');
+                    toolbar.addPrototype("Activity", null, new mxCell({"name":"test"}, new mxGeometry(20, 20, 150, 40), "activity"), null, null, null);
+
+                    var combo = toolbar.addActionCombo('More actions...');
+                    toolbar.addActionOption(combo, 'Paste', 'paste');
 
                     // Listen for changes and update the state
                     polymerThis.graph.model.addListener(mxEvent.CHANGE, function(sender, evt) {
@@ -214,18 +225,13 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
                         if(customAttributes.mxVertex === true) {
                             cell = polymerThis.graph.insertVertex(parent, customAttributes.mxId, node, 10, 10, 40, 20, customAttributes.mxStyle);
-                            console.log('vertex');
                         } else {
                             var source = polymerThis.model.getCell(customAttributes.mxSource),
                                 target = polymerThis.model.getCell(customAttributes.mxTarget);
                             cell = polymerThis.graph.insertEdge(parent, customAttributes.mxId, node, source, target, customAttributes.mxStyle);
-                            console.log(source);
-                            console.log(target);
-                            console.log('edge');
                         }
 
                         cell.setGeometry(geometry);
-                        //console.log(cell);
                     };
 
                     polymerThis.graph.refresh();
