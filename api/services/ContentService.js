@@ -261,17 +261,20 @@ module.exports = {
         var versionMatch = "";
 
         if(options.versionName) {
-            versionMatch = " AND version.name = " + options.versionName;
-        } else if(options.versionValidityDate) {
-            versionMatch = " AND version.from <= " + options.versionValidityDate + " AND version.to >= " + options.versionValidityDate;
+            versionMatch = " AND version.versionName = " + "'" + options.versionName + "'";
+        } 
+        if(options.versionValidityDate) {
+            versionMatch += " AND version.from <= " + options.versionValidityDate + " AND version.to >= " + options.versionValidityDate;
         } else {
-            versionMatch = " AND parentChildRel.to = 9007199254740991 AND version.to = 9007199254740991";
+            versionMatch += " AND parentChildRel.to = 9007199254740991 AND version.to = 9007199254740991";
         }
         var query =   'MATCH (parentNode)-[parentChildRel:CONTAINS]->(identityNode)-[version:VERSION]->(versionNode), (authorNode)-[created:CREATED]->(identityNode)'
                     +' WHERE parentNode.uuid = {id} AND version.lang = {lang}'
                     +  versionMatch
                     +' OPTIONAL MATCH (identityNode)-[:URL_ALIAS]->(urlAliasIdentity)-[urlAliasVersionRel:VERSION {to:9007199254740991}]->(urlAliasVersion)'
                     +' RETURN identityNode, version, versionNode, authorNode, urlAliasVersion.urlAlias as urlAlias';
+        console.log(options);
+        console.log(query);
         return session
             .run(query, params)
             .then(result => {

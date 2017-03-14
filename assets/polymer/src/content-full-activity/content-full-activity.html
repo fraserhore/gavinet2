@@ -235,7 +235,8 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
             getChildren: function() {
                 var options = {
                     "uuid": this.nodeData.identityNode.properties.uuid,
-                    "versionValidityDate": this.versionSliderValue
+                    "versionValidityDate": this.versionSliderValue,
+                    "versionName": "current"
                 };
                 var request = this.$.api.getChildren(options),
                     polymerThis = this;
