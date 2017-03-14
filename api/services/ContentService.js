@@ -481,14 +481,14 @@ module.exports = {
 					// Match on parent uuid and author uuid
                     +' WHERE parent.uuid = {parentId}'
                     // Create new identity and version
-                    +' CREATE (parent)-[:CONTAINS {from:timestamp(), to:9007199254740991, versionNumber:1, versionName:"Initial"}]->'
+                    +' CREATE (parent)-[:CONTAINS {from:timestamp(), to:9007199254740991, versionNumber:1, versionName:{versionName}}]->'
                     +       '(childidentity:Identity:ContentObject {contentType:{contenttype}})'
-                    +       '-[:VERSION {from:timestamp(), to:9007199254740991, versionNumber:1, versionName:"Initial", lang:{lang}}]->'
+                    +       '-[:VERSION {from:timestamp(), to:9007199254740991, versionNumber:1, versionName:{versionName}, lang:{lang}}]->'
                     +       '(childversion:Version)'
                     // Create URL alias identity and version
-                    +' CREATE (childidentity)-[:URL_ALIAS {from:timestamp(), to:9007199254740991, versionNumber:1, versionName:"Initial"}]->'
+                    +' CREATE (childidentity)-[:URL_ALIAS {from:timestamp(), to:9007199254740991, versionNumber:1, versionName:{versionName}}]->'
                     +       '(urlAliasIdentity:Identity:UrlAlias {contentType:"urlAlias"})'
-                    +       '-[:VERSION {from:timestamp(), to:9007199254740991, versionNumber:1, versionName:"Initial", lang:{lang}}]->'
+                    +       '-[:VERSION {from:timestamp(), to:9007199254740991, versionNumber:1, versionName:{versionName}, lang:{lang}}]->'
                     +       '(urlAliasVersion:Version)'
                     // Set properties
                     +' SET childidentity:' + ContentService.pascalize(options.contenttype) 
@@ -526,15 +526,15 @@ module.exports = {
 
                     // Return results
                     +' RETURN parent, childidentity, childversion, urlAliasIdentity, urlAliasVersion, author';
-        
+        console.log(options);
         return session
             .run(query, options)
             .then(result => {
                 session.close();
                 console.log(result);
                 var record = result.records[0];
-                console.log(record.get('childidentity'));
-                console.log(record.get('childversion'));
+                //console.log(record.get('childidentity'));
+                //console.log(record.get('childversion'));
                 return done({
                     'parent': record.get('parent'),
                     'identityNode': record.get('childidentity'), 
@@ -561,7 +561,7 @@ module.exports = {
                     +' WHERE id(from)={fromId} AND id(to)={toId}'
                     +' CREATE from-[r:' 
                     + req.body.relationshipName.split(' ').join('_').toUpperCase()
-                    + ' {from:timestamp(), to:9007199254740991, versionNumber:1, versionName:"Initial"}]->to'
+                    + ' {from:timestamp(), to:9007199254740991, versionNumber:1, versionName:{versionName}}]->to'
                     +' RETURN from, r, to';
         var params = {
             "fromId": req.body.direction === 'Inbound' ? parseInt(req.body.relatedNodeId) : parseInt(req.body.referenceNodeId),

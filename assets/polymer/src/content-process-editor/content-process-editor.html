@@ -12,26 +12,30 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 <link rel="import" href="../mxgraph-change-handler.html">
 <link rel="import" href="../api-gavi-graph.html">
 <!-- <link rel="import" href="../api-sharepoint.html"> -->
-<!-- <link rel="stylesheet" type="text/css" href="styles/grapheditor.css"> -->
+<link rel="stylesheet" type="text/css" href="styles/grapheditor.css">
 <script type="text/javascript" src="js/Init.js"></script>
-<!-- <script type="text/javascript" src="js/Graph.js"></script>
-<script type="text/javascript" src="js/Editor.js"></script>
+<script type="text/javascript" src="jscolor/jscolor.js"></script>
 <script type="text/javascript" src="sanitizer/sanitizer.min.js"></script>
 <script type="text/javascript" src="js/EditorUi.js"></script>
+<script type="text/javascript" src="js/Editor.js"></script>
+<script type="text/javascript" src="js/Sidebar.js"></script>
+<script type="text/javascript" src="js/Graph.js"></script>
+<script type="text/javascript" src="js/Shapes.js"></script>
 <script type="text/javascript" src="js/Actions.js"></script>
 <script type="text/javascript" src="js/Menus.js"></script>
-<script type="text/javascript" src="js/Sidebar.js"></script>
-<script type="text/javascript" src="js/Toolbar.js"></script>
-<script type="text/javascript" src="js/Shapes.js"></script>
 <script type="text/javascript" src="js/Format.js"></script>
-<script type="text/javascript" src="jscolor/jscolor.js"></script>
-<script type="text/javascript" src="js/Dialogs.js"></script> -->
+<script type="text/javascript" src="js/Toolbar.js"></script>
+<script type="text/javascript" src="js/Dialogs.js"></script>
 
 <dom-module id="content-process-editor">
     <template>
         <style>
         :host {
             display: block;
+        }
+        /* fix for inline text editing in cell */
+        .mxCellEditor {
+            position: absolute;
         }
         </style>
 
@@ -97,33 +101,55 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
                     authorId = this.nodeData.authorNode.properties.uuid,
                     changeHandler = this.$.changeHandler;
 
-                // Main
-                var container = this.$.graphEditor;
+                // Adds required resources (disables loading of fallback properties, this can only
+                // be used if we know that all keys are defined in the language specific file)
+                mxResources.loadDefaultBundle = true;
+                var bundle = mxResources.getDefaultBundle(RESOURCE_BASE, mxLanguage) ||
+                    mxResources.getSpecialBundle(RESOURCE_BASE, mxLanguage);
 
-                //var editorUi = new EditorUi(new Editor(urlParams['chrome'] == '0', themes), container);
-                //var graph = editorUi.editor.graph;
+                // Fixes possible asynchronous requests
+                mxUtils.getAll([bundle, STYLE_PATH + '/default.xml'], function(xhr) {
+                    // Adds bundle text to resources
+                    mxResources.parse(xhr[0].getText());
 
-                //mxObjectCodec.allowEval = true;
-                //var config = mxUtils.load('/polymer/src/mxgraph-import/mxgraph/config/diagrameditor.xml').getDocumentElement();
-                //var editor = new mxEditor(node);
-                //mxObjectCodec.allowEval = false;
+                    // Configures the default graph theme
+                    var themes = new Object();
+                    themes[Graph.prototype.defaultThemeName] = xhr[1].getDocumentElement();
 
-                //editor.setGraphContainer(container);
-              
-                //var graph = editor.graph;
+                    // Main
+                    var container = null //polymerThis.$.graphEditor;
 
-                this.graph = new mxGraph(container);
-                this.model = this.graph.getModel();
-                this.editor = new mxEditor();
-                //this.editor = new Editor(null, null, null, this.graph);
-                //this.editorUi = new EditorUi(this.editor, container);
+                    polymerThis.editorUi = new EditorUi(new Editor(urlParams['chrome'] == '0'), container);
+                    polymerThis.graph = polymerThis.editorUi.editor.graph;
+                    polymerThis.model = polymerThis.graph.getModel();
 
-                // Listen for changes and update the state
-                this.graph.model.addListener(mxEvent.CHANGE, function(sender, evt) {
-                    if(!polymerThis.updatingChildren) {
-                        changeHandler.handleChange(currentItemId, authorId, polymerThis.graph, sender, evt);
-                    }
+                    //mxObjectCodec.allowEval = true;
+                    //var config = mxUtils.load('/polymer/src/mxgraph-import/mxgraph/config/diagrameditor.xml').getDocumentElement();
+                    //var editor = new mxEditor(node);
+                    //mxObjectCodec.allowEval = false;
+
+                    //editor.setGraphContainer(container);
+                  
+                    //var graph = editor.graph;
+
+                    //polymerThis.graph = new Graph(container);
+                    //polymerThis.model = polymerThis.graph.getModel();
+                    //polymerThis.editor = new Editor(null, null, polymerThis.graph, polymerThis.model);
+                    //polymerThis.editor = new mxEditor();
+                    //polymerThis.editor = new Editor(null, null, null, polymerThis.graph);
+                    //polymerThis.editorUi = new EditorUi(polymerThis.editor, container);
+
+                    // Listen for changes and update the state
+                    polymerThis.graph.model.addListener(mxEvent.CHANGE, function(sender, evt) {
+                        if(!polymerThis.updatingChildren) {
+                            changeHandler.handleChange(currentItemId, authorId, polymerThis.graph, sender, evt);
+                        }
+                    });
+
+                }, function() {
+                    document.body.innerHTML = '<center style="margin-top:10%;">Error loading resource files. Please check browser console.</center>';
                 });
+
 
             },
 
@@ -145,6 +171,9 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
             _updateChildren: function() {
                 var polymerThis = this;
+
+                // Sort the children to ensure that the vertices are created before the edges
+                this.children2.sort(function(a,b) {return (a.versionNode.properties.mxEdge > b.versionNode.properties.mxEdge) ? 1 : ((b.versionNode.properties.mxEdge > a.versionNode.properties.mxEdge) ? -1 : 0);} );
 
                 // Gets the default parent for inserting new cells. This
                 // is normally the first child of the root (ie. layer 0).
@@ -184,11 +213,15 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
                         }
 
                         if(customAttributes.mxVertex === true) {
-                            cell = polymerThis.graph.insertVertex(parent, null, node, 10, 10, 40, 20, customAttributes.mxStyle);
+                            cell = polymerThis.graph.insertVertex(parent, customAttributes.mxId, node, 10, 10, 40, 20, customAttributes.mxStyle);
+                            console.log('vertex');
                         } else {
                             var source = polymerThis.model.getCell(customAttributes.mxSource),
                                 target = polymerThis.model.getCell(customAttributes.mxTarget);
-                            cell = polymerThis.graph.insertEdge(parent, null, node, source, target, customAttributes.mxStyle);
+                            cell = polymerThis.graph.insertEdge(parent, customAttributes.mxId, node, source, target, customAttributes.mxStyle);
+                            console.log(source);
+                            console.log(target);
+                            console.log('edge');
                         }
 
                         cell.setGeometry(geometry);
