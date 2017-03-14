@@ -117,11 +117,11 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
                     themes[Graph.prototype.defaultThemeName] = xhr[1].getDocumentElement();
 
                     // Main
-                    var container = null //polymerThis.$.graphEditor;
+                    var container = polymerThis.$.graphEditor;
 
-                    polymerThis.editorUi = new EditorUi(new Editor(urlParams['chrome'] == '0'), container);
-                    polymerThis.graph = polymerThis.editorUi.editor.graph;
-                    polymerThis.model = polymerThis.graph.getModel();
+                    //polymerThis.editorUi = new EditorUi(new Editor(urlParams['chrome'] == '0'), container);
+                    //polymerThis.graph = polymerThis.editorUi.editor.graph;
+                    //polymerThis.model = polymerThis.graph.getModel();
 
                     //mxObjectCodec.allowEval = true;
                     //var config = mxUtils.load('/polymer/src/mxgraph-import/mxgraph/config/diagrameditor.xml').getDocumentElement();
@@ -132,9 +132,9 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
                   
                     //var graph = editor.graph;
 
-                    //polymerThis.graph = new Graph(container);
-                    //polymerThis.model = polymerThis.graph.getModel();
-                    //polymerThis.editor = new Editor(null, null, polymerThis.graph, polymerThis.model);
+                    polymerThis.graph = new Graph(container);
+                    polymerThis.model = polymerThis.graph.getModel();
+                    polymerThis.editor = new Editor(null, null, polymerThis.graph, polymerThis.model);
                     //polymerThis.editor = new mxEditor();
                     //polymerThis.editor = new Editor(null, null, null, polymerThis.graph);
                     //polymerThis.editorUi = new EditorUi(polymerThis.editor, container);
