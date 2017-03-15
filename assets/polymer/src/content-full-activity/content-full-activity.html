@@ -48,13 +48,14 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
             <moment-element datetime="{{versionSliderValue}}" output-format="MMM DD[,] YYYY"></moment-element>
         </div>
         <paper-slider id="versionSlider" label="Version validity date" value="{{versionSliderValue}}" min="{{versionSliderMin}}" max="{{versionSliderMax}}" step="{{versionSliderStep}}" pin on-change="_versionSliderChanged"></paper-slider>
-        <paper-dropdown-menu label="Branch" value="{{versionName}}" on-iron-select="_branchChanged">
+        <paper-dropdown-menu label="Branch" value="{{versionName}}" on-iron-select="_versionNameChanged">
           <paper-listbox class="dropdown-content" selected="0">
             <paper-item>Initial</paper-item>
             <paper-item>current</paper-item>
             <paper-item>future</paper-item>
           </paper-listbox>
         </paper-dropdown-menu>
+
         <paper-button raised on-click="update">Edit</paper-button>
         <!-- <paper-button raised on-click="create">New</paper-button> -->
         <paper-dialog id="editDialog" entry-animation="scale-up-animation" exit-animation="fade-out-animation" autoFitOnAttach="true" on-iron-overlay-closed="_dialogClosed">
@@ -104,6 +105,10 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
                         type: 'LOAD_CHILDREN',
                         children: children
                     }
+                },
+                updateVersionNameAction: function(versionName) {
+                    type: 'UPDATE_VERSION_NAME',
+                    versionName: versionName
                 }
             },
 
@@ -220,7 +225,8 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
                 this.getChildren();
             },
 
-            _branchChanged: function(event) {
+            _versionNameChanged: function(event) {
+                this.dispatch('updateVersionNameAction', response);
                 this.getChildren();
             },
 

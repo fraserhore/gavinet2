@@ -15,7 +15,7 @@
             Polymer({
                 is: 'mxgraph-change-handler',
 
-                handleChange: function(currentItemId, authorId, graph, sender, evt) {
+                handleChange: function(currentItemId, authorId, versionName, graph, sender, evt) {
                     //console.log('change');
                     //console.log(evt);
 
@@ -143,7 +143,7 @@
                                     "lang" : "en-gb",
                                     "properties" : properties, 
                                     "relationships" : "", 
-                                    "versionName" : "",
+                                    "versionName" : versionName,
                                     "identityNamePattern" : ""
                                 };
 

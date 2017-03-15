@@ -72,6 +72,11 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
                     statePath: 'nodeData'
                 },
 
+                versionName: {
+                	type: String,
+                	statePath: 'versionName'
+                },
+
                 children2: {
                     type: Object,
                     statePath: 'children'
@@ -98,7 +103,8 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
             createGraph: function() {
                 var polymerThis = this,
                     currentItemId = this.nodeData.identityNode.properties.uuid, 
-                    authorId = this.nodeData.authorNode.properties.uuid,
+                    authorId = this.nodeData.authorNode.properties.uuid, // should come from as user session
+                    versionName = this.versionName,
                     changeHandler = this.$.changeHandler;
 
                 // Adds required resources (disables loading of fallback properties, this can only
@@ -143,6 +149,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
                     //polymerThis.editor = new Editor(null, null, null, polymerThis.graph);
                     //polymerThis.editorUi = new EditorUi(polymerThis.editor, container);
 
+                    // Create Toolbar
                     var toolbar = new mxDefaultToolbar(polymerThis.$.toolbar, polymerThis.editor);
                     toolbar.addItem('Copy', null, 'copy');
                     toolbar.addPrototype("Activity", null, new mxCell({"name":"test"}, new mxGeometry(20, 20, 150, 40), "activity"), null, null, null);
@@ -150,10 +157,18 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
                     var combo = toolbar.addActionCombo('More actions...');
                     toolbar.addActionOption(combo, 'Paste', 'paste');
 
+                    var doc = mxUtils.createXmlDocument();
+					var node = doc.createElement('MyNode')
+					node.setAttribute('label', 'MyLabel');
+					node.setAttribute('attribute1', 'value1');
+					var geo = new mxGeometry(20, 20, 80, 60);
+					var prototype = new mxCell(node, geo, "activity");
+					toolbar.addPrototype("Activity", 'images/editor/Activity.png', prototype, null, null, null);
+
                     // Listen for changes and update the state
                     polymerThis.graph.model.addListener(mxEvent.CHANGE, function(sender, evt) {
                         if(!polymerThis.updatingChildren) {
-                            changeHandler.handleChange(currentItemId, authorId, polymerThis.graph, sender, evt);
+                            changeHandler.handleChange(currentItemId, authorId, , polymerThis.graph, sender, evt);
                         }
                     });
 

@@ -448,8 +448,9 @@ module.exports = {
     create: function(options, done) {
         var session = driver.session();
         var properties = options.properties,
-            relationships = options.relationships
-            relationshipsStatement = '';
+            relationships = options.relationships,
+            relationshipsStatement = '',
+            versionName = options.versionName || "initial";
         if(relationships.length) {
             var matchRelated = ' MATCH ',
                 whereRelated = ' WHERE ',
