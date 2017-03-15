@@ -107,8 +107,10 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
                     }
                 },
                 updateVersionNameAction: function(versionName) {
-                    type: 'UPDATE_VERSION_NAME',
-                    versionName: versionName
+                    return {
+                        type: 'UPDATE_VERSION_NAME',
+                        versionName: versionName
+                    }
                 }
             },
 
@@ -226,7 +228,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
             },
 
             _versionNameChanged: function(event) {
-                this.dispatch('updateVersionNameAction', response);
+                this.dispatch('updateVersionNameAction', this.versionName);
                 this.getChildren();
             },
 

@@ -22,6 +22,9 @@
 
             case 'LOAD_CHILDREN' :
                 return Object.assign({}, state, {children: action.children});
+
+            case 'UPDATE_VERSION_NAME' :
+                return Object.assign({}, state, {versionName: action.versionName});
         }
     };
 

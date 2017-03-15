@@ -14,7 +14,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 <!-- <link rel="import" href="../api-sharepoint.html"> -->
 <link rel="stylesheet" type="text/css" href="styles/grapheditor.css">
 <script type="text/javascript" src="js/Init.js"></script>
-<script type="text/javascript" src="jscolor/jscolor.js"></script>
+<<!-- script type="text/javascript" src="jscolor/jscolor.js"></script>
 <script type="text/javascript" src="sanitizer/sanitizer.min.js"></script>
 <script type="text/javascript" src="js/EditorUi.js"></script>
 <script type="text/javascript" src="js/Editor.js"></script>
@@ -25,7 +25,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 <script type="text/javascript" src="js/Menus.js"></script>
 <script type="text/javascript" src="js/Format.js"></script>
 <script type="text/javascript" src="js/Toolbar.js"></script>
-<script type="text/javascript" src="js/Dialogs.js"></script>
+<script type="text/javascript" src="js/Dialogs.js"></script> -->
 
 <dom-module id="content-process-editor">
     <template>
@@ -93,20 +93,23 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
             },
 
             observers: [
-                '_updateChildren(children2)'
+                '_updateChildren(children2)',
+                '_versionNameChanged(versionName)'
               ],
 
             ready: function() {
                 this.createGraph();
             },
 
+            _versionNameChanged: function() {
+                //console.log('versionName: ' + this.versionName);
+            },
+
             createGraph: function() {
                 var polymerThis = this,
                     currentItemId = this.nodeData.identityNode.properties.uuid, 
                     authorId = this.nodeData.authorNode.properties.uuid, // should come from as user session
-                    versionName = this.versionName,
                     changeHandler = this.$.changeHandler;
-
                 // Adds required resources (disables loading of fallback properties, this can only
                 // be used if we know that all keys are defined in the language specific file)
                 mxResources.loadDefaultBundle = true;
@@ -120,7 +123,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
                     // Configures the default graph theme
                     var themes = new Object();
-                    themes[Graph.prototype.defaultThemeName] = xhr[1].getDocumentElement();
+                    //themes[Graph.prototype.defaultThemeName] = xhr[1].getDocumentElement();
 
                     // Main
                     var container = polymerThis.$.graphEditor;
@@ -151,24 +154,21 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
                     // Create Toolbar
                     var toolbar = new mxDefaultToolbar(polymerThis.$.toolbar, polymerThis.editor);
-                    toolbar.addItem('Copy', null, 'copy');
-                    toolbar.addPrototype("Activity", null, new mxCell({"name":"test"}, new mxGeometry(20, 20, 150, 40), "activity"), null, null, null);
-
-                    var combo = toolbar.addActionCombo('More actions...');
-                    toolbar.addActionOption(combo, 'Paste', 'paste');
-
+                    
+                    // create toolbar items
                     var doc = mxUtils.createXmlDocument();
-					var node = doc.createElement('MyNode')
+					var node = doc.createElement('activity')
 					node.setAttribute('label', 'MyLabel');
 					node.setAttribute('attribute1', 'value1');
 					var geo = new mxGeometry(20, 20, 80, 60);
-					var prototype = new mxCell(node, geo, "activity");
-					toolbar.addPrototype("Activity", 'images/editor/Activity.png', prototype, null, null, null);
+					var prototype = new mxCell(node, geo, "rounded=1;whiteSpace=wrap;html=1");
+                    prototype.setVertex(true);
+					toolbar.addPrototype("Activity", '/polymer/src/content-process-editor/images/editor/Activity.png', prototype, null, null, null);
 
                     // Listen for changes and update the state
                     polymerThis.graph.model.addListener(mxEvent.CHANGE, function(sender, evt) {
                         if(!polymerThis.updatingChildren) {
-                            changeHandler.handleChange(currentItemId, authorId, , polymerThis.graph, sender, evt);
+                            changeHandler.handleChange(currentItemId, authorId, polymerThis.versionName, polymerThis.graph, sender, evt);
                         }
                     });
 
