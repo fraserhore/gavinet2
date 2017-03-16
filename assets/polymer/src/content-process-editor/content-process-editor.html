@@ -132,12 +132,10 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
                     //polymerThis.graph = polymerThis.editorUi.editor.graph;
                     //polymerThis.model = polymerThis.graph.getModel();
 
-                    //mxObjectCodec.allowEval = true;
-                    //var config = mxUtils.load('/polymer/src/mxgraph-import/mxgraph/config/diagrameditor.xml').getDocumentElement();
-                    //var editor = new mxEditor(node);
-                    //mxObjectCodec.allowEval = false;
-                    //editor.setGraphContainer(container);
-                    //var graph = editor.graph;
+                    // mxObjectCodec.allowEval = true;
+                    // var config = mxUtils.load('/polymer/src/content-process-editor/config/diagrameditor.xml').getDocumentElement();
+                    // polymerThis.editor = new mxEditor(config);
+                    // mxObjectCodec.allowEval = false;
 
                     //polymerThis.graph = new Graph(container);
                     //polymerThis.model = polymerThis.graph.getModel();
@@ -152,18 +150,8 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
                     //polymerThis.editor = new Editor(null, null, null, polymerThis.graph);
                     //polymerThis.editorUi = new EditorUi(polymerThis.editor, container);
 
-                    // Create Toolbar
-                    var toolbar = new mxDefaultToolbar(polymerThis.$.toolbar, polymerThis.editor);
-                    
-                    // create toolbar items
-                    var doc = mxUtils.createXmlDocument();
-					var node = doc.createElement('activity')
-					node.setAttribute('label', 'MyLabel');
-					node.setAttribute('attribute1', 'value1');
-					var geo = new mxGeometry(20, 20, 80, 60);
-					var prototype = new mxCell(node, geo, "rounded=1;whiteSpace=wrap;html=1");
-                    prototype.setVertex(true);
-					toolbar.addPrototype("Activity", '/polymer/src/content-process-editor/images/editor/Activity.png', prototype, null, null, null);
+                    polymerThis.createToolbar();
+                    polymerThis.setGraphOptions();
 
                     // Listen for changes and update the state
                     polymerThis.graph.model.addListener(mxEvent.CHANGE, function(sender, evt) {
@@ -176,6 +164,79 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
                     document.body.innerHTML = '<center style="margin-top:10%;">Error loading resource files. Please check browser console.</center>';
                 });
 
+
+            },
+
+            createToolbar: function() {
+                var polymerThis = this;
+
+                // Create Toolbar
+                var toolbar = new mxDefaultToolbar(this.$.toolbar, this.editor);
+                
+                // create toolbar items
+                var contentTypes = ["text", "input", "activity", "decision", "output", "outcome", "impact", "role", "offPageReference"];
+                for (var i = 0; i < contentTypes.length; i++) {
+                    var contentType = contentTypes[i];                      
+                    var doc = mxUtils.createXmlDocument();
+                    var node = doc.createElement(contentType);
+                    node.setAttribute('label', 'MyLabel');
+                    node.setAttribute('attribute1', 'value1');
+                    var geo = new mxGeometry(20, 20, 80, 60);
+                    var prototype = new mxCell(node, geo, contentType);
+                    prototype.setVertex(true);
+                    toolbar.addPrototype(contentType, '/polymer/src/content-process-editor/images/editor/' + contentType + '.png', prototype, null, null, null);
+                };
+
+                //set styles
+                var style = new Object();
+                style[mxConstants.STYLE_SHAPE] = mxConstants.SHAPE_RECTANGLE;
+                style[mxConstants.STYLE_PERIMETER] = mxPerimeter.RectanglePerimeter;
+                style[mxConstants.STYLE_FONTSIZE] = '12';
+                style[mxConstants.STYLE_ALIGN] = 'center';
+                style[mxConstants.STYLE_VERTICAL_ALIGN] = 'middle';
+                style[mxConstants.STYLE_SHADOW] = 0;
+                style[mxConstants.STYLE_STROKECOLOR] = '#C3D9FF';
+                style[mxConstants.STYLE_FILLCOLOR] = '#C3D9FF';
+                style[mxConstants.STYLE_GRADIENTCOLOR] = 'none';
+                //style[mxConstants.STYLE_ROUNDED] = true;
+                this.graph.getStylesheet().putCellStyle('defaultVertex', style);
+
+                var style = new Object();
+                style[mxConstants.STYLE_SHAPE] = mxConstants.SHAPE_SWIMLANE;
+                style[mxConstants.STYLE_HORIZONTAL] = 0;
+                style[mxConstants.STYLE_FONTCOLOR] = '#005CB9';
+                style[mxConstants.STYLE_STROKECOLOR] = '#C3D9FF';
+                style[mxConstants.STYLE_FILLCOLOR] = '#005CB9';
+                style[mxConstants.STYLE_FONTCOLOR] = 'white';
+                style[mxConstants.STYLE_HTML] = 1;
+                style[mxConstants.STYLE_WHITESPACE] = 1;
+
+                this.graph.getStylesheet().putCellStyle('role', style);
+
+                console.log(this.editor.templates);
+
+                // try
+                // {
+                //     var file = ('/polymer/src/content-process-editor/config/stylesheet.xml');
+                //     var req = mxUtils.load(file);
+                //     var root = req.getDocumentElement();
+                //     var codec = new mxCodec(root);
+                //     codec.decode(root, this.graph.getModel());
+                // }
+                // catch (ex)
+                // {
+                //   mxUtils.alert('Cannot load '+file+': '+ex);
+                // }
+
+                // console.log(this.editor.stylesheet);
+                
+
+            },
+
+            setGraphOptions: function() {
+                var graph = this.graph;
+
+                graph.setHtmlLabels(true);
 
             },
 

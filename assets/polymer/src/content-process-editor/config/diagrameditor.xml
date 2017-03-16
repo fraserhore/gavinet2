@@ -1,0 +1,89 @@
+<mxEditor defaultGroup="group" defaultEdge="connector">
+	<Array as="templates">
+		<add as="text">
+			<Text label="Text" contentType="text" href="">
+				<mxCell vertex="1" style="text">
+					<mxGeometry as="geometry" width="80" height="20"/>
+				</mxCell>
+			</Text>
+		</add>
+		<add as="input">
+			<Input label="Input" description="" relatedOutputId="" id="" contentType="input">
+				<mxCell vertex="1" style="input">
+					<mxGeometry as="geometry" width="80" height="60"/>
+				</mxCell>
+			</Input>
+		</add>
+		<add as="activity">
+			<Activity label="Activity" description="" duration="" personDays="" policies="" kpis="" supportingTechnology="" status="" id="" contentType="activity" recommendations="" comments="">
+				<mxCell vertex="1" style="activity">
+					<mxGeometry as="geometry" width="80" height="60"/>
+				</mxCell>
+			</Activity>
+		</add>
+		<add as="decision">
+			<Decision label="Decision" description="" duration="" kpis="" supportingTechnology="" status="" id="" contentType="decision">
+				<mxCell vertex="1" style="decision">
+					<mxGeometry as="geometry" width="80" height="60"/>
+				</mxCell>
+			</Decision>
+		</add>
+		<add as="output">
+			<Output label="Output" description="" duration="" kpis="" supportingTechnology="" status="" id="" contentType="output" mediaType="" storageLocation="">
+				<mxCell vertex="1" style="output">
+					<mxGeometry as="geometry" width="80" height="60"/>
+				</mxCell>
+			</Output>
+		</add>
+		<add as="outcome">
+			<Outcome label="Outcome" description="" duration="" kpis="" supportingTechnology="" status="" id="" contentType="outcome">
+				<mxCell vertex="1" style="outcome">
+					<mxGeometry as="geometry" width="80" height="60"/>
+				</mxCell>
+			</Outcome>
+		</add>
+		<add as="impact">
+			<Impact label="Impact" description="" duration="" kpis="" supportingTechnology="" status="" id="" contentType="impact">
+				<mxCell vertex="1" style="impact">
+					<mxGeometry as="geometry" width="80" height="60"/>
+				</mxCell>
+			</Impact>
+		</add>
+		<add as="image">
+			<Image label="Image" href="">
+				<mxCell vertex="1" style="image">
+					<mxGeometry as="geometry" width="80" height="50"/>
+				</mxCell>
+			</Image>
+		</add>
+		
+		<add as="role">
+			<Role label="Role" description="" duration="" kpis="" supportingTechnology="" status="" id="" contentType="actor">
+				<mxCell vertex="1" style="swimlane" connectable="1">
+					<mxGeometry as="geometry" width="900" height="100"/>
+				</mxCell>
+			</Role>
+		</add>
+		<add as="hline">
+			<Hline label="Hline" href="">
+				<mxCell vertex="1" style="ellipse">
+					<mxGeometry as="geometry" width="60" height="10"/>
+				</mxCell>
+			</Hline>
+		</add>
+		<add as="connector">
+			<Connector label="">
+				<mxCell edge="1">
+					<mxGeometry as="geometry" relative="1"/>
+				</mxCell>
+			</Connector>
+		</add>
+		<add as="offPageReference">
+			<OffPageReference label="Off Page Reference"  href="" targetId="">
+				<mxCell vertex="1" style="offPageReference">
+					<mxGeometry as="geometry" width="80" height="40"/>
+				</mxCell>
+			</OffPageReference>
+		</add>
+	</Array>
+</mxEditor>
