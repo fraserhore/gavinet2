@@ -75,6 +75,23 @@
                     return ajax.generateRequest();
                 },
 
+                // createBranch Operation
+                // Options: 
+                // {
+                //     "parentId" : "uuid",
+                //     "currentVersionName" : "versionName",
+                //     "versionValidityDate" : "timestamp",
+                //     "newVersionName" : "versionName",
+                //     "lang" : "en-gb"
+                // }
+                createBranch: function(options) {                  
+                    var ajax = this.$.ajax;
+                    ajax.url = '/content/createBranch';
+                    ajax.method = 'POST';
+                    ajax.body = options;
+                    console.log(options);
+                    return ajax.generateRequest();
+                },
 
 
                 // READ SPECIFIC ITEM operation

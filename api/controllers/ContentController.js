@@ -702,6 +702,28 @@ module.exports = {
     /** Add content object to an additional location (create new location relationship) */
     addLocation: function(req, res) {
 
+    },
+
+    // createBranch Operation
+    // Options: 
+    // {
+    //     "parentId" : "uuid",
+    //     "currentVersionName" : "versionName",
+    //     "versionValidityDate" : "timestamp",
+    //     "newVersionName" : "versionName",
+    //     "lang" : "en-gb"
+    // }
+    createBranch: function(req, res) {
+        console.log(req.body);
+        var options = {
+                "parentId": req.body.parentId,
+                "currentVersionName": req.body.currentVersionName,
+                "versionValidityDate": req.body.versionValidityDate,
+                "newVersionName": req.body.newVersionName,
+                "lang": req.body.lang
+            };
+        console.log(options);
+        ContentService.create(options, function(done){return res.json(done)});       
     }
 
 };
