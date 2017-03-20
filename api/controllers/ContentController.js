@@ -723,7 +723,37 @@ module.exports = {
                 "lang": req.body.lang
             };
         console.log(options);
-        ContentService.create(options, function(done){return res.json(done)});       
+        ContentService.createBranch(options, function(done){return res.json(done)});       
+    },
+
+    // createSnapshot Operation
+    // Options: 
+    // {
+    //     "parentId": "uuid",
+    //     "snapshotName": "snapshotName",
+    //     "versionValidityDate": "versionValidityDate",
+    //     "versionName": "versionName",
+    //     "lang": "lang"
+    // }
+    createSnapshot: function(req, res) {
+        console.log(req.body);
+        var options = {
+                "parentId": req.body.parentId,
+                "currentVersionName": req.body.currentVersionName,
+                "versionValidityDate": req.body.versionValidityDate,
+                "newVersionName": req.body.newVersionName,
+                "lang": req.body.lang
+            };
+        var options = {
+                    "parentId": req.body.parentId,
+                    "snapshotName": req.body.snapshotName,
+                    "versionValidityDate": req.body.versionValidityDate,
+                    "versionName": req.body.versionName,
+                    "lang": req.body.lang
+                };
+        console.log(options);
+        ContentService.createSnapshot(options, function(done){return res.json(done)});       
     }
+
 
 };

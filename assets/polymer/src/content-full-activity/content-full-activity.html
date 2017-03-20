@@ -50,12 +50,22 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         <paper-slider id="versionSlider" label="Version validity date" value="{{versionSliderValue}}" min="{{versionSliderMin}}" max="{{versionSliderMax}}" step="{{versionSliderStep}}" pin on-change="_versionSliderChanged"></paper-slider>
         <paper-dropdown-menu label="Branch" value="{{versionName}}" on-iron-select="_versionNameChanged">
           <paper-listbox class="dropdown-content" selected="0">
-            <paper-item>Initial</paper-item>
             <paper-item>current</paper-item>
             <paper-item>future</paper-item>
           </paper-listbox>
+          <<paper-input label="New Branch"></paper-input>
+          <paper-button raised on-click="createBranch">Create</paper-button>
         </paper-dropdown-menu>
-
+        
+        <paper-dropdown-menu label="Snapshot" value="{{snapshot}}" on-iron-select="_snapshotChanged">
+          <paper-listbox class="dropdown-content" selected="0">
+            <paper-item>Snapshot 1</paper-item>
+            <paper-item>Snapshot 2</paper-item>
+          </paper-listbox>
+          <<paper-input label="New Snapshot"></paper-input>
+          <paper-button raised on-click="createSnapshot">Snapshot</paper-button>
+        </paper-dropdown-menu>
+        
         <paper-button raised on-click="update">Edit</paper-button>
         <!-- <paper-button raised on-click="create">New</paper-button> -->
         <paper-dialog id="editDialog" entry-animation="scale-up-animation" exit-animation="fade-out-animation" autoFitOnAttach="true" on-iron-overlay-closed="_dialogClosed">
@@ -232,6 +242,11 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
                 this.getChildren();
             },
 
+            _snapshotChanged: function(event) {
+                //this.dispatch('updateVersionNameAction', this.versionName);
+                //this.getChildren();
+            },
+
             _submit: function(event) {
                 var button = event.target;
                 while (!button.hasAttribute('data-form') && button !== document.body) {
@@ -268,6 +283,45 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
                         // console.log(response);
                     });
                 
+            },
+
+            createBranch: function() {
+                var options = {
+                    "parentId": this.nodeData.identityNode.properties.uuid,
+                    "currentVersionName": this.versionName,
+                    "versionValidityDate": this.versionSliderValue,
+                    "newVersionName": this.newVersionName,
+                    "lang": this.nodeData.lang
+                };
+                var request = this.$.api.createBranch(options),
+                    polymerThis = this;
+                Promise.all([request.completes])
+                    .then(function (requests) {
+                        var response = requests[0].response;
+                        // polymerThis.dispatch('loadChildrenAction', response);
+                        // do whatever you want from here...
+                        // console.log(response);
+                    });
+                
+            },
+
+            createSnapshot: function() {
+                var options = {
+                    "parentId": this.nodeData.identityNode.properties.uuid,
+                    "snapshotName": this.snapshotName,
+                    "versionValidityDate": this.versionSliderValue,
+                    "versionName": this.versionName,
+                    "lang": this.nodeData.lang
+                };
+                var request = this.$.api.createSnapshot(options),
+                    polymerThis = this;
+                Promise.all([request.completes])
+                    .then(function (requests) {
+                        var response = requests[0].response;
+                        // polymerThis.dispatch('loadChildrenAction', response);
+                        // do whatever you want from here...
+                        // console.log(response);
+                    });
             }
 
 
