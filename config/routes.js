@@ -144,6 +144,18 @@ module.exports.routes = {
     skipAssets: true
   },  
 
+  'POST /content/createBranch': {
+    controller: 'ContentController',
+    action: 'createBranch',
+    skipAssets: true
+  },  
+
+  'POST /content/createSnapshot': {
+    controller: 'ContentController',
+    action: 'createSnapshot',
+    skipAssets: true
+  },  
+
   'GET /swagger/doc': {
     controller: 'SwaggerController',
     action: 'doc',

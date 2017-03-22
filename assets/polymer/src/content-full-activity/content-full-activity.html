@@ -48,24 +48,25 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
             <moment-element datetime="{{versionSliderValue}}" output-format="MMM DD[,] YYYY"></moment-element>
         </div>
         <paper-slider id="versionSlider" label="Version validity date" value="{{versionSliderValue}}" min="{{versionSliderMin}}" max="{{versionSliderMax}}" step="{{versionSliderStep}}" pin on-change="_versionSliderChanged"></paper-slider>
-        <paper-dropdown-menu label="Branch" value="{{versionName}}" on-iron-select="_versionNameChanged">
+
+        <paper-dropdown-menu label="Branch" value="{{versionName}}" on-iron-select="_versionNameChanged" style="width: 15%;">
           <paper-listbox class="dropdown-content" selected="0">
             <paper-item>current</paper-item>
             <paper-item>future</paper-item>
           </paper-listbox>
-          <<paper-input label="New Branch"></paper-input>
-          <paper-button raised on-click="createBranch">Create</paper-button>
         </paper-dropdown-menu>
+        <paper-input label="New Branch" value="{{newVersionName}}" style="width: 15%; display: inline-block;"></paper-input>
+        <paper-button raised on-click="createBranch">Create</paper-button>
         
-        <paper-dropdown-menu label="Snapshot" value="{{snapshot}}" on-iron-select="_snapshotChanged">
+        <paper-dropdown-menu label="Snapshot" value="{{snapshot}}" on-iron-select="_snapshotChanged" style="width: 15%;">
           <paper-listbox class="dropdown-content" selected="0">
             <paper-item>Snapshot 1</paper-item>
             <paper-item>Snapshot 2</paper-item>
           </paper-listbox>
-          <<paper-input label="New Snapshot"></paper-input>
-          <paper-button raised on-click="createSnapshot">Snapshot</paper-button>
         </paper-dropdown-menu>
-        
+        <paper-input label="New Snapshot" value="{{newSnapshotName}}" style="width: 15%; display: inline-block;"></paper-input>
+        <paper-button raised on-click="createSnapshot">Create</paper-button>
+
         <paper-button raised on-click="update">Edit</paper-button>
         <!-- <paper-button raised on-click="create">New</paper-button> -->
         <paper-dialog id="editDialog" entry-animation="scale-up-animation" exit-animation="fade-out-animation" autoFitOnAttach="true" on-iron-overlay-closed="_dialogClosed">
@@ -286,6 +287,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
             },
 
             createBranch: function() {
+                console.log(this.newVersionName);
                 var options = {
                     "parentId": this.nodeData.identityNode.properties.uuid,
                     "currentVersionName": this.versionName,
@@ -306,9 +308,10 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
             },
 
             createSnapshot: function() {
+                console.log(this.newSnapshotName)
                 var options = {
                     "parentId": this.nodeData.identityNode.properties.uuid,
-                    "snapshotName": this.snapshotName,
+                    "snapshotName": this.newSnapshotName,
                     "versionValidityDate": this.versionSliderValue,
                     "versionName": this.versionName,
                     "lang": this.nodeData.lang

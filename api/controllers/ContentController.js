@@ -101,7 +101,7 @@ module.exports = {
                 if(data[i].ID !==97) {
                     continue;
                 } else {
-                    console.log(data[i].ID);
+                   //console.log(data[i].ID);
                 }
 
                 var contentType = data[i].ContentType.Name.toLowerCase();
@@ -133,12 +133,12 @@ module.exports = {
                             +' SET childidentity.spID = childversion.ID'
                             +' SET childidentity.spParentIDs = childversion.ParentIDs'
                             +' RETURN parent,childidentity,childversion';
-                console.log(query);
+               //console.log(query);
                 var cb = function(error, cypherData) {
                     if (error) {
-                        console.log(error);
+                       //console.log(error);
                     } else {
-                        console.log(cypherData);
+                       //console.log(cypherData);
                         //return res.json(cypherData);
                     }
                     
@@ -167,8 +167,8 @@ module.exports = {
             // Iterate through the data items with a delay
             (function theLoop(i) {
                 setTimeout(function() {
-                    console.log(delay);
-                    console.log(i);
+                   //console.log(delay);
+                   //console.log(i);
                     // START OF CODE TO EXECUTE AFTER EACH DELAY
 
                     if (data[i].GraphXML) {
@@ -223,10 +223,10 @@ module.exports = {
                                 //console.log(query);
                                 var cb = function(error, cypherData) {
                                     if (error) {
-                                        console.log(error);
+                                       //console.log(error);
                                     } else {
-                                        console.log('Cypher results');
-                                        console.log(cypherData);
+                                       //console.log('Cypher results');
+                                       //console.log(cypherData);
                                         //return res.json(cypherData);
                                     }
                                 };
@@ -264,8 +264,8 @@ module.exports = {
             // Iterate through the data items with a delay
             (function theLoop(i) {
                 setTimeout(function() {
-                    console.log(delay);
-                    console.log(i);
+                   //console.log(delay);
+                   //console.log(i);
                     // START OF CODE TO EXECUTE AFTER EACH DELAY
 
                     if (data[i].GraphXML) {
@@ -320,12 +320,12 @@ module.exports = {
                                     var cb = function(error, cypherData) {
                                         if (error) {
                                             if(error.code === 'ECONNREFUSED') {
-                                                console.log('ECONNREFUSED Caught');     
+                                               //console.log('ECONNREFUSED Caught');     
                                             }
-                                            console.log(error);
+                                           //console.log(error);
                                         } else {
-                                            console.log('Cypher results');
-                                            console.log(cypherData);
+                                           //console.log('Cypher results');
+                                           //console.log(cypherData);
                                             //return res.json(cypherData);
                                         }
                                     };
@@ -440,10 +440,10 @@ module.exports = {
                                     //console.log(query);
                                     var cb = function(error, cypherData) {
                                         if (error) {
-                                            console.log(error);
+                                           //console.log(error);
                                         } else {
-                                            console.log('Cypher results');
-                                            console.log(cypherData);
+                                           //console.log('Cypher results');
+                                           //console.log(cypherData);
                                             //return res.json(cypherData);
                                         }
                                     };
@@ -587,12 +587,12 @@ module.exports = {
                     +'     }'
                     +' })'
                     +' } AS result';
-        console.log(query);
+       //console.log(query);
         var cb = function(err, data) {
             if(err) {
-                console.log(err);
+               //console.log(err);
             } else if(data[0]) {
-                console.log(data[0].result.children);
+               //console.log(data[0].result.children);
                 return res.json(data[0].result.children);
             }
         };
@@ -610,7 +610,7 @@ module.exports = {
      // TODO: Add url alias subnode with from and to timestamps
 
     create: function(req, res) {
-        console.log(req.body);
+       //console.log(req.body);
         var options = {
                 "parentId": req.body.parentId,
                 "authorId": req.body.authorId,
@@ -621,7 +621,7 @@ module.exports = {
                 "versionName": req.body.versionName,
                 "identityNamePattern": req.body.identityNamePattern ? req.body.identityNamePattern : 'childversion.' + (req.body.properties.name ? 'name' : req.body.properties.title ? 'title' : req.body.properties.term ? 'term' : req.body.properties.identifier ? 'identifier' : 'name')
             };
-        console.log(options);
+       //console.log(options);
         ContentService.create(options, function(done){return res.json(done)});       
     },
 
@@ -665,7 +665,7 @@ module.exports = {
                 "versionName": req.body.versionName || "",
                 "identityNamePattern": req.body.identityNamePattern ? req.body.identityNamePattern : 'newversion.' + (req.body.properties.name ? 'name' : req.body.properties.title ? 'title' : req.body.properties.term ? 'term' : req.body.properties.identifier ? 'identifier' : 'name')
             };
-        console.log(options);
+       //console.log(options);
         ContentService.update(options, function(done){return res.json(done)});       
     },
 
@@ -683,9 +683,9 @@ module.exports = {
         };
         
         var cb = function(err, data) {
-            console.log(err);
-            console.log("delete: "+req.param('id'));
-            console.log(data);
+           //console.log(err);
+           //console.log("delete: "+req.param('id'));
+           //console.log(data);
             return res.json(data);
         };
         db.cypher({
@@ -714,7 +714,7 @@ module.exports = {
     //     "lang" : "en-gb"
     // }
     createBranch: function(req, res) {
-        console.log(req.body);
+       console.log(req.body);
         var options = {
                 "parentId": req.body.parentId,
                 "currentVersionName": req.body.currentVersionName,
@@ -722,7 +722,7 @@ module.exports = {
                 "newVersionName": req.body.newVersionName,
                 "lang": req.body.lang
             };
-        console.log(options);
+       //console.log(options);
         ContentService.createBranch(options, function(done){return res.json(done)});       
     },
 
@@ -736,7 +736,7 @@ module.exports = {
     //     "lang": "lang"
     // }
     createSnapshot: function(req, res) {
-        console.log(req.body);
+       //console.log(req.body);
         var options = {
                 "parentId": req.body.parentId,
                 "currentVersionName": req.body.currentVersionName,
@@ -751,7 +751,7 @@ module.exports = {
                     "versionName": req.body.versionName,
                     "lang": req.body.lang
                 };
-        console.log(options);
+        //console.log(options);
         ContentService.createSnapshot(options, function(done){return res.json(done)});       
     }
 

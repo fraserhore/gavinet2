@@ -273,8 +273,8 @@ module.exports = {
                     +  versionMatch
                     +' OPTIONAL MATCH (identityNode)-[:URL_ALIAS]->(urlAliasIdentity)-[urlAliasVersionRel:VERSION {to:9007199254740991}]->(urlAliasVersion)'
                     +' RETURN identityNode, version, versionNode, authorNode, urlAliasVersion.urlAlias as urlAlias';
-        console.log(options);
-        console.log(query);
+       //console.log(options);
+       //console.log(query);
         return session
             .run(query, params)
             .then(result => {
@@ -293,7 +293,7 @@ module.exports = {
             })
             .catch(error => {
                 session.close();
-                console.log(error);
+               //console.log(error);
                 return done(error);
                 throw error;
             });      
@@ -322,7 +322,7 @@ module.exports = {
             })
             .catch(error => {
                 session.close();
-                console.log(error);
+               //console.log(error);
                 return done(error);
                 throw error;
             });
@@ -389,7 +389,7 @@ module.exports = {
             })
             .catch(error => {
                 session.close();
-                console.log(error);
+               //console.log(error);
                 return done(error);
                 throw error;
             });        
@@ -436,7 +436,7 @@ module.exports = {
             })
             .catch(error => {
                 session.close();
-                console.log(error);
+               //console.log(error);
                 return done(error);
                 throw error;
             });        
@@ -456,7 +456,7 @@ module.exports = {
                 whereRelated = ' WHERE ',
                 createRelationships = '';
             for (var i = relationships.length - 1; i >= 0; i--) {
-                console.log(relationships[i]);
+               //console.log(relationships[i]);
                 var relationshipName = relationships[i].relationshipName.toUpperCase(),
                     direction = relationships[i].direction,
                     inboundSymbol = direction === 'inbound' ? '<' : '',
@@ -530,12 +530,12 @@ module.exports = {
 
                     // Return results
                     +' RETURN parent, childidentity, childversion, urlAliasIdentity, urlAliasVersion, author';
-        console.log(options);
+       //console.log(options);
         return session
             .run(query, options)
             .then(result => {
                 session.close();
-                console.log(result);
+               //console.log(result);
                 var record = result.records[0];
                 //console.log(record.get('childidentity'));
                 //console.log(record.get('childversion'));
@@ -550,7 +550,7 @@ module.exports = {
             })
             .catch(error => {
                 session.close();
-                console.log(error);
+               //console.log(error);
                 return done(error);
                 throw error;
             });
@@ -597,7 +597,7 @@ module.exports = {
                 whereRelated = ' WHERE ',
                 createRelationships = '';
             for (var i = relationships.length - 1; i >= 0; i--) {
-                console.log(relationships[i]);
+               //console.log(relationships[i]);
                 var relationshipName = relationships[i].relationshipName.toUpperCase(),
                     direction = relationships[i].direction,
                     inboundSymbol = direction === 'inbound' ? '<' : '',
@@ -672,7 +672,7 @@ module.exports = {
             .then(result => {
                 session.close();
                 var record = result.records[0];
-                console.log(record.get('newversion'));
+               //console.log(record.get('newversion'));
                 return done({
                     'identityNode': record.get('identitynode'), 
                     'versionNode': record.get('newversion'),
@@ -683,7 +683,7 @@ module.exports = {
             })
             .catch(error => {
                 session.close();
-                console.log(error);
+               //console.log(error);
                 return done(error);
                 throw error;
             });
@@ -703,9 +703,9 @@ module.exports = {
         };
         
         var cb = function(err, data) {
-            console.log(err);
-            console.log("delete: "+req.param('id'));
-            console.log(data);
+           //console.log(err);
+           //console.log("delete: "+req.param('id'));
+           //console.log(data);
             return res.json(data);
         };
         db.cypher({
@@ -765,12 +765,12 @@ module.exports = {
                     +'     }'
                     +' })'
                     +' } AS result';
-        console.log(query);
+       //console.log(query);
         var cb = function(err, data) {
             if(err) {
-                console.log(err);
+               //console.log(err);
             } else if(data[0]) {
-                console.log(data[0].result.children);
+               //console.log(data[0].result.children);
                 return res.json(data[0].result.children);
             }
         };
@@ -796,7 +796,7 @@ module.exports = {
                 if(data[i].ID !==97) {
                     continue;
                 } else {
-                    console.log(data[i].ID);
+                   //console.log(data[i].ID);
                 }
 
                 var contentType = data[i].ContentType.Name.toLowerCase();
@@ -828,12 +828,12 @@ module.exports = {
                             +' SET childidentity.spID = childversion.ID'
                             +' SET childidentity.spParentIDs = childversion.ParentIDs'
                             +' RETURN parent,childidentity,childversion';
-                console.log(query);
+               //console.log(query);
                 var cb = function(error, cypherData) {
                     if (error) {
-                        console.log(error);
+                       //console.log(error);
                     } else {
-                        console.log(cypherData);
+                       //console.log(cypherData);
                         //return res.json(cypherData);
                     }
                     
@@ -862,8 +862,8 @@ module.exports = {
             // Iterate through the data items with a delay
             (function theLoop(i) {
                 setTimeout(function() {
-                    console.log(delay);
-                    console.log(i);
+                   //console.log(delay);
+                   //console.log(i);
                     // START OF CODE TO EXECUTE AFTER EACH DELAY
 
                     if (data[i].GraphXML) {
@@ -918,10 +918,10 @@ module.exports = {
                                 //console.log(query);
                                 var cb = function(error, cypherData) {
                                     if (error) {
-                                        console.log(error);
+                                       //console.log(error);
                                     } else {
-                                        console.log('Cypher results');
-                                        console.log(cypherData);
+                                       //console.log('Cypher results');
+                                       //console.log(cypherData);
                                         //return res.json(cypherData);
                                     }
                                 };
@@ -959,8 +959,8 @@ module.exports = {
             // Iterate through the data items with a delay
             (function theLoop(i) {
                 setTimeout(function() {
-                    console.log(delay);
-                    console.log(i);
+                   //console.log(delay);
+                   //console.log(i);
                     // START OF CODE TO EXECUTE AFTER EACH DELAY
 
                     if (data[i].GraphXML) {
@@ -1015,12 +1015,12 @@ module.exports = {
                                     var cb = function(error, cypherData) {
                                         if (error) {
                                             if(error.code === 'ECONNREFUSED') {
-                                                console.log('ECONNREFUSED Caught');     
+                                               //console.log('ECONNREFUSED Caught');     
                                             }
-                                            console.log(error);
+                                           //console.log(error);
                                         } else {
-                                            console.log('Cypher results');
-                                            console.log(cypherData);
+                                           //console.log('Cypher results');
+                                           //console.log(cypherData);
                                             //return res.json(cypherData);
                                         }
                                     };
@@ -1135,10 +1135,10 @@ module.exports = {
                                     //console.log(query);
                                     var cb = function(error, cypherData) {
                                         if (error) {
-                                            console.log(error);
+                                           //console.log(error);
                                         } else {
-                                            console.log('Cypher results');
-                                            console.log(cypherData);
+                                           //console.log('Cypher results');
+                                           //console.log(cypherData);
                                             //return res.json(cypherData);
                                         }
                                     };
@@ -1158,15 +1158,15 @@ module.exports = {
     },
 
 	/** Create a branch */
+    // {
+    //     "parentId" : "uuid",
+    //     "currentVersionName" : "versionName",
+    //     "versionValidityDate" : "timestamp",
+    //     "newVersionName" : "versionName",
+    //     "lang" : "en-gb"
+    // }
     createBranch: function(options, done) {
         var session = driver.session();
-        var params = {
-			"parentId" : "uuid",
-			"currentVersionName" : "versionName",
-			"versionValidityDate" : "timestamp",
-			"newVersionName" : "versionName",
-			"lang" : "en-gb"
-    	};
         
         var query =   'MATCH (b)-[r2:CONTAINS]->(c)-[r3:VERSION]->(d:Version) '
 					+ 'WHERE b.uuid = {parentId} ' 
@@ -1179,10 +1179,10 @@ module.exports = {
 					+ 'AND r1.versionName = {currentVersionName} r3.lang = {lang} '
 					+ 'CREATE (b)-[:VERSION {from:timestamp(), to:9007199254740991, versionNumber:1, versionName:{newVersionName} lang:{lang}}]->(a) '
 					+ 'RETURN a,b'
-        console.log(options);
-        console.log(query);
+       console.log(options);
+       console.log(query);
         return session
-            .run(query, params)
+            .run(query, options)
             .then(result => {
                 result.records.forEach(function(record) {
 
@@ -1192,7 +1192,7 @@ module.exports = {
             })
             .catch(error => {
                 session.close();
-                console.log(error);
+               console.log(error);
                 return done(error);
                 throw error;
             });      
@@ -1220,8 +1220,8 @@ module.exports = {
 					+ 'AND r1.versionName = {currentVersionName} r3.lang = {lang} '
 					+ 'CREATE (b)-[:VERSION {from:timestamp(), to:9007199254740991, versionNumber:1, versionName:{newVersionName} lang:{lang}}]->(a) '
 					+ 'RETURN a,b'
-        console.log(options);
-        console.log(query);
+       //console.log(options);
+       //console.log(query);
         return session
             .run(query, params)
             .then(result => {
@@ -1233,7 +1233,7 @@ module.exports = {
             })
             .catch(error => {
                 session.close();
-                console.log(error);
+               //console.log(error);
                 return done(error);
                 throw error;
             });      
