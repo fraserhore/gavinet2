@@ -23,24 +23,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         </style>
         <api-gavi-graph id="api"></api-gavi-graph>
         <!-- <api-sharepoint id="api"></api-sharepoint> -->
-        <iron-ajax id="getContentTypes" 
-        	auto url="/content/getContentTypes" 
-        	params='' 
-        	handle-as="json" 
-        	last-response="{{contenttypes}}" 
-        	debounce-duration="300"></iron-ajax>
-        <iron-ajax id="getContent" 
-        	url="/content/getContent/{{nodeData.identityNode.properties.uuid}}" 
-        	params={} 
-        	handle-as="json" 
-        	last-response="{{content}}" 
-        	on-response="_refreshContent" 
-        	debounce-duration="300"></iron-ajax>
-        <iron-ajax id="deleteRequest" 
-        	url="" 
-        	handle-as="json" 
-        	on-response="deleteResponse" 
-        	debounce-duration="300"></iron-ajax>
+        
         <h1>{{nodeData.identityNode.properties.name}}</h1>
         <div>{{nodeData.versionNode.properties.description}}</div>
         <br/>
@@ -52,7 +35,9 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         <paper-dropdown-menu label="Branch" value="{{versionName}}" on-iron-select="_versionNameChanged" style="width: 15%;">
           <paper-listbox class="dropdown-content" selected="0">
             <paper-item>current</paper-item>
-            <paper-item>future</paper-item>
+            <template is="dom-repeat" items="{{branches}}">
+                <paper-item>{{item.identityNode.properties.name}}</paper-item>
+            </template>
           </paper-listbox>
         </paper-dropdown-menu>
         <paper-input label="New Branch" value="{{newVersionName}}" style="width: 15%; display: inline-block;"></paper-input>
@@ -167,6 +152,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
                 this.versionSliderValue = Date.now();
                 // console.log(today.toISOString());
                 this.getChildren();
+                this.getBranches();
             },
 
             create: function(event) {
@@ -227,14 +213,14 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
             },
 
             _versionSliderChanged: function(event) {
-                this.$.getContent.params["versionValidityDate"] = event.target.value;
-                this.$.getContent.generateRequest();
-                this.nodeData.versionValidityDate = event.target.value;
+                //this.$.getContent.params["versionValidityDate"] = event.target.value;
+                //this.$.getContent.generateRequest();
+                //this.nodeData.versionValidityDate = event.target.value;
                 // this.$.contentChildren.versionValidityDate = event.target.value;
                 // this.$.contentChildren.refresh();
                 //this.$.contentChildren.firstElementChild.versionValidityDate = event.target.value;
-                this.$.contentChildren.$.template.firstChild.notifyPath('nodeData.versionValidityDate');
-                this.$.contentChildren.$.template.firstChild.refresh();
+                //this.$.contentChildren.$.template.firstChild.notifyPath('nodeData.versionValidityDate');
+                //this.$.contentChildren.$.template.firstChild.refresh();
                 this.getChildren();
             },
 
@@ -272,7 +258,8 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
                 var options = {
                     "uuid": this.nodeData.identityNode.properties.uuid,
                     "versionValidityDate": this.versionSliderValue,
-                    "versionName": this.versionName
+                    "versionName": this.versionName,
+                    "contentTypes": "'text', 'input', 'activity', 'decision', 'output', 'outcome', 'impact', 'role'",
                 };
                 var request = this.$.api.getChildren(options),
                     polymerThis = this;
@@ -286,10 +273,28 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
                 
             },
 
+            getBranches: function() {
+                var options = {
+                    "uuid": this.nodeData.identityNode.properties.uuid,
+                    "contentTypes": "'branch'",
+                };
+                var request = this.$.api.getChildren(options),
+                    polymerThis = this;
+                Promise.all([request.completes])
+                    .then(function (requests) {
+                        var response = requests[0].response;
+                        polymerThis.branches = response;
+                        //polymerThis.dispatch('loadChildrenAction', response);
+                        // do whatever you want from here...
+                        // console.log(response);
+                    });
+            },
+
             createBranch: function() {
                 console.log(this.newVersionName);
                 var options = {
                     "parentId": this.nodeData.identityNode.properties.uuid,
+                    "authorId": this.nodeData.authorNode.properties.uuid,
                     "currentVersionName": this.versionName,
                     "versionValidityDate": this.versionSliderValue,
                     "newVersionName": this.newVersionName,

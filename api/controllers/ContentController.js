@@ -480,7 +480,8 @@ module.exports = {
             "id": req.param('id') || 0,
             "lang": parseInt(req.param('lang')) || "en-gb",
             "versionName": req.param('versionName'),
-            "versionValidityDate": parseInt(req.param('versionValidityDate'))
+            "versionValidityDate": parseInt(req.param('versionValidityDate')),
+            "contentTypes": req.param('contentTypes')
         };
         ContentService.getChildren(options, function(done){return res.json(done)});
     },
@@ -708,6 +709,7 @@ module.exports = {
     // Options: 
     // {
     //     "parentId" : "uuid",
+    //     "authorId" : "authorId",
     //     "currentVersionName" : "versionName",
     //     "versionValidityDate" : "timestamp",
     //     "newVersionName" : "versionName",
@@ -717,6 +719,7 @@ module.exports = {
        console.log(req.body);
         var options = {
                 "parentId": req.body.parentId,
+                "authorId": req.body.authorId,
                 "currentVersionName": req.body.currentVersionName,
                 "versionValidityDate": req.body.versionValidityDate,
                 "newVersionName": req.body.newVersionName,
@@ -730,6 +733,7 @@ module.exports = {
     // Options: 
     // {
     //     "parentId": "uuid",
+    //     "authorId" : "authorId",
     //     "snapshotName": "snapshotName",
     //     "versionValidityDate": "versionValidityDate",
     //     "versionName": "versionName",
@@ -746,6 +750,7 @@ module.exports = {
             };
         var options = {
                     "parentId": req.body.parentId,
+                    "authorId": req.body.authorId,
                     "snapshotName": req.body.snapshotName,
                     "versionValidityDate": req.body.versionValidityDate,
                     "versionName": req.body.versionName,

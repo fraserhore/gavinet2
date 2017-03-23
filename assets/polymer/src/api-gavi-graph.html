@@ -68,9 +68,7 @@
                         versionValidityDate = options.versionValidityDate ? options.versionValidityDate : '',
                         ajax = this.$.ajax;
 
-                    // console.log('/content/getChildren/' + options.uuid + '?lang=' + lang + '&versionName=' + versionName + '&versionValidityDate=' + versionValidityDate);
-
-                    ajax.url = '/content/getChildren/' + options.uuid + '?lang=' + lang + '&versionName=' + versionName + '&versionValidityDate=' + versionValidityDate;
+                    ajax.url = '/content/getChildren/' + options.uuid + '?lang=' + lang + '&versionName=' + versionName + '&versionValidityDate=' + versionValidityDate + '&contentTypes=' + options.contentTypes;
                     ajax.method = 'GET';
                     return ajax.generateRequest();
                 },
@@ -79,6 +77,7 @@
                 // Options: 
                 // {
                 //     "parentId" : "uuid",
+                //     "authorId" : "authorId",
                 //     "currentVersionName" : "versionName",
                 //     "versionValidityDate" : "timestamp",
                 //     "newVersionName" : "versionName",

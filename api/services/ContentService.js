@@ -259,6 +259,7 @@ module.exports = {
             "lang": options.lang
         };
         var versionMatch = "";
+        var contentTypeMatch = options.contentTypes ? " AND identityNode.contentType IN [" + options.contentTypes + "]" : '';
 
         if(options.versionName) {
             versionMatch = " AND version.versionName = " + "'" + options.versionName + "'";
@@ -271,6 +272,7 @@ module.exports = {
         var query =   'MATCH (parentNode)-[parentChildRel:CONTAINS]->(identityNode)-[version:VERSION]->(versionNode), (authorNode)-[created:CREATED]->(identityNode)'
                     +' WHERE parentNode.uuid = {id} AND version.lang = {lang}'
                     +  versionMatch
+                    +  contentTypeMatch
                     +' OPTIONAL MATCH (identityNode)-[:URL_ALIAS]->(urlAliasIdentity)-[urlAliasVersionRel:VERSION {to:9007199254740991}]->(urlAliasVersion)'
                     +' RETURN identityNode, version, versionNode, authorNode, urlAliasVersion.urlAlias as urlAlias';
        //console.log(options);
@@ -1163,7 +1165,8 @@ module.exports = {
     //     "currentVersionName" : "versionName",
     //     "versionValidityDate" : "timestamp",
     //     "newVersionName" : "versionName",
-    //     "lang" : "en-gb"
+    //     "lang" : "en-gb",
+    //     "authorId" : "authorI    d"
     // }
     createBranch: function(options, done) {
         var session = driver.session();
@@ -1172,23 +1175,30 @@ module.exports = {
 					+ 'WHERE b.uuid = {parentId} ' 
 					+ 'AND r3.from <= {versionValidityDate} AND r3.to >= {versionValidityDate} '
 					+ 'AND r3.versionName = {currentVersionName} AND r3.lang = {lang} ' 
-					+ 'CREATE (c)-[:VERSION {from:timestamp(), to:9007199254740991, versionNumber:1, versionName:{newVersionName} lang:{lang}}]->(d) '
+					+ 'CREATE (c)-[:VERSION {from:timestamp(), to:9007199254740991, versionNumber:1, versionName:{newVersionName}, lang:{lang}}]->(d) '
 					+ 'WITH b LIMIT 1 '
 					+ 'MATCH (b)-[r1:VERSION]->(a:Version) '
 					+ 'WHERE r1.from <= 1489705672990 AND r1.to >= 1489705672990 '
-					+ 'AND r1.versionName = {currentVersionName} r3.lang = {lang} '
-					+ 'CREATE (b)-[:VERSION {from:timestamp(), to:9007199254740991, versionNumber:1, versionName:{newVersionName} lang:{lang}}]->(a) '
+					+ 'AND r1.versionName = {currentVersionName} AND r1.lang = {lang} '
+					+ 'CREATE (b)-[:VERSION {from:timestamp(), to:9007199254740991, versionNumber:1, versionName:{newVersionName}, lang:{lang}}]->(a) '
 					+ 'RETURN a,b'
        console.log(options);
        console.log(query);
         return session
             .run(query, options)
             .then(result => {
-                result.records.forEach(function(record) {
-
-                });
+                var options2 = {
+                    "parentId": options.parentId,
+                    "authorId": options.authorId,
+                    "contenttype": "branch",
+                    "lang": options.lang,
+                    "properties": {"name" : options.newVersionName},
+                    "relationships": [],
+                    "versionName": "initial",
+                    "identityNamePattern": "childversion.name"
+                };
                 session.close();
-                return done();
+                return done( ContentService.create(options2, function(done2){return res.json(done2)}) );
             })
             .catch(error => {
                 session.close();
@@ -1200,43 +1210,22 @@ module.exports = {
 
     /** Create a branch */
     createSnapshot: function(options, done) {
-        var session = driver.session();
-        var params = {
-			"parentId" : "uuid",
-			"currentVersionName" : "versionName",
-			"versionValidityDate" : "timestamp",
-			"newVersionName" : "versionName",
-			"lang" : "en-gb"
-    	};
-        
-        var query =   'MATCH (b)-[r2:CONTAINS]->(c)-[r3:VERSION]->(d:Version) '
-					+ 'WHERE b.uuid = {parentId} ' 
-					+ 'AND r3.from <= {versionValidityDate} AND r3.to >= {versionValidityDate} '
-					+ 'AND r3.versionName = {currentVersionName} AND r3.lang = {lang} ' 
-					+ 'CREATE (c)-[:VERSION {from:timestamp(), to:9007199254740991, versionNumber:1, versionName:{newVersionName} lang:{lang}}]->(d) '
-					+ 'WITH b LIMIT 1 '
-					+ 'MATCH (b)-[r1:VERSION]->(a:Version) '
-					+ 'WHERE r1.from <= 1489705672990 AND r1.to >= 1489705672990 '
-					+ 'AND r1.versionName = {currentVersionName} r3.lang = {lang} '
-					+ 'CREATE (b)-[:VERSION {from:timestamp(), to:9007199254740991, versionNumber:1, versionName:{newVersionName} lang:{lang}}]->(a) '
-					+ 'RETURN a,b'
-       //console.log(options);
-       //console.log(query);
-        return session
-            .run(query, params)
-            .then(result => {
-                result.records.forEach(function(record) {
-
-                });
-                session.close();
-                return done();
-            })
-            .catch(error => {
-                session.close();
-               //console.log(error);
-                return done(error);
-                throw error;
-            });      
+        var options2 = {
+            "parentId": options.parentId,
+            "authorId": options.authorId,
+            "contenttype": "snapshot",
+            "lang": options.lang,
+            "properties": {
+                "name": options.snapshotName,
+                "versionValidityDate": options.versionValidityDate,
+                "versionName": options.versionName,
+                "lang": options.lang
+            },
+            "relationships": [],
+            "versionName": "initial",
+            "identityNamePattern": "childversion.name"
+        };
+        return done( ContentService.create(options2, function(done2){return res.json(done2)}) );
     },
 
     // Utilies
