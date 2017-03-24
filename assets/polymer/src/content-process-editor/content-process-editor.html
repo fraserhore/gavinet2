@@ -181,7 +181,12 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
                     var node = doc.createElement(contentType);
                     node.setAttribute('label', 'MyLabel');
                     node.setAttribute('attribute1', 'value1');
-                    var geo = new mxGeometry(20, 20, 80, 60);
+                    var geo;
+                    if(contentTypes[i] === 'role') {
+                    	geo = new mxGeometry(20, 20, 900, 100);
+                    } else {
+                    	geo = new mxGeometry(20, 20, 80, 60);
+                    } 
                     var prototype = new mxCell(node, geo, contentType);
                     prototype.setVertex(true);
                     toolbar.addPrototype(contentType, '/polymer/src/content-process-editor/images/editor/' + contentType + '.png', prototype, null, null, null);
@@ -223,6 +228,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
                 style = new Object();
                 style[mxConstants.STYLE_STROKECOLOR] = '#00A1DF';
                 style[mxConstants.STYLE_FILLCOLOR] = '#00A1DF';
+                style[mxConstants.STYLE_FONTCOLOR] = 'white';
                 this.graph.getStylesheet().putCellStyle('activity', style);
 
                 // Activity Group
@@ -281,8 +287,8 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
                 style = new Object();
                 style[mxConstants.STYLE_SHAPE] = mxConstants.SHAPE_OFFPAGE_REFERENCE;
                 style[mxConstants.STYLE_HORIZONTAL] = 0;
-                style[mxConstants.STYLE_STROKECOLOR] = '#C3D9FF';
-                style[mxConstants.STYLE_FILLCOLOR] = '#005CB9';
+                style[mxConstants.STYLE_STROKECOLOR] = '#4CBCED';
+                style[mxConstants.STYLE_FILLCOLOR] = '#4CBCED';
                 style[mxConstants.STYLE_FONTCOLOR] = 'white';
                 this.graph.getStylesheet().putCellStyle('offPageReference', style);
 
