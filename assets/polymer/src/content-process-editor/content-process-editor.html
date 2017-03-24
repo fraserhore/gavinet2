@@ -188,6 +188,8 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
                 };
 
                 //set styles
+
+                // Default Vertex
                 var style = new Object();
                 style[mxConstants.STYLE_SHAPE] = mxConstants.SHAPE_RECTANGLE;
                 style[mxConstants.STYLE_PERIMETER] = mxPerimeter.RectanglePerimeter;
@@ -198,20 +200,104 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
                 style[mxConstants.STYLE_STROKECOLOR] = '#C3D9FF';
                 style[mxConstants.STYLE_FILLCOLOR] = '#C3D9FF';
                 style[mxConstants.STYLE_GRADIENTCOLOR] = 'none';
+                style[mxConstants.STYLE_ROUNDED] = 1;
+                style[mxConstants.STYLE_WHITE_SPACE] = 'wrap';
                 //style[mxConstants.STYLE_ROUNDED] = true;
                 this.graph.getStylesheet().putCellStyle('defaultVertex', style);
 
-                var style = new Object();
+                // Text
+                style = new Object();
+                style[mxConstants.STYLE_ALIGN] = 'left';
+                style[mxConstants.STYLE_VERTICAL_ALIGN] = 'top';
+                style[mxConstants.STYLE_STROKECOLOR] = 'none';
+                style[mxConstants.STYLE_FILLCOLOR] = 'none';
+                this.graph.getStylesheet().putCellStyle('text', style);
+
+                // Input
+                style = new Object();
+                style[mxConstants.STYLE_STROKECOLOR] = '#C3D9FF';
+                style[mxConstants.STYLE_FILLCOLOR] = '#C3D9FF';
+                this.graph.getStylesheet().putCellStyle('input', style);
+
+                // Activity
+                style = new Object();
+                style[mxConstants.STYLE_STROKECOLOR] = '#C3D9FF';
+                style[mxConstants.STYLE_FILLCOLOR] = '#C3D9FF';
+                this.graph.getStylesheet().putCellStyle('activity', style);
+
+                // Activity Group
+                this.graph.getStylesheet().putCellStyle('activityGroup', style);
+                style = new Object();
+                style[mxConstants.STYLE_STROKECOLOR] = '#005CB9';
+                style[mxConstants.STYLE_FILLCOLOR] = '#005CB9';
+                style[mxConstants.STYLE_FONTCOLOR] = 'white';
+                style[mxConstants.STYLE_VERTICAL_ALIGN] = 'top';
+                this.graph.getStylesheet().putCellStyle('activityGroup', style);
+
+                // Decision
+                style = new Object();
+                style[mxConstants.STYLE_SHAPE] = mxConstants.SHAPE_RHOMBUS;
+                style[mxConstants.STYLE_PERIMETER] = mxPerimeter.RhombusPerimeter;
+                style[mxConstants.STYLE_STROKECOLOR] = '#C0C0C0';
+                style[mxConstants.STYLE_FILLCOLOR] = '#C0C0C0';
+                this.graph.getStylesheet().putCellStyle('decision', style);
+
+                // Decision Extended
+                this.graph.getStylesheet().putCellStyle('decisionExtended', style);
+                style = new Object();
+                style[mxConstants.STYLE_SHAPE] = mxConstants.SHAPE_HEXAGON;
+                style[mxConstants.STYLE_PERIMETER] = mxPerimeter.HexagonPerimeter;
+                this.graph.getStylesheet().putCellStyle('decisionExtended', style);
+
+                // Output
+                style = new Object();
+                style[mxConstants.STYLE_STROKECOLOR] = '#95D600';
+                style[mxConstants.STYLE_FILLCOLOR] = '#95D600';
+                this.graph.getStylesheet().putCellStyle('output', style);
+
+                // Outcome
+                style = new Object();
+                style[mxConstants.STYLE_STROKECOLOR] = '#0097A9';
+                style[mxConstants.STYLE_FILLCOLOR] = '#0097A9';
+                this.graph.getStylesheet().putCellStyle('outcome', style);
+
+                // Impact
+                style = new Object();
+                style[mxConstants.STYLE_STROKECOLOR] = '#009639';
+                style[mxConstants.STYLE_FILLCOLOR] = '#009639';
+                this.graph.getStylesheet().putCellStyle('impact', style);
+
+                // Role
+                style = new Object();
                 style[mxConstants.STYLE_SHAPE] = mxConstants.SHAPE_SWIMLANE;
                 style[mxConstants.STYLE_HORIZONTAL] = 0;
-                style[mxConstants.STYLE_FONTCOLOR] = '#005CB9';
                 style[mxConstants.STYLE_STROKECOLOR] = '#C3D9FF';
                 style[mxConstants.STYLE_FILLCOLOR] = '#005CB9';
                 style[mxConstants.STYLE_FONTCOLOR] = 'white';
-                style[mxConstants.STYLE_HTML] = 1;
-                style[mxConstants.STYLE_WHITESPACE] = 1;
-
                 this.graph.getStylesheet().putCellStyle('role', style);
+
+                // Off Page Reference
+                style = new Object();
+                style[mxConstants.STYLE_SHAPE] = mxConstants.SHAPE_OFFPAGE_REFERENCE;
+                style[mxConstants.STYLE_HORIZONTAL] = 0;
+                style[mxConstants.STYLE_STROKECOLOR] = '#C3D9FF';
+                style[mxConstants.STYLE_FILLCOLOR] = '#005CB9';
+                style[mxConstants.STYLE_FONTCOLOR] = 'white';
+                this.graph.getStylesheet().putCellStyle('offPageReference', style);
+
+                // Default Edge StyLe
+                style = new Object();
+                style[mxConstants.STYLE_SHAPE] = mxConstants.SHAPE_CONNECTOR;
+                style[mxConstants.STYLE_EDGE] = mxEdgeStyle.ElbowConnector;
+                style[mxConstants.STYLE_ENDARROW] = mxConstants.ARROW_CLASSIC
+                style[mxConstants.STYLE_FONTSIZE] = '10';
+                style[mxConstants.STYLE_ALIGN] = 'center';
+                style[mxConstants.STYLE_VERTICAL_ALIGN] = 'middle';
+                style[mxConstants.STYLE_STROKECOLOR] = '#36393D';
+                style[mxConstants.STYLE_STROKEWIDTH] = 1;
+                style[mxConstants.STYLE_ROUNDED] = 1;
+                style[mxConstants.STYLE_WHITE_SPACE] = 'wrap';
+                this.graph.getStylesheet().putCellStyle('defaultEdge', style);
 
                 console.log(this.editor.templates);
 
