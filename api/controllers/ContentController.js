@@ -697,7 +697,14 @@ module.exports = {
 
     /** Move a content object (end validity of old location relationship and create new location relationship) */
     move: function(req, res) {
-
+        var options = {
+                "id": req.body.id,
+                "parentId": req.body.parentId,
+                "newParentId": req.body.newParentId,
+                "authorId": req.body.authorId
+                };
+       //console.log(options);
+        ContentService.move(options, function(done){return res.json(done)});      
     },
 
     /** Add content object to an additional location (create new location relationship) */
@@ -716,6 +723,30 @@ module.exports = {
     //     "lang" : "en-gb"
     // }
     createBranch: function(req, res) {
+       console.log(req.body);
+        var options = {
+                "parentId": req.body.parentId,
+                "authorId": req.body.authorId,
+                "currentVersionName": req.body.currentVersionName,
+                "versionValidityDate": req.body.versionValidityDate,
+                "newVersionName": req.body.newVersionName,
+                "lang": req.body.lang
+            };
+       //console.log(options);
+        ContentService.createBranch(options, function(done){return res.json(done)});       
+    },
+
+    // replaceBranch Operation
+    // Options: 
+    // {
+    //     "parentId" : "uuid",
+    //     "authorId" : "authorId",
+    //     "currentVersionName" : "versionName",
+    //     "versionValidityDate" : "timestamp",
+    //     "newVersionName" : "versionName",
+    //     "lang" : "en-gb"
+    // }
+    replaceBranch: function(req, res) {
        console.log(req.body);
         var options = {
                 "parentId": req.body.parentId,

@@ -717,7 +717,13 @@ module.exports = {
     },
 
     /** Move a content object (end validity of old location relationship and create new location relationship) */
-    move: function(req, res) {
+    // {
+    //     "id": req.body.id,
+    //     "parentId": req.body.parentId,
+    //     "newParentId": req.body.newParentId,
+    //     "authorId": req.body.authorId
+    // };
+    move: function(options, done) {
 
     },
 
@@ -1208,7 +1214,56 @@ module.exports = {
             });      
     },
 
-    /** Create a branch */
+    /** Replace a branch */
+    // {
+    //     "parentId" : "uuid",
+    //     "currentVersionName" : "versionName",
+    //     "versionValidityDate" : "timestamp",
+    //     "newVersionName" : "versionName",
+    //     "lang" : "en-gb",
+    //     "authorId" : "authorI    d"
+    // }
+    replaceBranch: function(options, done) {
+        var session = driver.session();
+        
+        var query =   'MATCH (b)-[r2:CONTAINS]->(c)-[r3:VERSION]->(d:Version) '
+                    + 'WHERE b.uuid = {parentId} ' 
+                    + 'AND r3.from <= {versionValidityDate} AND r3.to >= {versionValidityDate} '
+                    + 'AND r3.versionName = {currentVersionName} AND r3.lang = {lang} ' 
+                    + 'CREATE (c)-[:VERSION {from:timestamp(), to:9007199254740991, versionNumber:1, versionName:{newVersionName}, lang:{lang}}]->(d) '
+                    + 'WITH b LIMIT 1 '
+                    + 'MATCH (b)-[r1:VERSION]->(a:Version) '
+                    + 'WHERE r1.from <= 1489705672990 AND r1.to >= 1489705672990 '
+                    + 'AND r1.versionName = {currentVersionName} AND r1.lang = {lang} '
+                    + 'CREATE (b)-[:VERSION {from:timestamp(), to:9007199254740991, versionNumber:1, versionName:{newVersionName}, lang:{lang}}]->(a) '
+                    + 'RETURN a,b'
+       console.log(options);
+       console.log(query);
+        return session
+            .run(query, options)
+            .then(result => {
+                var options2 = {
+                    "parentId": options.parentId,
+                    "authorId": options.authorId,
+                    "contenttype": "branch",
+                    "lang": options.lang,
+                    "properties": {"name" : options.newVersionName},
+                    "relationships": [],
+                    "versionName": "initial",
+                    "identityNamePattern": "childversion.name"
+                };
+                session.close();
+                return done( ContentService.create(options2, function(done2){return res.json(done2)}) );
+            })
+            .catch(error => {
+                session.close();
+               console.log(error);
+                return done(error);
+                throw error;
+            });      
+    },
+
+    /** Create a snapshot */
     createSnapshot: function(options, done) {
         var options2 = {
             "parentId": options.parentId,
