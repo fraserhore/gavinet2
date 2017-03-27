@@ -114,6 +114,25 @@
                     return ajax.generateRequest();
                 },
 
+                // createSnapshot Operation
+                // Options: 
+                // {
+                //     "parentId" : "uuid",
+                //     "authorId" : "authorId",
+                //     "currentVersionName" : "versionName",
+                //     "versionValidityDate" : "timestamp",
+                //     "newVersionName" : "versionName",
+                //     "lang" : "en-gb"
+                // }
+                createSnapshot: function(options) {                  
+                    var ajax = this.$.ajax;
+                    ajax.url = '/content/createBranch';
+                    ajax.method = 'POST';
+                    ajax.body = options;
+                    console.log(options);
+                    return ajax.generateRequest();
+                },
+
 
                 // READ SPECIFIC ITEM operation
                 // itemId: The id of the item to get
