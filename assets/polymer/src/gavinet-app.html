@@ -25,6 +25,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 <link rel="import" href="content-full/content-full.html">
 <link rel="import" href="content-left-menu/content-left-menu.html">
 <!-- <link rel="import" href="app-data.html"> -->
+<link rel="import" href="api-gavi-graph.html">
 <link rel="import" href="redux-store.html">
 <link rel="import" href="log-out.html">
 <link rel="import" href="register-login.html">
@@ -83,7 +84,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       }
     </style>
 
-    
+    <api-gavi-graph id="api"></api-gavi-graph>
 
     <iron-localstorage name="user-storage" value="{{storedUser}}"></iron-localstorage>
     <!-- <app-data key="userData" data="{{storedUser}}"></app-data> -->
@@ -165,23 +166,23 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
             type: 'LOAD_NODE_DATA',
             nodeData: nodeData
           }
-        }
-      },
-      loadChildrenAction: function(children) {
+        },
+        loadChildrenAction: function(children) {
           return {
               type: 'LOAD_CHILDREN',
               children: children
           }
-      },
-      addFriend: function() {
-        const field = this.$.field;
-        if(field.value) {
-          this.dispatch('add', field.value);
-          field.value = null;
-          field.focus();
+        },
+        addFriend: function() {
+          const field = this.$.field;
+          if(field.value) {
+            this.dispatch('add', field.value);
+            field.value = null;
+            field.focus();
+          }
         }
       },
-
+      
       properties: {
         friends: {
           type: Array,
@@ -222,7 +223,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
                 // console.log(response);
             });
         
-    },
+      },
 
       _updatedNodeData: function() {
         // console.log(this.nodeData);
@@ -235,12 +236,12 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         // this.set('app', this.nodeData);
         // this.set('nodeData', this.nodeData);
         this.dispatch('loadNodeDataAction', this.nodeDataResponse);
+        this.getChildren();
       },
 
       _routePathChanged: function(path) {
         this.path = path || 'register-login';
         this.$.getNodeData.generateRequest();
-        this.getChildren();
         // console.log(this.route);
         // console.log(this.routeData);
         // console.log(this.subroute);

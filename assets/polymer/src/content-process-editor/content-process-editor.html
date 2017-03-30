@@ -385,7 +385,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
                         var child = polymerThis.children2[i],
                             contentType = child.identityNode.properties.contentType,
                             customAttributes = child.versionNode.properties,
-                            childGeometry = JSON.parse(customAttributes.mxGeometry),
+                            childGeometry = customAttributes.mxGeometry ? JSON.parse(customAttributes.mxGeometry) : "",
                             geometry = new mxGeometry(childGeometry.x, childGeometry.y, childGeometry.width, childGeometry.height),
                             cell;
 
