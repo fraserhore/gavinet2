@@ -96,6 +96,12 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
             },
 
             actions: {
+                loadNodeDataAction: function(content) {
+                    return {
+                        type: 'LOAD_NODE_DATA',
+                        nodeData: nodeData
+                    }
+                },
                 loadChildrenAction: function(children) {
                     return {
                         type: 'LOAD_CHILDREN',
@@ -117,7 +123,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
             observers: [
                 '_identityNodeChanged(nodeData.identityNode)'
             ],
-            
+
             _identityNodeChanged: function() {
                 if (this.nodeData.identityNode) {
                     this.$.contentChildren.createElement();
@@ -131,6 +137,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
                 this.versionSliderStep = 86400000;
                 this.versionSliderValue = Date.now();
                 // console.log(today.toISOString());
+                this.getNodeData();
                 this.getChildren();
                 this.getBranches();
             },
@@ -166,11 +173,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
             },
 
             delete: function(event) {
-                this.$.deleteRequest.url = "/content/delete";
-                this.$.deleteRequest.params = {
-                    "id": event.model.item.identityNode.uuid
-                };
-                this.$.deleteRequest.generateRequest();
+                this.$.api.delete(event.model.item.identityNode.properties.uuid);
             },
 
             deleteResponse: function(request) {},
@@ -179,38 +182,25 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
                 //this.$.getContent.generateRequest();
             },
 
-            _refreshContent: function() {
-                this.nodeData.identityNode = this.content.identityNode;
-                this.nodeData.versionNode = this.content.versionNode;
-                this.set('nodeData.identityNode', this.content.identityNode);
-                this.set('nodeData.versionNode', this.content.versionNode);
-            },
-
             _refreshAllContent: function() {
-                // console.log("test");
-                // this.$.contentChildren.refresh();
-                this.$.contentChildren.$.template.firstChild.refresh();
+                this.getNodeData();
+                this.getChildren();
             },
 
             _versionSliderChanged: function(event) {
-                //this.$.getContent.params["versionValidityDate"] = event.target.value;
-                //this.$.getContent.generateRequest();
-                //this.nodeData.versionValidityDate = event.target.value;
-                // this.$.contentChildren.versionValidityDate = event.target.value;
-                // this.$.contentChildren.refresh();
-                //this.$.contentChildren.firstElementChild.versionValidityDate = event.target.value;
-                //this.$.contentChildren.$.template.firstChild.notifyPath('nodeData.versionValidityDate');
-                //this.$.contentChildren.$.template.firstChild.refresh();
+                this.getNodeData();
                 this.getChildren();
             },
 
             _versionNameChanged: function(event) {
                 this.dispatch('updateVersionNameAction', this.versionName);
+                this.getNodeData();
                 this.getChildren();
             },
 
             _snapshotChanged: function(event) {
                 //this.dispatch('updateVersionNameAction', this.versionName);
+                //this.getNodeData();
                 //this.getChildren();
             },
 
@@ -231,7 +221,27 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
                     form._submit();
                 }
                 this.$.editDialog.close();
-                this.$.getContent.generateRequest();
+                //this.$.getContent.generateRequest();
+                this.getNodeData();
+            },
+
+            getNodeData: function() {
+                var options = {
+                    "uuid": this.nodeData.identityNode.properties.uuid,
+                    "versionValidityDate": this.versionSliderValue,
+                    //"versionName": this.versionName,
+                    "contentTypes": "",
+                };
+                var request = this.$.api.getNodeData(options),
+                    polymerThis = this;
+                Promise.all([request.completes])
+                    .then(function (requests) {
+                        var response = requests[0].response;
+                        polymerThis.dispatch('loadNodeDataAction', response);
+                        // do whatever you want from here...
+                        // console.log(response);
+                    });
+                
             },
 
             getChildren: function() {

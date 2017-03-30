@@ -21,6 +21,9 @@
             Polymer({
                 is: 'api-gavi-graph',
 
+
+
+
                  // Create Operation
                 // webAbsoluteUrl: The url of the site that the list is in
                 // listName: The name of the list you want to get items from
@@ -75,6 +78,24 @@
                 // };
                 addLocation: function(options) {
                     
+                },
+
+                // getNodeData Operation
+                // Options: 
+                getNodeData: function(options) {
+                    if(!options) {
+                        console.log("Failed to update item, no options were passed, please try to update the graph before performing another operation.");
+                        return;
+                    }
+                    
+                    var lang = options.lang ? options.lang : '',
+                        versionName = options.versionName ? options.versionName : '',
+                        versionValidityDate = options.versionValidityDate ? options.versionValidityDate : '',
+                        ajax = this.$.ajax;
+
+                    ajax.url = '/content/getContent/' + options.uuid + '?lang=' + lang + '&versionName=' + versionName + '&versionValidityDate=' + versionValidityDate;
+                    ajax.method = 'GET';
+                    return ajax.generateRequest();
                 },
 
                 // getChildren Operation
