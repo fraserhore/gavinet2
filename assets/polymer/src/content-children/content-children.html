@@ -9,7 +9,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 -->
 
 <link rel="import" href="/polymer/bower_components/polymer/polymer.html">
-<!-- <link rel="import" href="/polymer/src/app-data.html"> -->
+<link rel="import" href="../api-gavi-graph.html">
 
 <dom-module id="content-children">
   <template>
@@ -19,26 +19,9 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       }
     </style>
 
-    <!-- <app-data key="nodeData" data="{{nodeData}}"></app-data> -->
+    <api-gavi-graph id="api"></api-gavi-graph>
 
-    <iron-ajax
-      id="getChildren"
-      auto
-      url="/content/getChildren/{{nodeData.identityNode.properties.uuid}}?versionValidityDate={{nodeData.versionValidityDate}}"
-      params=''
-      handle-as="json"
-      last-response="{{children}}"
-      on-response="_updateChildren"
-      debounce-duration="300"></iron-ajax>
-
-    <iron-ajax
-      id="deleteRequest"
-      url=""
-      handle-as="json"
-      on-response="deleteResponse"
-      debounce-duration="300"></iron-ajax>
-
-    <template is="dom-repeat" items="[[children]]">
+    <template is="dom-repeat" items="[[children2]]">
       <div class="horizontal-section">
         <h4>
           <template is="dom-if" if="{{item.urlAlias}}">
@@ -68,21 +51,13 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       is: 'content-children',
       behaviors: [ ReduxBehavior ],
       properties: {
-        app: {
-          type: Object,
-          value: function() { return {}; },
-          notify: true,
-          reflectToAttribute: true,
-        },
-
-        versionValidityDate: {
-          type: Number,
-          value: undefined,
-          notify: true
-        },
         nodeData: {
           type: Object,
           statePath: 'nodeData'
+        },
+        children2: {
+            type: Object,
+            statePath: 'children'
         }
 
       },
@@ -92,9 +67,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       },
 
       delete: function(event) {
-        this.$.deleteRequest.url = "/content/delete";
-        this.$.deleteRequest.params = {"id": event.model.item.identityNode.properties.uuid};
-        this.$.deleteRequest.generateRequest();
+        this.$.api.delete(event.model.item.identityNode.properties.uuid);
       },
 
       deleteResponse: function(request) {
@@ -104,15 +77,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
       refresh: function() {
         // this.notifyPath('nodeData.identityNode');
-        this.$.getChildren.generateRequest();
-      },
-
-      _updateChildren: function(event) {
-        //this.grid = this.grid || this.$.childrenGrid;
-        // this.grid.items = this.children;
-        // this.grid.size = this.children.length;
-        // this.grid.refreshItems();
-        // console.log(this.children);
+        //this.$.getChildren.generateRequest();
       },
 
       _toArray: function(obj) {

@@ -117,31 +117,11 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
             observers: [
                 '_identityNodeChanged(nodeData.identityNode)'
             ],
-
-            initStoredUser: function() {
-                // if entering site on the secret quotes page, verify if logged in and if so, preload a secret quote
-                if (this.storedUser.loggedin) {
-                    //this.getSecretQuote();
-                }
-            },
-            getSecretQuote: function() {
-                // add token authorization and generate Ajax request
-                //this.$.getSecretQuoteAjax.headers['Authorization'] = 'Bearer ' + this.storedUser.token;
-                //this.$.getSecretQuoteAjax.generateRequest();
-            },
-
+            
             _identityNodeChanged: function() {
                 if (this.nodeData.identityNode) {
                     this.$.contentChildren.createElement();
                 }
-            },
-
-            _appChanged: function() {
-                // console.log('Change');
-            },
-
-            contentTypeSchemaResponse: function() {
-                // console.log("this.dataSchema");
             },
 
             ready: function() {

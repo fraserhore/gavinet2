@@ -93,16 +93,11 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
             },
 
             observers: [
-                '_updateChildren(children2)',
-                '_versionNameChanged(versionName)'
+                '_updateChildren(children2)'
               ],
 
             ready: function() {
                 this.createGraph();
-            },
-
-            _versionNameChanged: function() {
-                //console.log('versionName: ' + this.versionName);
             },
 
             createGraph: function() {
@@ -163,8 +158,6 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
                 }, function() {
                     document.body.innerHTML = '<center style="margin-top:10%;">Error loading resource files. Please check browser console.</center>';
                 });
-
-
             },
 
             createToolbar: function() {
@@ -321,9 +314,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
                 //   mxUtils.alert('Cannot load '+file+': '+ex);
                 // }
 
-                // console.log(this.editor.stylesheet);
-                
-
+                // console.log(this.editor.stylesheet);             
             },
 
             setGraphOptions: function() {
@@ -331,22 +322,46 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
                 graph.setHtmlLabels(true);
 
-            },
+                // Clone the source if new connection has no target
+                graph.connectionHandler.setCreateTarget(true);
 
-            getChildren: function() {
-                var options = {
-                    "uuid": this.nodeData.identityNode.properties.uuid,
-                    "versionValidityDate": this.versionValidityDate
+                // Crisp rendering in SVG except for connectors, actors, cylinder, ellipses
+                mxShape.prototype.crisp = true;
+                mxActor.prototype.crisp = false;
+                mxCylinder.prototype.crisp = false;
+                mxEllipse.prototype.crisp = false;
+                mxDoubleEllipse.prototype.crisp = false;
+                mxConnector.prototype.crisp = false;
+
+                // Enable guides
+                mxGraphHandler.prototype.guidesEnabled = true;
+
+                // Alt to disable guides
+                mxGuide.prototype.isEnabledForEvent = function (evt) {
+                    return !mxEvent.isAltDown(evt);
                 };
-                var request = this.$.api.getChildren(options),
-                    polymerThis = this;
-                Promise.all([request.completes])
-                    .then(function (requests) {
-                        var response = requests[0].response;
-                        polymerThis.dispatch('loadChildrenAction', response);
-                        // do whatever you want from here...
-                        // console.log(response);
-                    });
+
+                // Enable snapping waypoints to terminals
+                mxEdgeHandler.prototype.snapToTerminals = true;
+
+                // Define an icon for creating new connections in the connection handler.
+                // This will automatically disable the highlighting of the source vertex.
+                mxConnectionHandler.prototype.connectImage = new mxImage(siteAbsoluteUrl + '/polymer/src/content-process-editor/images/editor/connector.gif', 16, 16);
+
+                // Enable connections in the graph and disables
+                // reset of zoom and translate on root change
+                // (ie. switch between XML and graphical mode).
+                graph.setConnectable(true);
+
+                // Enable nesting of vertices
+                graph.setDropEnabled(true);
+
+                graph.isValidDropTarget = function (cell) {
+                    return true;
+                };
+
+                
+
             },
 
             _updateChildren: function() {
