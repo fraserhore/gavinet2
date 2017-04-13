@@ -90,11 +90,11 @@ module.exports.routes = {
     skipAssets: true
   },
 
-  'GET /content/getContent/:id': {
-    controller: 'ContentController',
-    action: 'getContent',
-    skipAssets: true
-  },
+  // 'GET /content/getContent/:id': {
+  //   controller: 'ContentController',
+  //   action: 'getContent',
+  //   skipAssets: true
+  // },
 
   'GET /content/getParent/:id': {
     controller: 'ContentController',

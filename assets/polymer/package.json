@@ -1,0 +1,13 @@
+{
+  "name": "",
+  "private": true,
+  "version": "0.0.0",
+  "description": "",
+  "keywords": [],
+  "dependencies": {
+    "redux": "^3.6.0",
+    "redux-thunk": "^2.2.0"
+  },
+  "author": "fraserhore",
+  "license": ""
+}

@@ -36,6 +36,7 @@
     "passport-twitter": "^1.0.4",
     "rc": "1.0.1",
     "redux": "^3.6.0",
+    "redux-thunk": "^2.2.0",
     "request": "^2.74.0",
     "sails": "~0.12.4",
     "sails-disk": "~0.10.9",

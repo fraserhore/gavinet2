@@ -88,12 +88,10 @@
                         return;
                     }
                     
-                    var lang = options.lang ? options.lang : '',
-                        versionName = options.versionName ? options.versionName : '',
-                        versionValidityDate = options.versionValidityDate ? options.versionValidityDate : '',
-                        ajax = this.$.ajax;
+                    var ajax = this.$.ajax;
 
-                    ajax.url = '/content/getContent/' + options.uuid + '?lang=' + lang + '&versionName=' + versionName + '&versionValidityDate=' + versionValidityDate;
+                    ajax.url = '/content/getNodeData';
+                    ajax.params = options;
                     ajax.method = 'GET';
                     return ajax.generateRequest();
                 },

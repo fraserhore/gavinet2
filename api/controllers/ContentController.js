@@ -44,33 +44,37 @@ module.exports = {
     },
 
     getNodeData: function(req, res) {
-        var route = req.param('route'),
-            routeArray = route.substr(1).split('/');
-            langs = ['en-gb', 'fr-fr'],
-            lang = 'en-gb',
-            id = '',
-            urlAlias = '',
-            versionName = req.param('versionName'),
-            versionValidityDate = parseInt(req.param('versionValidityDate')),
-            options = {};
-        //console.log(route);
-        // Parse route to get either an identity node id or a path to an identity node
-        if(routeArray.length) {
-            for (var i = 0; i < langs.length; i++) {
-                if(routeArray[0] === langs[i]) {
-                    lang = routeArray.shift(); // remove the first item of the array and return it
-                }
+        var path = req.param('path'),
+            options = {
+                "id": req.param('id') || 0,
+                "urlAlias": req.param('urlAlias') || "",
+                "lang": parseInt(req.param('lang')) || "en-gb",
+                "versionName": req.param('versionName'),
+                "versionValidityDate": parseInt(req.param('versionValidityDate'))
             };
-        }
-        if(routeArray.length) {
-            var regexUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
-            if(regexUuid.test(routeArray[0])) {
-                id = routeArray[0];
-            } else {
-                urlAlias = "/" + routeArray.join('/');
+
+
+        // Parse path to get either an identity node id or a path to an identity node
+        if(path) {
+            var pathArray = path.substr(1).split('/'),
+                langs = ['en-gb', 'fr-fr'];
+            if(pathArray.length) {
+                for (var i = 0; i < langs.length; i++) {
+                    if(pathArray[0] === langs[i]) {
+                        options.lang = pathArray.shift(); // remove the first item of the array and return it
+                    }
+                };
+            }
+            if(pathArray.length) {
+                var regexUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+                if(regexUuid.test(pathArray[0])) {
+                    options.id = pathArray[0];
+                } else {
+                    options.urlAlias = "/" + pathArray.join('/');
+                }
             }
         }
-        options = {id: id, urlAlias: urlAlias, lang: lang, versionName: versionName, versionValidityDate: versionValidityDate};
+        
         //console.log(options);
         ContentService.getNodeData(options, function(done){return res.json(done)});
     },
@@ -461,19 +465,7 @@ module.exports = {
             }
         }); // fs
     },
-
-
-    /** Get child content objects */
-    getContent: function(req, res) {
-        var options = {
-            "id": req.param('id') || 0,
-            "lang": parseInt(req.param('lang')) || "en-gb",
-            "versionName": req.param('versionName'),
-            "versionValidityDate": parseInt(req.param('versionValidityDate'))
-        };
-        ContentService.getContent(options, function(done){return res.json(done)});
-    },
-
+   
     /** Get child content objects */
     getChildren: function(req, res) {
         var options = {

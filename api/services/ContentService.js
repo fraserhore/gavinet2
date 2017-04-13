@@ -29,18 +29,13 @@ module.exports = {
     //id, lang, versionName, versionValidityDate
     getNodeData: function(options, done) {
         var session = driver.session(),
-            params = {
-                "id": options.id,
-                "urlAlias": options.urlAlias,
-                "lang": options.lang
-            },
             query = '',
             urlMatch = '',
             versionMatch = "";
 
-        if(versionName) {
+        if(options.versionName) {
             versionMatch = " AND version.name = " + options.versionName;
-        } else if(versionValidityDate) {
+        } else if(options.versionValidityDate) {
             versionMatch = " AND version.from <= " + options.versionValidityDate + " AND version.to >= " + options.versionValidityDate;
         } else {
             versionMatch = " AND version.to = 9007199254740991";
@@ -52,6 +47,14 @@ module.exports = {
         } else {
             urlMatch = 'identityNode.uuid = {id} AND urlAliasVersionRel.to = 9007199254740991 AND version.lang = {lang}';
         }
+
+        for(var property in options) {
+            if(options[property] === undefined) {
+                options[property] = null;
+            }
+        }
+
+
         query =   'MATCH (urlAliasVersion)<-[urlAliasVersionRel:VERSION]-(urlAliasIdentity)-[:URL_ALIAS]-(identityNode)-[version:VERSION]->(versionNode), (authorNode)-[created:CREATED]->(identityNode)'
                 +' WHERE ' + urlMatch + versionMatch
                 +' WITH identityNode, version, versionNode, authorNode, urlAliasVersion.urlAlias as urlAlias'
@@ -61,7 +64,7 @@ module.exports = {
                 +' RETURN identityNode, version, versionNode, authorNode, urlAlias, contentTypeIdentity, contentTypeVersion, collect(propertyIdentity) as propertyIdentities, collect(propertyVersion) as propertyVersions';
         // console.log(query);
         return session
-            .run(query, params)
+            .run(query, options)
             .then(result => {
                 session.close();
                 var record = result.records[0],
@@ -93,6 +96,44 @@ module.exports = {
             });
     },
 
+    /** Get child content objects */
+    getContent: function(options, done) {
+        var session = driver.session(),
+            query,
+            versionMatch = "";
+
+        if(options.versionName) {
+            versionMatch = " AND version.name = " + options.versionName;
+        } else if(options.versionValidityDate) {
+            versionMatch = " AND version.from <= " + options.versionValidityDate + " AND version.to >= " + options.versionValidityDate;
+        } else {
+            versionMatch = " AND version.to = 9007199254740991";
+        }
+        //console.log(versionMatch);
+        var query =   'MATCH (identityNode)-[version:VERSION]->(versionNode), (authorNode)-[created:CREATED]->(identityNode)'
+                    +' WHERE identityNode.uuid = {id} AND version.lang = {lang}'
+                    +  versionMatch
+                    +' RETURN identityNode, version, versionNode, authorNode';
+
+        return session
+            .run(query, options)
+            .then(result => {
+                session.close();
+                var record = result.records[0];
+                return done({
+                    'identityNode': record.get('identityNode'), 
+                    'version': record.get('version'),
+                    'versionNode': record.get('versionNode'),
+                    'authorNode': record.get('authorNode')
+                });
+            })
+            .catch(error => {
+                session.close();
+                console.log(error);
+                return done(error);
+                throw error;
+            });
+    },
 
     /**
      * ContentController.view()
@@ -200,48 +241,6 @@ module.exports = {
                     Overrides.push({Override: res.get('Override')});
                 })
                 return done(Overrides);
-            })
-            .catch(error => {
-                session.close();
-                console.log(error);
-                return done(error);
-                throw error;
-            });
-    },
-
-    /** Get child content objects */
-    getContent: function(options, done) {
-        var session = driver.session();
-        var params = {
-            "id": options.id,
-            "lang": options.lang
-        };
-        var versionMatch = "";
-
-        if(options.versionName) {
-            versionMatch = " AND version.name = " + options.versionName;
-        } else if(options.versionValidityDate) {
-            versionMatch = " AND version.from <= " + options.versionValidityDate + " AND version.to >= " + options.versionValidityDate;
-        } else {
-            versionMatch = " AND version.to = 9007199254740991";
-        }
-        //console.log(versionMatch);
-        var query =   'MATCH (identityNode)-[version:VERSION]->(versionNode), (authorNode)-[created:CREATED]->(identityNode)'
-                    +' WHERE identityNode.uuid = {id} AND version.lang = {lang}'
-                    +  versionMatch
-                    +' RETURN identityNode, version, versionNode, authorNode';
-
-        return session
-            .run(query, params)
-            .then(result => {
-                session.close();
-                var record = result.records[0];
-                return done({
-                    'identityNode': record.get('identityNode'), 
-                    'version': record.get('version'),
-                    'versionNode': record.get('versionNode'),
-                    'authorNode': record.get('authorNode')
-                });
             })
             .catch(error => {
                 session.close();

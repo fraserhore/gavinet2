@@ -24,7 +24,6 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 <link rel="import" href="../bower_components/iron-localstorage/iron-localstorage.html">
 <link rel="import" href="content-full/content-full.html">
 <link rel="import" href="content-left-menu/content-left-menu.html">
-<!-- <link rel="import" href="app-data.html"> -->
 <link rel="import" href="api-gavi-graph.html">
 <link rel="import" href="redux-store.html">
 <link rel="import" href="log-out.html">
@@ -88,7 +87,6 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
     <iron-localstorage name="user-storage" value="{{storedUser}}"></iron-localstorage>
     <!-- <app-data key="userData" data="{{storedUser}}"></app-data> -->
-    <!-- <app-data key="nodeData" data="{{nodeData}}"></app-data> -->
 
     <app-location route="{{route}}"></app-location>
     <!-- <app-route
@@ -96,15 +94,6 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         pattern="/:lang/:path"
         data="{{routeData}}"
         tail="{{subroute}}"></app-route> -->
-
-    <iron-ajax id="getNodeData"
-      auto
-      url="/content/getNodeData?route={{route.path}}"
-      handle-as="json"
-      last-response="{{nodeDataResponse}}"
-      on-response="_updatedNodeData"
-      debounce-duration="300">
-    </iron-ajax>
 
     <app-drawer-layout fullbleed>
       <!-- Drawer content -->
@@ -132,18 +121,9 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         </app-header>
 
         <div class="card">
-          <!-- <h3>Node id: [[nodeData.identityNode.properties.uuid]]</h3>
-          <h3>You have [[friendCount]] friends!</h3>
-          <input id="field" type="text"/>
-          <button on-tap="addFriend">Add Friend</button>
-          <ul>
-            <template is="dom-repeat" items="[[friends]]" as="friend">
-              <li>[[friend]]</li>
-            </template>
-          </ul> -->
           <!-- <content-full name="view1" view-template="content-full"></content-full> -->
           <template-match id="contentFull" view-template="content-full"></template-match>
-          <register-login name="register-login"></register-login>
+          <!-- <register-login name="register-login"></register-login> -->
 
         </div>
       </app-header-layout>
@@ -153,14 +133,8 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
   <script>
     Polymer({
       is: 'gavinet-app',
-      behaviors: [ ReduxBehavior ],
+      behaviors: [ ReduxBehavior, AsyncActionsBehavior ],
       actions: {
-        add: function(name) {
-          return {
-            type: 'ADD_FRIEND',
-            friend: name
-          }
-        },
         loadNodeDataAction: function(nodeData) {
           return {
             type: 'LOAD_NODE_DATA',
@@ -172,39 +146,37 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
               type: 'LOAD_CHILDREN',
               children: children
           }
-        },
-        addFriend: function() {
-          const field = this.$.field;
-          if(field.value) {
-            this.dispatch('add', field.value);
-            field.value = null;
-            field.focus();
-          }
         }
       },
       
       properties: {
-        friends: {
-          type: Array,
-          statePath: 'friends'
-        },
-        friendCount: {
-          type: Number,
-          computed: 'computeFriendCount(friends)'
-        },
         nodeData: {
           type: Object,
           statePath: 'nodeData'
         }
       },
 
-      computeFriendCount: function(friends) {
-        return friends.length;
-      },
-
       observers: [
         '_routePathChanged(route.path)'
       ],
+
+      getNodeData: function() {
+        var options = {
+            "path": this.route.path
+            };
+
+        this.dispatch('getNodeData', options);
+        
+        // var request = this.$.api.getNodeData(options),
+        //     polymerThis = this;
+        // Promise.all([request.completes])
+        //     .then(function (requests) {
+        //         var response = requests[0].response;
+        //         polymerThis.dispatch('loadNodeDataAction', response);
+        //         // do whatever you want from here...
+        //         console.log(response);
+        //     });
+      },
 
       getChildren: function() {
         var options = {
@@ -222,30 +194,15 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
                 // do whatever you want from here...
                 // console.log(response);
             });
-        
-      },
-
-      _updatedNodeData: function() {
-        // console.log(this.nodeData);
-        // this.set('app.identityNode', this.nodeData.identityNode);
-        // this.set('app.version', this.nodeData.version);
-        // this.set('app.versionNode', this.nodeData.versionNode);
-        // this.set('app.authorNode', this.nodeData.authorNode);
-        // this.set('app.lang', this.nodeData.lang);
-        // this.set('app.schema', this.nodeData.schema);
-        // this.set('app', this.nodeData);
-        // this.set('nodeData', this.nodeData);
-        this.dispatch('loadNodeDataAction', this.nodeDataResponse);
-        this.getChildren();
       },
 
       _routePathChanged: function(path) {
         this.path = path || 'register-login';
-        this.$.getNodeData.generateRequest();
-        // console.log(this.route);
+        this.getNodeData();
+        console.log("ROUTE");
+        console.log(this.route);
         // console.log(this.routeData);
         // console.log(this.subroute);
-
       },
 
       _pathChanged: function(path) {
