@@ -2,18 +2,6 @@
 <link rel="import" href="/polymer/bower_components/polymer-redux/polymer-redux.html">
 <link rel="import" href="/polymer/api-gavi-graph.html">
 
-<dom-module id="redux-store">
-    <template>
-        <api-gavi-graph id="api"></api-gavi-graph>
-        <!-- <api-sharepoint id="api"></api-sharepoint> -->
-    </template>
-    <script>
-        Polymer({
-          is: 'redux-store'
-        });
-    </script>
-</dom-module>
-
 <script>
     const initialState = {
         friends: ['Rod', 'Shelby'],
@@ -72,7 +60,9 @@
                 return function(dispatch) {
                     dispatch({ type: 'GET_NODE_DATA_STARTED'});
 
-                    return this.$.api.getNodeData(options).then(
+                    var api = document.createElement('api-gavi-graph');
+
+                    api.getNodeData(options).then(
                         function (requests) {
                             var response = requests[0].response;
                             dispatch({
