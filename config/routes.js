@@ -108,9 +108,9 @@ module.exports.routes = {
     skipAssets: true
   },
 
-  'GET /content/getViewTemplateOverrides': {
+  'GET /content/getOverrides': {
     controller: 'ContentController',
-    action: 'getViewTemplateOverrides',
+    action: 'getOverrides',
     skipAssets: true
   },
 

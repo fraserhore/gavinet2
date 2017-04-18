@@ -18,10 +18,9 @@
         <content-relationship reference-node-id="{{nodeData.identityNode.properties.uuid}}" direction="outbound" parent-node-id="{{nodeData.identityNode.properties.uuid}}"></content-relationship>
       </paper-dialog-scrollable>
     </paper-dialog> -->
-        <div>Version validity date:
-            <moment-element datetime="{{versionSliderValue}}" output-format="MMM DD[,] YYYY"></moment-element>
-        </div>
-        <paper-slider id="versionSlider" value="{{versionSliderValue}}" min="{{versionSliderMin}}" max="{{versionSliderMax}}" step="60000" pin on-change="_versionSliderChanged"></paper-slider>
+        <content-version-selector></content-version-selector>
+
+        
         <paper-button raised on-click="update">Edit</paper-button>
         <paper-button raised on-click="create">New</paper-button>
         <paper-dialog id="editDialog" entry-animation="scale-up-animation" exit-animation="fade-out-animation" autoFitOnAttach="true" on-iron-overlay-closed="_dialogClosed">
@@ -52,41 +51,14 @@
                 nodeData: {
                   type: Object,
                   statePath: 'nodeData'
-                },
-                children2: {
-                    type: Object,
-                    statePath: 'children'
                 }
             },
 
-            actions: {
-                loadNodeDataAction: function(nodeData) {
-                    return {
-                        type: 'LOAD_NODE_DATA',
-                        nodeData: nodeData
-                    }
-                },
-                loadChildrenAction: function(children) {
-                    return {
-                        type: 'LOAD_CHILDREN',
-                        children: children
-                    }
-                },
-                updateVersionNameAction: function(versionName) {
-                    return {
-                        type: 'UPDATE_VERSION_NAME',
-                        versionName: versionName
-                    }
-                }
-            },
 
             listeners: {
                 'contentEdit.contentEdited': '_refreshAllContent'
             },
 
-            observers: [
-                '_identityNodeChanged(nodeData.identityNode)'
-            ],
 
             initStoredUser: function() {
                 // if entering site on the secret quotes page, verify if logged in and if so, preload a secret quote
@@ -98,23 +70,6 @@
                 // add token authorization and generate Ajax request
                 //this.$.getSecretQuoteAjax.headers['Authorization'] = 'Bearer ' + this.storedUser.token;
                 //this.$.getSecretQuoteAjax.generateRequest();
-            },
-
-            _identityNodeChanged: function() {
-                if (this.nodeData.identityNode) {
-                    //this.$.contentChildren.createElement();
-                }
-            },
-
-            ready: function() {
-                var today = new Date();
-                this.versionSliderMax = Date.now();
-                this.versionSliderMin = Date.now() - 604800000; // one day = 86400000, one week = 604800000, One month = 2629746000, one year = 31556952000
-                this.versionSliderStep = 86400000;
-                this.versionSliderValue = Date.now();
-                // console.log(today.toISOString());
-                this.getNodeData();
-                this.getChildren();
             },
 
             create: function(event) {
@@ -163,26 +118,14 @@
                 //this.set('nodeData.identityNode', this.content.identityNode);
                 //this.set('nodeData.versionNode', this.content.versionNode);
                 this.getNodeData();
-                this.getChildren();
+                //this.getChildren();
             },
 
             _refreshAllContent: function() {
                 this.getNodeData();
-                this.getChildren();
+                //this.getChildren();
             },
 
-            _versionSliderChanged: function(event) {
-                //this.$.getContent.params["versionValidityDate"] = event.target.value;
-                //this.$.getContent.generateRequest();
-                //this.nodeData.versionValidityDate = event.target.value;
-                // this.$.contentChildren.versionValidityDate = event.target.value;
-                // this.$.contentChildren.refresh();
-                //this.$.contentChildren.firstElementChild.versionValidityDate = event.target.value;
-                //this.$.contentChildren.$.template.firstChild.notifyPath('nodeData.versionValidityDate');
-                //this.$.contentChildren.$.template.firstChild.refresh();
-                this.getNodeData();
-                this.getChildren();
-            },
 
             getNodeData: function() {
                 var options = {
@@ -192,16 +135,6 @@
                     "contentTypes": "",
                 };
                 this.dispatch('getNodeData', options);
-            },
-
-            getChildren: function() {
-                var options = {
-                    "id": this.nodeData.identityNode.properties.uuid,
-                    "versionValidityDate": this.versionSliderValue,
-                    "versionName": this.versionName ? this.versionName : "",
-                    "contentTypes": "",
-                };
-                this.dispatch('getChildren', options);
             },
 
             _submit: function(event) {

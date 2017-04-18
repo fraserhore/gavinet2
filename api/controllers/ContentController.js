@@ -85,8 +85,8 @@ module.exports = {
         ContentService.getViewTemplate(options, function(done){return res.json(done)});
     },
 
-    getViewTemplateOverrides: function(req, res) {
-        ContentService.getViewTemplateOverrides(function(done){return res.json(done)});
+    getOverrides: function(req, res) {
+        ContentService.getOverrides(function(done){return res.json(done)});
     },
 
     /**

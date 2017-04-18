@@ -114,18 +114,6 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
         <div class="card">
 
-          <label>
-            Username:
-            <input type="text" id="username">
-          </label>
-          <button on-tap="signUp">Sign Up</button>
-          <template is="dom-if" if="[[loading]]">
-            <p>Loading...</p>
-          </template>
-          <template is="dom-if" if="[[username]]">
-            <p>Welcome [[username]]!</p>
-          </template>
-
           <!-- <content-full name="view1" view-template="content-full"></content-full> -->
           <template-match id="contentFull" view-template="content-full"></template-match>
           <!-- <register-login name="register-login"></register-login> -->
@@ -141,6 +129,10 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       behaviors: [ ReduxBehavior, AsyncActionsBehavior ],
       
       properties: {
+        routePath: {
+          type: String,
+          statePath: 'routePath'
+        },
         loading: {
           type: Boolean,
           statePath: 'loading'
@@ -157,15 +149,10 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
       observers: [
         '_routePathChanged(route.path)',
-        '_nodeDataChanged(nodeData)'
-      ],
+        '_nodeDataChanged(nodeData)',
+        'getNodeData(routePath)'
 
-      signUp: function() {
-        const username = this.$.username.value;
-        this.dispatch('signUpWithTimeout', username);
-        //this.getNodeData();
-        
-      },
+      ],
 
       getNodeData: function() {
         var options = {
@@ -187,7 +174,6 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
             };
         this.dispatch('getSiblings', options);
       },
-
 
       getChildren: function() {
         var options = {
@@ -211,7 +197,11 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
       _routePathChanged: function(path) {
         this.path = path || 'register-login';
-        this.signUp();
+        if(this.isReady) {
+          this.dispatch({ type: 'ROUTE_PATH_CHANGED', routePath: path });
+        }
+        
+        //this.signUp();
         //this.getNodeData();
         //console.log("ROUTE");
         //console.log(this.route);
@@ -227,9 +217,9 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       },
 
       _nodeDataChanged: function() {
-        this.getParent();
-        this.getSiblings();
-        this.getChildren();
+        //this.getParent();
+        //this.getSiblings();
+        //this.getChildren();
       },
 
       _showPath404: function() {
@@ -237,6 +227,8 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       },
 
       ready: function() {
+        this.isReady = true;
+        this.dispatch({ type: 'ROUTE_PATH_CHANGED', routePath: this.route.path });
         
       }
 

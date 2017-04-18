@@ -1,0 +1,137 @@
+<link rel="import" href="/polymer/bower_components/polymer/polymer.html">
+
+<dom-module id="content-version-selector">
+    <template>
+        <style>
+        :host {
+            display: block;
+        }
+        </style>
+
+        <div>Version validity date:
+            <moment-element datetime="{{versionSliderValue}}" output-format="MMM DD[,] YYYY"></moment-element>
+        </div>
+        <paper-slider id="versionSlider" label="Version validity date" value="{{versionSliderValue}}" min="{{versionSliderMin}}" max="{{versionSliderMax}}" step="{{versionSliderStep}}" pin on-change="_versionSliderChanged"></paper-slider>
+
+        <paper-dropdown-menu label="Branch" value="{{versionName}}" on-iron-select="_versionNameChanged" style="width: 15%;">
+          <paper-listbox class="dropdown-content" selected="0">
+            <paper-item></paper-item>
+            <template is="dom-repeat" items="{{branches}}">
+                <paper-item>{{item.identityNode.properties.name}}</paper-item>
+            </template>
+          </paper-listbox>
+        </paper-dropdown-menu>
+        <paper-input label="New Branch" value="{{newVersionName}}" style="width: 15%; display: inline-block;"></paper-input>
+        <paper-button raised on-click="createBranch">Create</paper-button>
+        
+        <paper-dropdown-menu label="Snapshot" value="{{snapshot}}" on-iron-select="_snapshotChanged" style="width: 15%;">
+          <paper-listbox class="dropdown-content" selected="0">
+            <paper-item>Snapshot 1</paper-item>
+            <paper-item>Snapshot 2</paper-item>
+          </paper-listbox>
+        </paper-dropdown-menu>
+        <paper-input label="New Snapshot" value="{{newSnapshotName}}" style="width: 15%; display: inline-block;"></paper-input>
+        <paper-button raised on-click="createSnapshot">Create</paper-button>
+        
+    </template>
+    <script>
+    (function() {
+        'use strict';
+
+        Polymer({
+            is: 'content-version-selector',
+            behaviors: [ ReduxBehavior, AsyncActionsBehavior ],
+            properties: {
+                nodeData: {
+                  type: Object,
+                  statePath: 'nodeData'
+                },
+                versionValidityDate: {
+                  type: Number,
+                  statePath: 'versionValidityDate'
+                },
+                versionName: {
+                  type: String,
+                  statePath: 'versionName'
+                }
+            },
+
+            actions: {
+                updateVersionValidityDate: function(versionValidityDate) {
+                    return {
+                        type: 'UPDATE_VERSION_VALIDITY_DATE',
+                        versionValidityDate: versionValidityDate
+                    }
+                },
+                updateVersionName: function(versionName) {
+                    return {
+                        type: 'UPDATE_VERSION_NAME',
+                        versionName: versionName
+                    }
+                }
+            },
+
+            ready: function() {
+                var today = new Date();
+                this.versionSliderMax = Date.now();
+                this.versionSliderMin = Date.now() - 31556952000; // one day = 86400000, one week = 604800000, One month = 2629746000, one year = 31556952000
+                this.versionSliderStep = 86400000;
+                this.versionSliderValue = Date.now();
+            },
+
+            _versionSliderChanged: function(event) {
+                this.dispatch('updateVersionValidityDate', this.versionSliderValue);
+            },
+
+            _versionNameChanged: function(event) {
+                this.dispatch('updateVersionName', this.versionName);
+            },
+
+            _snapshotChanged: function(event) {
+            },
+
+            getBranches: function() {
+                var options = {
+                    "uuid": this.nodeData.identityNode.properties.uuid,
+                    "contentTypes": "'branch'",
+                };
+                this.dispatch('getBranches', options);
+            },
+
+            getSnapshots: function() {
+                var options = {
+                    "uuid": this.nodeData.identityNode.properties.uuid,
+                    "contentTypes": "'branch'",
+                };
+                this.dispatch('getSnapshots', options);
+            },
+
+            createBranch: function() {
+                console.log(this.newVersionName);
+                var options = {
+                    "parentId": this.nodeData.identityNode.properties.uuid,
+                    "authorId": this.nodeData.authorNode.properties.uuid,
+                    "currentVersionName": this.versionName,
+                    "versionValidityDate": this.versionSliderValue,
+                    "newVersionName": this.newVersionName,
+                    "lang": this.nodeData.lang
+                };
+                this.dispatch('createBranch', options);                
+            },
+
+            createSnapshot: function() {
+                console.log(this.newSnapshotName)
+                var options = {
+                    "parentId": this.nodeData.identityNode.properties.uuid,
+                    "snapshotName": this.newSnapshotName,
+                    "versionValidityDate": this.versionSliderValue,
+                    "versionName": this.versionName,
+                    "lang": this.nodeData.lang
+                };
+                this.dispatch('createSnapshot', options);
+            }
+           
+        });
+    })();
+    </script>
+</dom-module>

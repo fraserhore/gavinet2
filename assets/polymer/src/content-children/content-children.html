@@ -18,7 +18,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       }
     </style>
 
-    <template is="dom-repeat" items="[[children2]]">
+    <template is="dom-repeat" items="[[children]]">
       <div class="horizontal-section">
         <h4>
           <template is="dom-if" if="{{item.urlAlias}}">
@@ -46,17 +46,42 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
     Polymer({
       is: 'content-children',
-      behaviors: [ ReduxBehavior ],
+      behaviors: [ ReduxBehavior, AsyncActionsBehavior ],
       properties: {
         nodeData: {
           type: Object,
           statePath: 'nodeData'
         },
-        children2: {
+        children: {
             type: Object,
             statePath: 'children'
+        },
+        versionValidityDate: {
+          type: Number,
+          statePath: 'versionValidityDate',
+          observer: 'getChildren'
+        },
+        versionName: {
+          type: String,
+          statePath: 'versionName'
         }
 
+      },
+
+      observers: [
+        'getChildren(nodeData)'
+      ],
+
+      getChildren: function() {
+        if(!this.isReady) return;
+        console.log('getChildren');
+        var options = {
+            "id": this.nodeData.identityNode.properties.uuid,
+            "versionValidityDate": this.versionValidityDate ? this.versionValidityDate : "",
+            "versionName": this.versionName ? this.versionName : "",
+            "contentTypes": "",
+        };
+        this.dispatch('getChildren', options);
       },
 
       edit: function(event) {
@@ -84,6 +109,11 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
                 value: obj[key]
             };
         });
+      },
+
+      ready: function() {
+        this.isReady = true;
+        this.getChildren();
       }
 
 

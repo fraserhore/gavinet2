@@ -178,7 +178,7 @@ module.exports = {
                     var props = {};
                     props['app'] = options;
                     props.app['viewTemplate'] = viewTemplate;
-                    ContentService.getViewTemplateOverrides(function(viewTemplateOverrides) {
+                    ContentService.getOverrides(function(viewTemplateOverrides) {
                         props.app['viewTemplateOverrides'] = viewTemplateOverrides;
                         //console.log('props: ' + props.app.viewTemplateOverrides);
                         return done(props);
@@ -227,7 +227,7 @@ module.exports = {
             });
     },
 
-    getViewTemplateOverrides: function(done) {
+    getOverrides: function(done) {
         var session = driver.session();
         var query =  'MATCH (a:Override)-[r:VERSION {to:9007199254740991}]->(b:Version)'
                     +' RETURN b as Override';

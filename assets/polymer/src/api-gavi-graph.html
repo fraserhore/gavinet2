@@ -144,6 +144,16 @@
                     return ajax.generateRequest();
                 },
 
+                // getOverrides Operation
+                // Options: 
+                getOverrides: function() {                   
+                    var ajax = this.$.ajax;
+                    ajax.url = '/content/getOverrides';
+                    //ajax.params = options;
+                    ajax.method = 'GET';
+                    return ajax.generateRequest();
+                },
+
                 // createBranch Operation
                 // Options: 
                 // {

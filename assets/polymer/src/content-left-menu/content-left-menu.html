@@ -59,7 +59,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
     Polymer({
       is: 'content-left-menu',
-      behaviors: [ ReduxBehavior ],
+      behaviors: [ ReduxBehavior, AsyncActionsBehavior ],
       properties: {
         nodeData: {
           type: Object,
@@ -75,9 +75,30 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         }
       },
 
+      observers: [
+        'getParent(nodeData)',
+        'getSiblings(nodeData)'
+      ],
+
+      getParent: function() {
+        if(!this.isReady) return;
+        var options = {
+            "id": this.nodeData.identityNode.properties.uuid
+            };
+        this.dispatch('getParent', options);
+      },
+
+      getSiblings: function() {
+        if(!this.isReady) return;
+        var options = {
+            "id": this.nodeData.identityNode.properties.uuid
+            };
+        this.dispatch('getSiblings', options);
+      },
+
       ready: function() {
-        //console.log("content-left-menu");
-        //console.log(this.nodeData);
+        this.isReady = true;
+        //this.getSiblings();
       }
       
     });
