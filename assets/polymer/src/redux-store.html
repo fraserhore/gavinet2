@@ -1,32 +1,45 @@
-<link rel="import" href="/polymer/bower_components/polymer/polymer.html">
 <link rel="import" href="/polymer/bower_components/polymer-redux/polymer-redux.html">
-<link rel="import" href="/polymer/api-gavi-graph.html">
+<link rel="import" href="/polymer/src/api-gavi-graph.html">
 
 <script>
     const initialState = {
-        friends: ['Rod', 'Shelby'],
+        username: null,
+        loading: false,
         overrides: []
     };
 
     const reducer = (state, action) => {
         if(!state) return initialState;
         switch (action.type) {
-            case 'ADD_FRIEND' : 
-                const friends = state.friends.slice(0);
-                friends.push(action.friend);
-                return Object.assign({}, state, {friends: friends});
-
-            case 'SIGN_UP_STARTED':
+            
+            case 'SIGN_UP_STARTED' :
                 return Object.assign({}, state, { loading: true });
 
-            case 'GET_NODE_DATA_STARTED':
+            case 'SIGN_UP_COMPLETE':
+                return Object.assign({}, state, {
+                  loading: false,
+                  username: action.username
+                });
+
+            case 'GET_NODE_DATA_STARTED' :
                 return Object.assign({}, state, { loading: true });
 
             case 'LOAD_NODE_DATA' :
-                return Object.assign({}, state, {nodeData: action.nodeData});
+                return Object.assign({}, state, {
+                    loading: false,
+                    username: action.nodeData.authorNode.properties.name,
+                    nodeData: action.nodeData});
 
             case 'LOAD_OVERRIDES' :
                 return Object.assign({}, state, {overrides: action.overrides});
+
+            case 'LOAD_PARENT' :
+                return Object.assign({}, state, {parentNode: action.parentNode});
+
+            case 'LOAD_SIBLINGS' :
+                return Object.assign({}, state, {
+                    loading: false,
+                    siblingNodes: action.siblingNodes});
 
             case 'LOAD_CHILDREN' :
                 return Object.assign({}, state, {children: action.children});
@@ -58,37 +71,85 @@
 
             getNodeData: function(options) {
                 return function(dispatch) {
-                    dispatch({ type: 'GET_NODE_DATA_STARTED'});
+                    dispatch({ type: 'SIGN_UP_STARTED'});
 
-                    var api = document.createElement('api-gavi-graph');
+                    var api = document.createElement('api-gavi-graph'),
+                        request = api.getNodeData(options);
 
-                    api.getNodeData(options).then(
-                        function (requests) {
+                    Promise.all([request.completes])
+                        .then(function (requests) {
                             var response = requests[0].response;
+
                             dispatch({
                                 type: 'LOAD_NODE_DATA',
                                 nodeData: response
                             });
                             // do whatever you want from here...
                             console.log(response);
-                        }
-                    );
-                
-                    // var request = this.$.api.getNodeData(options);
-
-                    // Promise.all([request.completes])
-                    //     .then(function (requests) {
-                    //         var response = requests[0].response;
-                    //         dispatch({
-                    //             type: 'LOAD_NODE_DATA',
-                    //             nodeData: response
-                    //         });
-                    //         // do whatever you want from here...
-                    //         console.log(response);
-                    //     });
+                        });
                 }
             
-            }
+            },
+
+            getParent: function(options) {
+                return function(dispatch) {
+                    dispatch({ type: 'SIGN_UP_STARTED'});
+
+                    var api = document.createElement('api-gavi-graph'),
+                        request = api.getParent(options);
+
+                    Promise.all([request.completes])
+                        .then(function (requests) {
+                            var response = requests[0].response;
+
+                            dispatch({
+                                type: 'LOAD_PARENT',
+                                parentNode: response
+                            });
+                        });
+                }
+            
+            },
+
+            getSiblings: function(options) {
+                return function(dispatch) {
+                    dispatch({ type: 'SIGN_UP_STARTED'});
+
+                    var api = document.createElement('api-gavi-graph'),
+                        request = api.getSiblings(options);
+
+                    Promise.all([request.completes])
+                        .then(function (requests) {
+                            var response = requests[0].response;
+
+                            dispatch({
+                                type: 'LOAD_SIBLINGS',
+                                siblingNodes: response
+                            });
+                        });
+                }
+            
+            },
+
+            getChildren: function(options) {
+                return function(dispatch) {
+                    dispatch({ type: 'SIGN_UP_STARTED'});
+
+                    var api = document.createElement('api-gavi-graph'),
+                        request = api.getChildren(options);
+
+                    Promise.all([request.completes])
+                        .then(function (requests) {
+                            var response = requests[0].response;
+                            console.log(response);
+                            dispatch({
+                                type: 'LOAD_CHILDREN',
+                                children: response
+                            });
+                        });
+                }
+            
+            },
 
 
         }

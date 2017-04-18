@@ -252,11 +252,8 @@ module.exports = {
 
     /** Get child content objects */
     getChildren: function(options, done) {
+        console.log(options);
         var session = driver.session();
-        var params = {
-            "id": options.id,
-            "lang": options.lang
-        };
         var versionMatch = "";
         var contentTypeMatch = options.contentTypes ? " AND identityNode.contentType IN [" + options.contentTypes + "]" : '';
 
@@ -274,10 +271,9 @@ module.exports = {
                     +  contentTypeMatch
                     +' OPTIONAL MATCH (identityNode)-[:URL_ALIAS]->(urlAliasIdentity)-[urlAliasVersionRel:VERSION {to:9007199254740991}]->(urlAliasVersion)'
                     +' RETURN identityNode, version, versionNode, authorNode, urlAliasVersion.urlAlias as urlAlias';
-       //console.log(options);
-       //console.log(query);
+       console.log(query);
         return session
-            .run(query, params)
+            .run(query, options)
             .then(result => {
                 var children = [];
                 result.records.forEach(function(record) {

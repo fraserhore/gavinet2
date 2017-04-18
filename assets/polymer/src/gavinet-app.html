@@ -9,26 +9,20 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 -->
 
 <link rel="import" href="../bower_components/polymer/polymer.html">
-<link rel="import" href="../bower_components/iron-ajax/iron-ajax.html">
 <link rel="import" href="../bower_components/app-layout/app-drawer/app-drawer.html">
 <link rel="import" href="../bower_components/app-layout/app-drawer-layout/app-drawer-layout.html">
 <link rel="import" href="../bower_components/app-layout/app-header/app-header.html">
 <link rel="import" href="../bower_components/app-layout/app-header-layout/app-header-layout.html">
-<link rel="import" href="../bower_components/app-layout/app-scroll-effects/app-scroll-effects.html">
 <link rel="import" href="../bower_components/app-layout/app-toolbar/app-toolbar.html">
 <link rel="import" href="../bower_components/app-route/app-location.html">
 <link rel="import" href="../bower_components/app-route/app-route.html">
-<link rel="import" href="../bower_components/iron-pages/iron-pages.html">
 <link rel="import" href="../bower_components/iron-selector/iron-selector.html">
 <link rel="import" href="../bower_components/paper-icon-button/paper-icon-button.html">
 <link rel="import" href="../bower_components/iron-localstorage/iron-localstorage.html">
-<link rel="import" href="content-full/content-full.html">
+<link rel="import" href="template-match/template-match.html">
 <link rel="import" href="content-left-menu/content-left-menu.html">
-<link rel="import" href="api-gavi-graph.html">
-<link rel="import" href="redux-store.html">
 <link rel="import" href="log-out.html">
 <link rel="import" href="register-login.html">
-<link rel="import" href="my-icons.html">
 <link rel="import" href="shared-styles.html">
 
 <dom-module id="gavinet-app">
@@ -83,8 +77,6 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       }
     </style>
 
-    <api-gavi-graph id="api"></api-gavi-graph>
-
     <iron-localstorage name="user-storage" value="{{storedUser}}"></iron-localstorage>
     <!-- <app-data key="userData" data="{{storedUser}}"></app-data> -->
 
@@ -121,6 +113,19 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         </app-header>
 
         <div class="card">
+
+          <label>
+            Username:
+            <input type="text" id="username">
+          </label>
+          <button on-tap="signUp">Sign Up</button>
+          <template is="dom-if" if="[[loading]]">
+            <p>Loading...</p>
+          </template>
+          <template is="dom-if" if="[[username]]">
+            <p>Welcome [[username]]!</p>
+          </template>
+
           <!-- <content-full name="view1" view-template="content-full"></content-full> -->
           <template-match id="contentFull" view-template="content-full"></template-match>
           <!-- <register-login name="register-login"></register-login> -->
@@ -134,22 +139,16 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
     Polymer({
       is: 'gavinet-app',
       behaviors: [ ReduxBehavior, AsyncActionsBehavior ],
-      actions: {
-        loadNodeDataAction: function(nodeData) {
-          return {
-            type: 'LOAD_NODE_DATA',
-            nodeData: nodeData
-          }
-        },
-        loadChildrenAction: function(children) {
-          return {
-              type: 'LOAD_CHILDREN',
-              children: children
-          }
-        }
-      },
       
       properties: {
+        loading: {
+          type: Boolean,
+          statePath: 'loading'
+        },
+        username: {
+          type: String,
+          statePath: 'username'
+        },
         nodeData: {
           type: Object,
           statePath: 'nodeData'
@@ -157,50 +156,65 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       },
 
       observers: [
-        '_routePathChanged(route.path)'
+        '_routePathChanged(route.path)',
+        '_nodeDataChanged(nodeData)'
       ],
+
+      signUp: function() {
+        const username = this.$.username.value;
+        this.dispatch('signUpWithTimeout', username);
+        //this.getNodeData();
+        
+      },
 
       getNodeData: function() {
         var options = {
             "path": this.route.path
             };
-
         this.dispatch('getNodeData', options);
-        
-        // var request = this.$.api.getNodeData(options),
+      },
+
+      getParent: function() {
+        var options = {
+            "id": this.nodeData.identityNode.properties.uuid
+            };
+        this.dispatch('getParent', options);
+      },
+
+      getSiblings: function() {
+        var options = {
+            "id": this.nodeData.identityNode.properties.uuid
+            };
+        this.dispatch('getSiblings', options);
+      },
+
+
+      getChildren: function() {
+        var options = {
+            "id": this.nodeData.identityNode.properties.uuid,
+            "versionValidityDate": this.versionSliderValue,
+            "versionName": this.versionName ? this.versionName : "",
+            "contentTypes": "",
+        };
+        this.dispatch('getChildren', options);
+
+        // var request = this.$.api.getChildren(options),
         //     polymerThis = this;
         // Promise.all([request.completes])
         //     .then(function (requests) {
         //         var response = requests[0].response;
-        //         polymerThis.dispatch('loadNodeDataAction', response);
+        //         polymerThis.dispatch('loadChildrenAction', response);
         //         // do whatever you want from here...
-        //         console.log(response);
+        //         // console.log(response);
         //     });
-      },
-
-      getChildren: function() {
-        var options = {
-            "uuid": this.nodeData.identityNode.properties.uuid,
-            //"versionValidityDate": this.versionSliderValue,
-            //"versionName": this.versionName,
-            "contentTypes": "",
-        };
-        var request = this.$.api.getChildren(options),
-            polymerThis = this;
-        Promise.all([request.completes])
-            .then(function (requests) {
-                var response = requests[0].response;
-                polymerThis.dispatch('loadChildrenAction', response);
-                // do whatever you want from here...
-                // console.log(response);
-            });
       },
 
       _routePathChanged: function(path) {
         this.path = path || 'register-login';
-        this.getNodeData();
-        console.log("ROUTE");
-        console.log(this.route);
+        this.signUp();
+        //this.getNodeData();
+        //console.log("ROUTE");
+        //console.log(this.route);
         // console.log(this.routeData);
         // console.log(this.subroute);
       },
@@ -210,6 +224,12 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         //var resolvedPathUrl = this.resolveUrl('my-' + path + '.html');
         //this.importHref(resolvedPathUrl, null, this._showPath404, true);
         // console.log('test');
+      },
+
+      _nodeDataChanged: function() {
+        this.getParent();
+        this.getSiblings();
+        this.getChildren();
       },
 
       _showPath404: function() {

@@ -57,7 +57,7 @@ module.exports.routes = {
   //   skipAssets: false
   // },
 
-  'GET /content/getChildren/:id': {
+  'GET /content/getChildren': {
     controller: 'ContentController',
     action: 'getChildren',
     skipAssets: true,
@@ -96,13 +96,13 @@ module.exports.routes = {
   //   skipAssets: true
   // },
 
-  'GET /content/getParent/:id': {
+  'GET /content/getParent': {
     controller: 'ContentController',
     action: 'getParent',
     skipAssets: true
   },
 
-  'GET /content/getSiblings/:id': {
+  'GET /content/getSiblings': {
     controller: 'ContentController',
     action: 'getSiblings',
     skipAssets: true

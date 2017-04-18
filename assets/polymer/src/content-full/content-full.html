@@ -1,9 +1,4 @@
 <link rel="import" href="/polymer/bower_components/polymer/polymer.html">
-<link rel="import" href="../api-gavi-graph.html">
-<!-- <link rel="import" href="../api-sharepoint.html"> -->
-<link rel="import" href="/polymer/bower_components/iron-localstorage/iron-localstorage.html">
-<!-- <link rel="import" href="/polymer/src/app-data.html"> -->
-<link rel="import" href="../redux-store.html">
 
 <dom-module id="content-full">
     <template>
@@ -12,9 +7,6 @@
             display: block;
         }
         </style>
-
-        <api-gavi-graph id="api"></api-gavi-graph>
-        <!-- <api-sharepoint id="api"></api-sharepoint> -->
 
         <h1>{{nodeData.identityNode.properties.name}}</h1>
         <div>{{nodeData.versionNode.properties.description}}</div>
@@ -44,7 +36,7 @@
         </paper-dialog>
         <h3>Child Content</h3>
         <!-- <content-children id="contentChildren" identity-node-id="{{nodeData.identityNode.properties.uuid}}" on-edit="update"></content-children> -->
-        <!-- <template-match id="contentChildren" view-template="content-children" on-edit="update"></template-match> -->
+        <template-match id="contentChildren" view-template="content-children" on-edit="update"></template-match>
         <h3>Related Content</h3>
         <content-related identity-node-id="{{nodeData.identityNode.properties.uuid}}"></content-related>
     </template>
@@ -54,7 +46,7 @@
 
         Polymer({
             is: 'content-full',
-            behaviors: [ ReduxBehavior ],
+            behaviors: [ ReduxBehavior, AsyncActionsBehavior ],
             properties: {
                 storedUser: Object,
                 nodeData: {
@@ -194,40 +186,22 @@
 
             getNodeData: function() {
                 var options = {
-                    "uuid": this.nodeData.identityNode.properties.uuid,
+                    "id": this.nodeData.identityNode.properties.uuid,
                     "versionValidityDate": this.versionSliderValue,
                     //"versionName": this.versionName,
                     "contentTypes": "",
                 };
-                var request = this.$.api.getNodeData(options),
-                    polymerThis = this;
-                Promise.all([request.completes])
-                    .then(function (requests) {
-                        var response = requests[0].response;
-                        polymerThis.dispatch('loadNodeDataAction', response);
-                        // do whatever you want from here...
-                        // console.log(response);
-                    });
-                
+                this.dispatch('getNodeData', options);
             },
 
             getChildren: function() {
                 var options = {
-                    "uuid": this.nodeData.identityNode.properties.uuid,
+                    "id": this.nodeData.identityNode.properties.uuid,
                     "versionValidityDate": this.versionSliderValue,
-                    //"versionName": this.versionName,
+                    "versionName": this.versionName ? this.versionName : "",
                     "contentTypes": "",
                 };
-                var request = this.$.api.getChildren(options),
-                    polymerThis = this;
-                Promise.all([request.completes])
-                    .then(function (requests) {
-                        var response = requests[0].response;
-                        polymerThis.dispatch('loadChildrenAction', response);
-                        // do whatever you want from here...
-                        // console.log(response);
-                    });
-                
+                this.dispatch('getChildren', options);
             },
 
             _submit: function(event) {

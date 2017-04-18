@@ -62,10 +62,20 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
                 }
             },
 
-            _appChanged: function() {
-                console.log('app changed');
+            observers: [
+                '_nodeDataChanged(nodeData)'
+              ],
+
+            _nodeDataChanged: function() {
+                console.log('nodeData changed');
                 console.log(this.nodeData);
                 this.createElement();
+            },
+
+            _appChanged: function() {
+                //console.log('app changed');
+                //console.log(this.nodeData);
+                //this.createElement();
             },
 
             _updateViewTemplateOverrides: function() {
@@ -108,7 +118,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
                 if(this.currentViewTemplate !== viewTemplateOverride || !this.$.template.firstChild) {
                     // Remove the first child if there is one
                     if (this.$.template.firstChild) {
-                        //console.log('Remove child: ' + this.$.template.firstChild);
+                        console.log('Remove child: ' + this.$.template.firstChild);
                         this.$.template.removeChild(this.$.template.firstChild);
                     }
                     //console.log('creating child');
@@ -116,6 +126,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
                     props['app'] = this.app;
                     props['identityNodeId'] = this.nodeData.identityNode.properties.uuid;
                     el = Polymer.Base.create(viewTemplateOverride, props);
+                    console.dir(el);
                     this.$.template.appendChild(el);
                     this.currentViewTemplate = viewTemplateOverride;
                 } else {
