@@ -30,15 +30,6 @@
       last-response="{{dataSchema}}"
       debounce-duration="300"></iron-ajax>
 
-    <iron-ajax
-      id="deleteRequest"
-      url=""
-      handle-as="json"
-      on-response="deleteResponse"
-      debounce-duration="300"></iron-ajax>
-
-    <div>Version validity date: <moment-element datetime="{{versionSliderValue}}" output-format="MMM DD[,] YYYY"></moment-element></div>
-    <paper-slider id="versionSlider" value="{{versionSliderValue}}" min="{{versionSliderMin}}" max="{{versionSliderMax}}" step="60000" pin on-change="_versionSliderChanged"></paper-slider>
 
     <paper-button raised on-click="update">Edit</paper-button>
     <paper-button raised on-click="create">New</paper-button>

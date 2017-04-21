@@ -1,139 +1,142 @@
-
 <link rel="import" href="/polymer/bower_components/polymer/polymer.html">
-
 <dom-module id="content-children-grid">
-  <template>
-    <style>
-      :host {
-        display: block;
-      }
-    </style>
-
-    <!-- <app-data key="nodeData" data="{{nodeData}}"></app-data> -->
-
-    <iron-ajax
-      id="getChildren"
-      auto
-      url="/content/getChildren/{{identityNodeId}}?versionValidityDate={{versionValidityDate}}"
-      params=''
-      handle-as="json"
-      last-response="{{children}}"
-      on-response="_updateChildren"
-      debounce-duration="300"></iron-ajax>
-
-    <iron-ajax
-      id="deleteRequest"
-      url=""
-      handle-as="json"
-      on-response="deleteResponse"
-      debounce-duration="300"></iron-ajax>
-
-      <table>
-        <colgroup>
-          <col>
-          <col>
-          <col>
-        </colgroup>
-        <thead>
-          <tr>
-            <th>Name</th>
-            <th>Description</th>
-            <th></th>
-          </tr>
-        </thead>
-        <tbody>
-          <template is="dom-repeat" items="[[children]]">
-            <tr>
-              <td>
-                <h4>
+    <template>
+        <style>
+        :host {
+            display: block;
+        }
+        </style>
+        <table>
+            <colgroup>
+                <col>
+                <col>
+                <col>
+            </colgroup>
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Description</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                <template is="dom-repeat" items="[[children]]">
+                    <tr>
+                        <td>
+                            <h4>
                   <a href="/{{nodeData.lang}}/{{item.identityNode.properties.uuid}}">[[item.identityNode.properties.name]]</a>
                 </h4>
-              </td>
-              <td>{{item.versionNode.properties.description}}</td>
-              <td>
-                <paper-button on-click="edit"><iron-icon icon="create"></iron-icon></paper-button>
-                <paper-button on-click="delete"><iron-icon icon="delete"></iron-icon></paper-button>
-              </td>
-            </tr>
-          </template>
-        </tbody>
-      </table>
+                        </td>
+                        <td>{{item.versionNode.properties.description}}</td>
+                        <td>
+                            <paper-button on-click="edit">
+                                <iron-icon icon="create"></iron-icon>
+                            </paper-button>
+                            <paper-button on-click="delete">
+                                <iron-icon icon="delete"></iron-icon>
+                            </paper-button>
+                        </td>
+                    </tr>
+                </template>
+            </tbody>
+        </table>
+    </template>
+    <script>
+    (function() {
+        'use strict';
 
-  </template>
-  <script>
-  (function() {
-    'use strict';
+        Polymer({
+            is: 'content-children-grid',
+            behaviors: [ReduxBehavior, AsyncActionsBehavior],
+            properties: {
 
-    Polymer({
-      is: 'content-children-grid',
-      behaviors: [ ReduxBehavior ],
-      properties: {
-        identityNodeId: {
-          type: Number,
-          value: 0,
-          notify: true
-        },
+                nodeData: {
+                    type: Object,
+                    statePath: 'nodeData',
+                    observer: 'getChildren'
+                },
 
-        versionValidityDate: {
-          type: Number,
-          value: undefined,
-          notify: true
-        },
-        nodeData: {
-          type: Object,
-          statePath: 'nodeData'
-        }
+                versionValidityDate: {
+                    type: Number,
+                    statePath: 'versionValidityDate',
+                    observer: 'getChildren'
+                },
 
-      },
+                versionName: {
+                    type: String,
+                    statePath: 'versionName',
+                    observer: 'getChildren'
+                },
 
-      grid: document.querySelector('vaadin-grid'),
+                children: {
+                    type: Object,
+                    statePath: 'children'
+                }
+            },
 
-      ready: function() {
-        //this.grid = this.grid || this.$.childrenGrid;
-        //this.grid.items = this.children || [];
-      },
+            getChildren: function() {
+                if (!this.isReady) return;
+                console.log('getChildren');
+                var options = {
+                    "id": this.nodeData.identityNode.properties.uuid,
+                    "versionValidityDate": this.versionValidityDate ? this.versionValidityDate : "",
+                    "versionName": this.versionName ? this.versionName : "",
+                    "contentTypes": this.contentTypes ? this.contentTypes : "",
+                };
+                this.dispatch('getChildren', options);
+            },
 
-      edit: function(event) {
-        this.fire('edit', event.model.item);
-      },
+            grid: document.querySelector('vaadin-grid'),
 
-      delete: function(event) {
-        this.$.deleteRequest.url = "/content/delete";
-        this.$.deleteRequest.params = {"id": event.model.item.identityNode._id};
-        //console.log(deleteRequest);
-        this.$.deleteRequest.generateRequest();
-      },
+            ready: function() {
+              this.isReady = true;
+                //this.grid = this.grid || this.$.childrenGrid;
+                //this.grid.items = this.children || [];
+            },
 
-      deleteResponse: function(request) {
-        //console.log(request.detail.response);
-        //console.log(this.$.deleteRequest.lastResponse);
-      },
+            edit: function(event) {
+                this.fire('edit', event.model.item);
+            },
 
-      refresh: function() {
-        //console.log(this.$.getChildren.url);
-        this.$.getChildren.generateRequest();
-      },
+            delete: function(event) {
+                this.$.deleteRequest.url = "/content/delete";
+                this.$.deleteRequest.params = {
+                    "id": event.model.item.identityNode._id
+                };
+                //console.log(deleteRequest);
+                this.$.deleteRequest.generateRequest();
+            },
 
-      _updateChildren: function(event) {
-        // this.grid = this.grid || this.$.childrenGrid;
-        // this.grid.items = this.children;
-        // this.grid.size = this.children.length;
-        // this.grid.refreshItems();
-        // console.log(this.children);
-      },
+            deleteResponse: function(request) {
+                //console.log(request.detail.response);
+                //console.log(this.$.deleteRequest.lastResponse);
+            },
 
-      _toArray: function(obj) {
-        if(!obj) return;
-        return Object.keys(obj).map(function(key) {
-            return {
-                name: key,
-                value: obj[key]
-            };
+            refresh: function() {
+                //console.log(this.$.getChildren.url);
+                this.$.getChildren.generateRequest();
+            },
+
+            _updateChildren: function(event) {
+                // this.grid = this.grid || this.$.childrenGrid;
+                // this.grid.items = this.children;
+                // this.grid.size = this.children.length;
+                // this.grid.refreshItems();
+                // console.log(this.children);
+            },
+
+            _toArray: function(obj) {
+                if (!obj) return;
+                return Object.keys(obj).map(function(key) {
+                    return {
+                        name: key,
+                        value: obj[key]
+                    };
+                });
+            }
+
+
         });
-      }
-
-
-    });
-  })();
-  </script>
+    })();
+    </script>
 </dom-module>

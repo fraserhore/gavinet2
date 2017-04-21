@@ -27,33 +27,12 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         <h1>{{nodeData.identityNode.properties.name}}</h1>
         <div>{{nodeData.versionNode.properties.description}}</div>
         <br/>
-        <div>Version validity date:
-            <moment-element datetime="{{versionSliderValue}}" output-format="MMM DD[,] YYYY"></moment-element>
-        </div>
-        <paper-slider id="versionSlider" label="Version validity date" value="{{versionSliderValue}}" min="{{versionSliderMin}}" max="{{versionSliderMax}}" step="{{versionSliderStep}}" pin on-change="_versionSliderChanged"></paper-slider>
-
-        <paper-dropdown-menu label="Branch" value="{{versionName}}" on-iron-select="_versionNameChanged" style="width: 15%;">
-          <paper-listbox class="dropdown-content" selected="0">
-            <paper-item>current</paper-item>
-            <template is="dom-repeat" items="{{branches}}">
-                <paper-item>{{item.identityNode.properties.name}}</paper-item>
-            </template>
-          </paper-listbox>
-        </paper-dropdown-menu>
-        <paper-input label="New Branch" value="{{newVersionName}}" style="width: 15%; display: inline-block;"></paper-input>
-        <paper-button raised on-click="createBranch">Create</paper-button>
         
-        <paper-dropdown-menu label="Snapshot" value="{{snapshot}}" on-iron-select="_snapshotChanged" style="width: 15%;">
-          <paper-listbox class="dropdown-content" selected="0">
-            <paper-item>Snapshot 1</paper-item>
-            <paper-item>Snapshot 2</paper-item>
-          </paper-listbox>
-        </paper-dropdown-menu>
-        <paper-input label="New Snapshot" value="{{newSnapshotName}}" style="width: 15%; display: inline-block;"></paper-input>
-        <paper-button raised on-click="createSnapshot">Create</paper-button>
+        <content-version-selector></content-version-selector>
 
         <paper-button raised on-click="update">Edit</paper-button>
         <!-- <paper-button raised on-click="create">New</paper-button> -->
+
         <paper-dialog id="editDialog" entry-animation="scale-up-animation" exit-animation="fade-out-animation" autoFitOnAttach="true" on-iron-overlay-closed="_dialogClosed">
             <h2>Create / Edit Item</h2>
             <paper-dialog-scrollable>
@@ -67,14 +46,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
         <h3>Graph</h3>
         <content-process-editor id="processEditor"></content-process-editor>
-        <h3>Hierarchy</h3>
-        <!-- <content-hierarchy-editor id="processEditor" identity-node-id="{{nodeData.identityNode.uuid}}" on-edit="update"></content-hierarchy-editor> -->
         
-        <h3>Child Content</h3>
-        <!-- <content-children id="contentChildren" identity-node-id="{{nodeData.identityNode.properties.uuid}}" on-edit="update"></content-children> -->
-        <template-match id="contentChildren" view-template="content-children" on-edit="update"></template-match>
-        <h3>Related Content</h3>
-        <content-related identity-node-id="{{nodeData.identityNode.properties.uuid}}"></content-related>
     </template>
     <script>
     (function() {
@@ -82,64 +54,12 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
         Polymer({
             is: 'content-full-activity',
-            behaviors: [ReduxBehavior],
+            behaviors: [ReduxBehavior, AsyncActionsBehavior],
             properties: {
-                storedUser: Object,
                 nodeData: {
                     type: Object,
                     statePath: 'nodeData'
-                },
-                children2: {
-                    type: Object,
-                    statePath: 'children'
                 }
-            },
-
-            actions: {
-                loadNodeDataAction: function(nodeData) {
-                    return {
-                        type: 'LOAD_NODE_DATA',
-                        nodeData: nodeData
-                    }
-                },
-                loadChildrenAction: function(children) {
-                    return {
-                        type: 'LOAD_CHILDREN',
-                        children: children
-                    }
-                },
-                updateVersionNameAction: function(versionName) {
-                    return {
-                        type: 'UPDATE_VERSION_NAME',
-                        versionName: versionName
-                    }
-                }
-            },
-
-            listeners: {
-                'contentEdit.contentEdited': '_refreshAllContent'
-            },
-
-            observers: [
-                '_identityNodeChanged(nodeData.identityNode)'
-            ],
-
-            _identityNodeChanged: function() {
-                if (this.nodeData.identityNode) {
-                    this.$.contentChildren.createElement();
-                }
-            },
-
-            ready: function() {
-                var today = new Date();
-                this.versionSliderMax = Date.now();
-                this.versionSliderMin = Date.now() - 604800000; // one day = 86400000, one week = 604800000, One month = 2629746000, one year = 31556952000
-                this.versionSliderStep = 86400000;
-                this.versionSliderValue = Date.now();
-                // console.log(today.toISOString());
-                this.getNodeData();
-                this.getChildren();
-                this.getBranches();
             },
 
             create: function(event) {
@@ -182,28 +102,6 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
                 //this.$.getContent.generateRequest();
             },
 
-            _refreshAllContent: function() {
-                this.getNodeData();
-                this.getChildren();
-            },
-
-            _versionSliderChanged: function(event) {
-                this.getNodeData();
-                this.getChildren();
-            },
-
-            _versionNameChanged: function(event) {
-                this.dispatch('updateVersionNameAction', this.versionName);
-                this.getNodeData();
-                this.getChildren();
-            },
-
-            _snapshotChanged: function(event) {
-                //this.dispatch('updateVersionNameAction', this.versionName);
-                //this.getNodeData();
-                //this.getChildren();
-            },
-
             _submit: function(event) {
                 var button = event.target;
                 while (!button.hasAttribute('data-form') && button !== document.body) {
@@ -223,105 +121,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
                 this.$.editDialog.close();
                 //this.$.getContent.generateRequest();
                 this.getNodeData();
-            },
-
-            getNodeData: function() {
-                var options = {
-                    "uuid": this.nodeData.identityNode.properties.uuid,
-                    "versionValidityDate": this.versionSliderValue,
-                    //"versionName": this.versionName,
-                    "contentTypes": "",
-                };
-                var request = this.$.api.getNodeData(options),
-                    polymerThis = this;
-                Promise.all([request.completes])
-                    .then(function (requests) {
-                        var response = requests[0].response;
-                        polymerThis.dispatch('loadNodeDataAction', response);
-                        // do whatever you want from here...
-                        // console.log(response);
-                    });
-                
-            },
-
-            getChildren: function() {
-                var options = {
-                    "uuid": this.nodeData.identityNode.properties.uuid,
-                    "versionValidityDate": this.versionSliderValue,
-                    "versionName": this.versionName,
-                    "contentTypes": "'text', 'input', 'activity', 'decision', 'output', 'outcome', 'impact', 'role', 'offPageReference'",
-                };
-                var request = this.$.api.getChildren(options),
-                    polymerThis = this;
-                Promise.all([request.completes])
-                    .then(function (requests) {
-                        var response = requests[0].response;
-                        polymerThis.dispatch('loadChildrenAction', response);
-                        // do whatever you want from here...
-                        // console.log(response);
-                    });
-                
-            },
-
-            getBranches: function() {
-                var options = {
-                    "uuid": this.nodeData.identityNode.properties.uuid,
-                    "contentTypes": "'branch'",
-                };
-                var request = this.$.api.getChildren(options),
-                    polymerThis = this;
-                Promise.all([request.completes])
-                    .then(function (requests) {
-                        var response = requests[0].response;
-                        polymerThis.branches = response;
-                        //polymerThis.dispatch('loadChildrenAction', response);
-                        // do whatever you want from here...
-                        // console.log(response);
-                    });
-            },
-
-            createBranch: function() {
-                console.log(this.newVersionName);
-                var options = {
-                    "parentId": this.nodeData.identityNode.properties.uuid,
-                    "authorId": this.nodeData.authorNode.properties.uuid,
-                    "currentVersionName": this.versionName,
-                    "versionValidityDate": this.versionSliderValue,
-                    "newVersionName": this.newVersionName,
-                    "lang": this.nodeData.lang
-                };
-                var request = this.$.api.createBranch(options),
-                    polymerThis = this;
-                Promise.all([request.completes])
-                    .then(function (requests) {
-                        var response = requests[0].response;
-                        // polymerThis.dispatch('loadChildrenAction', response);
-                        // do whatever you want from here...
-                        // console.log(response);
-                    });
-                
-            },
-
-            createSnapshot: function() {
-                console.log(this.newSnapshotName)
-                var options = {
-                    "parentId": this.nodeData.identityNode.properties.uuid,
-                    "snapshotName": this.newSnapshotName,
-                    "versionValidityDate": this.versionSliderValue,
-                    "versionName": this.versionName,
-                    "lang": this.nodeData.lang
-                };
-                var request = this.$.api.createSnapshot(options),
-                    polymerThis = this;
-                Promise.all([request.completes])
-                    .then(function (requests) {
-                        var response = requests[0].response;
-                        // polymerThis.dispatch('loadChildrenAction', response);
-                        // do whatever you want from here...
-                        // console.log(response);
-                    });
             }
-
 
         });
     })();

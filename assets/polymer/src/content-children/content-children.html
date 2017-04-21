@@ -64,6 +64,10 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         versionName: {
           type: String,
           statePath: 'versionName'
+        },
+        contentTypes: {
+          type: Array,
+          value: ""
         }
 
       },
@@ -79,7 +83,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
             "id": this.nodeData.identityNode.properties.uuid,
             "versionValidityDate": this.versionValidityDate ? this.versionValidityDate : "",
             "versionName": this.versionName ? this.versionName : "",
-            "contentTypes": "",
+            "contentTypes": this.contentTypes ? this.contentTypes : "",
         };
         this.dispatch('getChildren', options);
       },
@@ -113,7 +117,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
       ready: function() {
         this.isReady = true;
-        this.getChildren();
+        //this.getChildren();
       }
 
 

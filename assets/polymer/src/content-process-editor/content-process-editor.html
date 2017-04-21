@@ -53,50 +53,36 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
         Polymer({
             is: 'content-process-editor',
-            behaviors: [ReduxBehavior],
+            behaviors: [ReduxBehavior, AsyncActionsBehavior],
             properties: {
-                identityNodeId: {
-                    type: Number,
-                    value: 0,
-                    notify: true
+
+                nodeData: {
+                    type: Object,
+                    statePath: 'nodeData',
+                    observer: 'getChildren'
                 },
 
                 versionValidityDate: {
                     type: Number,
-                    value: undefined,
-                    notify: true
-                },
-
-                nodeData: {
-                    type: Object,
-                    statePath: 'nodeData'
+                    statePath: 'versionValidityDate',
+                    observer: 'getChildren'
                 },
 
                 versionName: {
                 	type: String,
-                	statePath: 'versionName'
+                	statePath: 'versionName',
+                    observer: 'getChildren'
                 },
 
-                children2: {
+                children: {
                     type: Object,
-                    statePath: 'children'
+                    statePath: 'children',
+                    observer: '_updateChildren'
                 }
             },
-
-            actions: {
-                loadChildrenAction: function(children) {
-                    return {
-                        type: 'LOAD_CHILDREN',
-                        children: children
-                    }
-                }
-            },
-
-            observers: [
-                '_updateChildren(children2)'
-              ],
 
             ready: function() {
+                this.isReady = true;
                 this.createGraph();
             },
 
@@ -167,7 +153,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
                 var toolbar = new mxDefaultToolbar(this.$.toolbar, this.editor);
                 
                 // create toolbar items
-                var contentTypes = ["text", "input", "activity", "decision", "output", "outcome", "impact", "role", "offPageReference"];
+                var contentTypes = ["connect", "text", "input", "activity", "decision", "output", "outcome", "impact", "role", "offPageReference"];
                 for (var i = 0; i < contentTypes.length; i++) {
                     var contentType = contentTypes[i];                      
                     var doc = mxUtils.createXmlDocument();
@@ -181,7 +167,13 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
                     	geo = new mxGeometry(20, 20, 80, 60);
                     } 
                     var prototype = new mxCell(node, geo, contentType);
-                    prototype.setVertex(true);
+                    if(contentTypes[i] === 'connect') {
+                        prototype.setVertex(false);
+                        prototype.setEdge(true);   
+                    } else {
+                        prototype.setVertex(true);
+                    }
+                    
                     toolbar.addPrototype(contentType, '/polymer/src/content-process-editor/images/editor/' + contentType + '.png', prototype, null, null, null);
                 };
 
@@ -360,15 +352,37 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
                     return true;
                 };
 
+                graph.setPanning(true);
+                graph.panningHandler.useLeftButtonForPanning = true;
+                graph.keepSelectionVisibleOnZoom = true;
+                
+                // Add a highlight on the cell under the mouse pointer
+                new mxCellTracker(graph);
+
+                // Refresh is necessary to get the labels to wrap
+                graph.refresh();
 
 
+
+            },
+
+            getChildren: function() {
+                console.log('getChildren');
+                if(!this.isReady) return;
+                var options = {
+                    "id": this.nodeData.identityNode.properties.uuid,
+                    "versionValidityDate": this.versionValidityDate,
+                    "versionName": this.versionName,
+                    "contentTypes": "'text', 'input', 'activity', 'decision', 'output', 'outcome', 'impact', 'role', 'offPageReference', 'mxGraphObject'",
+                };
+                this.dispatch('getChildren', options);
             },
 
             _updateChildren: function() {
                 var polymerThis = this;
 
                 // Sort the children to ensure that the vertices are created before the edges
-                this.children2.sort(function(a,b) {return (a.versionNode.properties.mxEdge > b.versionNode.properties.mxEdge) ? 1 : ((b.versionNode.properties.mxEdge > a.versionNode.properties.mxEdge) ? -1 : 0);} );
+                this.children.sort(function(a,b) {return (a.versionNode.properties.mxEdge > b.versionNode.properties.mxEdge) ? 1 : ((b.versionNode.properties.mxEdge > a.versionNode.properties.mxEdge) ? -1 : 0);} );
 
                 // Gets the default parent for inserting new cells. This
                 // is normally the first child of the root (ie. layer 0).
@@ -381,8 +395,8 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
                     if(childCells.length > 0) {
                         polymerThis.graph.removeCells(polymerThis.graph.getChildCells(parent, true, true));
                     }
-                    for (var i = 0; i < polymerThis.children2.length; i++) {
-                        var child = polymerThis.children2[i],
+                    for (var i = 0; i < polymerThis.children.length; i++) {
+                        var child = polymerThis.children[i],
                             contentType = child.identityNode.properties.contentType,
                             customAttributes = child.versionNode.properties,
                             childGeometry = customAttributes.mxGeometry ? JSON.parse(customAttributes.mxGeometry) : "",
