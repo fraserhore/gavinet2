@@ -26,7 +26,6 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 <script type="text/javascript" src="js/Format.js"></script>
 <script type="text/javascript" src="js/Toolbar.js"></script>
 <script type="text/javascript" src="js/Dialogs.js"></script> -->
-
 <dom-module id="content-process-editor">
     <template>
         <style>
@@ -34,18 +33,16 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
             display: block;
         }
         /* fix for inline text editing in cell */
+        
         .mxCellEditor {
             position: absolute;
         }
         </style>
-
         <mxgraph-change-handler id="changeHandler"></mxgraph-change-handler>
         <api-gavi-graph id="api"></api-gavi-graph>
         <!-- <api-sharepoint id="api"></api-sharepoint> -->
-
         <div id="toolbar"></div>
         <div id="graphEditor" class="geEditor"></div>
-
     </template>
     <script>
     (function() {
@@ -69,8 +66,8 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
                 },
 
                 versionName: {
-                	type: String,
-                	statePath: 'versionName',
+                    type: String,
+                    statePath: 'versionName',
                     observer: 'getChildren'
                 },
 
@@ -88,7 +85,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
             createGraph: function() {
                 var polymerThis = this,
-                    currentItemId = this.nodeData.identityNode.properties.uuid, 
+                    currentItemId = this.nodeData.identityNode.properties.uuid,
                     authorId = this.nodeData.authorNode.properties.uuid, // should come from as user session
                     changeHandler = this.$.changeHandler;
                 // Adds required resources (disables loading of fallback properties, this can only
@@ -127,7 +124,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
                     polymerThis.model = polymerThis.graph.getModel();
 
                     polymerThis.editor.setGraphContainer(container);
-                    
+
                     //polymerThis.editor = new Editor(null, null, null, polymerThis.graph);
                     //polymerThis.editorUi = new EditorUi(polymerThis.editor, container);
 
@@ -136,7 +133,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
                     // Listen for changes and update the state
                     polymerThis.graph.model.addListener(mxEvent.CHANGE, function(sender, evt) {
-                        if(!polymerThis.updatingChildren) {
+                        if (!polymerThis.updatingChildren) {
                             changeHandler.handleChange(currentItemId, authorId, polymerThis.versionName, polymerThis.graph, sender, evt);
                         }
                     });
@@ -151,29 +148,29 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
                 // Create Toolbar
                 var toolbar = new mxDefaultToolbar(this.$.toolbar, this.editor);
-                
+
                 // create toolbar items
                 var contentTypes = ["connect", "text", "input", "activity", "decision", "output", "outcome", "impact", "role", "offPageReference"];
                 for (var i = 0; i < contentTypes.length; i++) {
-                    var contentType = contentTypes[i];                      
+                    var contentType = contentTypes[i];
                     var doc = mxUtils.createXmlDocument();
                     var node = doc.createElement(contentType);
                     node.setAttribute('label', 'MyLabel');
                     node.setAttribute('attribute1', 'value1');
                     var geo;
-                    if(contentTypes[i] === 'role') {
-                    	geo = new mxGeometry(20, 20, 900, 100);
+                    if (contentTypes[i] === 'role') {
+                        geo = new mxGeometry(20, 20, 900, 100);
                     } else {
-                    	geo = new mxGeometry(20, 20, 80, 60);
-                    } 
+                        geo = new mxGeometry(20, 20, 80, 60);
+                    }
                     var prototype = new mxCell(node, geo, contentType);
-                    if(contentTypes[i] === 'connect') {
+                    if (contentTypes[i] === 'connect') {
                         prototype.setVertex(false);
-                        prototype.setEdge(true);   
+                        prototype.setEdge(true);
                     } else {
                         prototype.setVertex(true);
                     }
-                    
+
                     toolbar.addPrototype(contentType, '/polymer/src/content-process-editor/images/editor/' + contentType + '.png', prototype, null, null, null);
                 };
 
@@ -310,7 +307,8 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
             },
 
             setGraphOptions: function() {
-                var graph = this.graph;
+                var graph = this.graph,
+                    model = graph.getModel();
 
                 graph.setHtmlLabels(true);
 
@@ -329,7 +327,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
                 mxGraphHandler.prototype.guidesEnabled = true;
 
                 // Alt to disable guides
-                mxGuide.prototype.isEnabledForEvent = function (evt) {
+                mxGuide.prototype.isEnabledForEvent = function(evt) {
                     return !mxEvent.isAltDown(evt);
                 };
 
@@ -348,16 +346,151 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
                 // Enable nesting of vertices
                 graph.setDropEnabled(true);
 
-                graph.isValidDropTarget = function (cell) {
+                graph.isValidDropTarget = function(cell) {
                     return true;
                 };
 
                 graph.setPanning(true);
                 graph.panningHandler.useLeftButtonForPanning = true;
                 graph.keepSelectionVisibleOnZoom = true;
-                
+
                 // Add a highlight on the cell under the mouse pointer
                 new mxCellTracker(graph);
+
+
+                // Adds automatic layout and various switches if the
+                // graph is enabled
+                if (graph.isEnabled()) {
+                    // Allows new connections but no dangling edges
+                    graph.setConnectable(true);
+                    graph.setAllowDanglingEdges(false);
+
+                    // End-states are no valid sources
+                    var previousIsValidSource = graph.isValidSource;
+
+                    graph.isValidSource = function(cell) {
+                        if (previousIsValidSource.apply(this, arguments)) {
+                            var style = model.getStyle(cell);
+
+                            return style == null || !(style == 'end' || style.indexOf('end') == 0);
+                        }
+
+                        return false;
+                    };
+
+                    // Start-states are no valid targets, we do not
+                    // perform a call to the superclass function because
+                    // this would call isValidSource
+                    // Note: All states are start states in
+                    // the example below, so we use the state
+                    // style below
+                    graph.isValidTarget = function(cell) {
+                        var style = model.getStyle(cell);
+
+                        return !model.isEdge(cell) && !this.isSwimlane(cell) &&
+                            (style == null || !(style == 'state' || style.indexOf('state') == 0));
+                    };
+
+                    // Allows dropping cells into new lanes and
+                    // lanes into new pools, but disallows dropping
+                    // cells on edges to split edges
+                    graph.setDropEnabled(true);
+                    graph.setSplitEnabled(false);
+
+                    // Returns true for valid drop operations
+                    graph.isValidDropTarget = function(target, cells, evt) {
+                        if (this.isSplitEnabled() && this.isSplitTarget(target, cells, evt)) {
+                            return true;
+                        }
+
+                        var lane = false;
+                        var pool = false;
+                        var cell = false;
+
+                        // Checks if any lanes or pools are selected
+                        for (var i = 0; i < cells.length; i++) {
+                            var tmp = model.getParent(cells[i]);
+                            lane = lane || this.isPool(tmp);
+                            pool = pool || this.isPool(cells[i]);
+
+                            cell = cell || !(lane || pool);
+                        }
+
+                        return !pool && cell != lane && ((lane && this.isPool(target)) ||
+                            (cell && this.isPool(model.getParent(target))));
+                    };
+
+                    // Adds new method for identifying a pool
+                    graph.isPool = function(cell) {
+                        var parent = model.getParent(cell);
+
+                        return parent != null && model.getParent(parent) == model.getRoot();
+                    };
+
+                    // Changes swimlane orientation while collapsed
+                    graph.model.getStyle = function(cell) {
+                        var style = mxGraphModel.prototype.getStyle.apply(this, arguments);
+
+                        if (graph.isCellCollapsed(cell)) {
+                            if (style != null) {
+                                style += ';';
+                            } else {
+                                style = '';
+                            }
+
+                            style += 'horizontal=1;align=left;spacingLeft=14;';
+                        }
+
+                        return style;
+                    };
+
+                    // Keeps widths on collapse/expand                  
+                    var foldingHandler = function(sender, evt) {
+                        var cells = evt.getProperty('cells');
+
+                        for (var i = 0; i < cells.length; i++) {
+                            var geo = graph.model.getGeometry(cells[i]);
+
+                            if (geo.alternateBounds != null) {
+                                geo.width = geo.alternateBounds.width;
+                            }
+                        }
+                    };
+
+                    graph.addListener(mxEvent.FOLD_CELLS, foldingHandler);
+                }
+
+                // Applies size changes to siblings and parents
+                new mxSwimlaneManager(graph);
+
+                // Creates a stack depending on the orientation of the swimlane
+                var layout = new mxStackLayout(graph, false);
+
+                // Makes sure all children fit into the parent swimlane
+                layout.resizeParent = true;
+
+                // Applies the size to children if parent size changes
+                layout.fill = true;
+
+                // Only update the size of swimlanes
+                layout.isVertexIgnored = function(vertex) {
+                    return !graph.isSwimlane(vertex);
+                }
+
+                // Keeps the lanes and pools stacked
+                var layoutMgr = new mxLayoutManager(graph);
+
+                layoutMgr.getLayout = function(cell) {
+                    if (!model.isEdge(cell) && graph.getModel().getChildCount(cell) > 0 &&
+                        (model.getParent(cell) == model.getRoot() || graph.isPool(cell))) {
+                        layout.fill = graph.isPool(cell);
+
+                        return layout;
+                    }
+
+                    return null;
+                };
+
 
                 // Refresh is necessary to get the labels to wrap
                 graph.refresh();
@@ -368,7 +501,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
             getChildren: function() {
                 console.log('getChildren');
-                if(!this.isReady) return;
+                if (!this.isReady) return;
                 var options = {
                     "id": this.nodeData.identityNode.properties.uuid,
                     "versionValidityDate": this.versionValidityDate,
@@ -382,7 +515,9 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
                 var polymerThis = this;
 
                 // Sort the children to ensure that the vertices are created before the edges
-                this.children.sort(function(a,b) {return (a.versionNode.properties.mxEdge > b.versionNode.properties.mxEdge) ? 1 : ((b.versionNode.properties.mxEdge > a.versionNode.properties.mxEdge) ? -1 : 0);} );
+                this.children.sort(function(a, b) {
+                    return (a.versionNode.properties.mxEdge > b.versionNode.properties.mxEdge) ? 1 : ((b.versionNode.properties.mxEdge > a.versionNode.properties.mxEdge) ? -1 : 0);
+                });
 
                 // Gets the default parent for inserting new cells. This
                 // is normally the first child of the root (ie. layer 0).
@@ -392,7 +527,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
                 this.model.beginUpdate();
                 try {
                     var childCells = polymerThis.graph.getChildCells(parent, true, true);
-                    if(childCells.length > 0) {
+                    if (childCells.length > 0) {
                         polymerThis.graph.removeCells(polymerThis.graph.getChildCells(parent, true, true));
                     }
                     for (var i = 0; i < polymerThis.children.length; i++) {
@@ -417,11 +552,11 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
                         node.setAttribute('label', customAttributes.title);
                         for (var key in customAttributes) {
                             if (customAttributes.hasOwnProperty(key)) {
-                               node.setAttribute(key, customAttributes[key]);
+                                node.setAttribute(key, customAttributes[key]);
                             }
                         }
 
-                        if(customAttributes.mxVertex === true) {
+                        if (customAttributes.mxVertex === true) {
                             cell = polymerThis.graph.insertVertex(parent, customAttributes.mxId, node, 10, 10, 40, 20, customAttributes.mxStyle);
                         } else {
                             var source = polymerThis.model.getCell(customAttributes.mxSource),
@@ -433,10 +568,10 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
                     };
 
                     polymerThis.graph.refresh();
-                    
+
                 } finally {
-                   // Updates the display
-                   polymerThis.model.endUpdate();
+                    // Updates the display
+                    polymerThis.model.endUpdate();
                 }
                 polymerThis.updatingChildren = false;
             }
