@@ -151,6 +151,27 @@
                     return ajax.generateRequest();
                 },
 
+                // getContentTypes Operation
+                // Options: 
+                getContentTypes: function() {                   
+                    var ajax = this.$.ajax;
+                    ajax.url = '/content/getContentTypes';
+                    //ajax.params = options;
+                    ajax.method = 'GET';
+                    return ajax.generateRequest();
+                },
+
+                // getContentTypeSchema Operation
+                // Options: 
+                getContentTypeSchema: function(options) {                   
+                    var ajax = this.$.ajax;
+                    ajax.url = '/content/getContentTypeSchema';
+                    ajax.params = options;
+                    ajax.method = 'GET';
+                    return ajax.generateRequest();
+                },
+
+
                 // createBranch Operation
                 // Options: 
                 // {

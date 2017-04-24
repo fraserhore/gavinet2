@@ -361,65 +361,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
                 // Adds automatic layout and various switches if the
                 // graph is enabled
                 if (graph.isEnabled()) {
-                    // Allows new connections but no dangling edges
-                    graph.setConnectable(true);
-                    graph.setAllowDanglingEdges(false);
-
-                    // End-states are no valid sources
-                    var previousIsValidSource = graph.isValidSource;
-
-                    graph.isValidSource = function(cell) {
-                        if (previousIsValidSource.apply(this, arguments)) {
-                            var style = model.getStyle(cell);
-
-                            return style == null || !(style == 'end' || style.indexOf('end') == 0);
-                        }
-
-                        return false;
-                    };
-
-                    // Start-states are no valid targets, we do not
-                    // perform a call to the superclass function because
-                    // this would call isValidSource
-                    // Note: All states are start states in
-                    // the example below, so we use the state
-                    // style below
-                    graph.isValidTarget = function(cell) {
-                        var style = model.getStyle(cell);
-
-                        return !model.isEdge(cell) && !this.isSwimlane(cell) &&
-                            (style == null || !(style == 'state' || style.indexOf('state') == 0));
-                    };
-
-                    // Allows dropping cells into new lanes and
-                    // lanes into new pools, but disallows dropping
-                    // cells on edges to split edges
-                    graph.setDropEnabled(true);
-                    graph.setSplitEnabled(false);
-
-                    // Returns true for valid drop operations
-                    graph.isValidDropTarget = function(target, cells, evt) {
-                        if (this.isSplitEnabled() && this.isSplitTarget(target, cells, evt)) {
-                            return true;
-                        }
-
-                        var lane = false;
-                        var pool = false;
-                        var cell = false;
-
-                        // Checks if any lanes or pools are selected
-                        for (var i = 0; i < cells.length; i++) {
-                            var tmp = model.getParent(cells[i]);
-                            lane = lane || this.isPool(tmp);
-                            pool = pool || this.isPool(cells[i]);
-
-                            cell = cell || !(lane || pool);
-                        }
-
-                        return !pool && cell != lane && ((lane && this.isPool(target)) ||
-                            (cell && this.isPool(model.getParent(target))));
-                    };
-
+                    
                     // Adds new method for identifying a pool
                     graph.isPool = function(cell) {
                         var parent = model.getParent(cell);

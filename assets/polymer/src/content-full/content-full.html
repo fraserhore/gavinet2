@@ -33,9 +33,11 @@
                 <paper-button raised on-click="_submit" data-form="contentEdit">Submit</paper-button>
             </div>
         </paper-dialog>
+
         <h3>Child Content</h3>
         <!-- <content-children id="contentChildren" identity-node-id="{{nodeData.identityNode.properties.uuid}}" on-edit="update"></content-children> -->
         <template-match id="contentChildren" view-template="content-children" on-edit="update"></template-match>
+        
         <h3>Related Content</h3>
         <content-related identity-node-id="{{nodeData.identityNode.properties.uuid}}"></content-related>
     </template>

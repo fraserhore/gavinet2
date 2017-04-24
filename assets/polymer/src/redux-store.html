@@ -173,6 +173,40 @@
             
             },
 
+            getContentTypes: function() {
+                return function(dispatch) {
+
+                    var request = api.getContentTypes();
+
+                    Promise.all([request.completes])
+                        .then(function (requests) {
+                            var response = requests[0].response;
+                            dispatch({
+                                type: 'LOAD_CONTENT_TYPES',
+                                contentTypes: response
+                            });
+                        });
+                }
+            
+            },
+
+            getContentTypeSchema: function() {
+                return function(dispatch) {
+
+                    var request = api.getContentTypeSchema();
+
+                    Promise.all([request.completes])
+                        .then(function (requests) {
+                            var response = requests[0].response;
+                            dispatch({
+                                type: 'LOAD_CONTENT_TYPE_SCHEMA',
+                                contentTypeSchema: response
+                            });
+                        });
+                }
+            
+            },
+
             getBranches: function(options) {
                 return function(dispatch) {
 
@@ -235,6 +269,74 @@
                             dispatch({
                                 type: 'ADD_SNAPSHOT',
                                 snapshot: response
+                            });
+                        });
+                }
+            
+            },
+
+            create: function(options) {
+                return function(dispatch) {
+
+                    var request = api.create(options);
+
+                    Promise.all([request.completes])
+                        .then(function (requests) {
+                            var response = requests[0].response;
+                            dispatch({
+                                type: 'ADD_CREATED',
+                                created: response
+                            });
+                        });
+                }
+            
+            },
+
+            update: function(options) {
+                return function(dispatch) {
+
+                    var request = api.update(options);
+
+                    Promise.all([request.completes])
+                        .then(function (requests) {
+                            var response = requests[0].response;
+                            dispatch({
+                                type: 'ADD_UPDATED',
+                                updated: response
+                            });
+                        });
+                }
+            
+            },
+
+            move: function(options) {
+                return function(dispatch) {
+
+                    var request = api.move(options);
+
+                    Promise.all([request.completes])
+                        .then(function (requests) {
+                            var response = requests[0].response;
+                            dispatch({
+                                type: 'ADD_MOVED',
+                                moved: response
+                            });
+                        });
+                }
+            
+            },
+
+            remove: function(options) {
+                return function(dispatch) {
+
+                    var request = api.remove(options);
+
+                    Promise.all([request.completes])
+                        .then(function (requests) {
+                            var response = requests[0].response;
+                            dispatch({
+                                type: 'ADD_REMOVED',
+                                removed: response
                             });
                         });
                 }
