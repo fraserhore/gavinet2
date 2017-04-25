@@ -9,6 +9,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 -->
 
 <link rel="import" href="/polymer/bower_components/polymer/polymer.html">
+<link rel="import" href="/polymer/bower_components/polymer-sortablejs/polymer-sortablejs.html"/>
 
 <dom-module id="content-children">
   <template>
@@ -18,27 +19,28 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       }
     </style>
 
-    <template is="dom-repeat" items="[[children]]">
-      <div class="horizontal-section">
-        <h4>
-          <template is="dom-if" if="{{item.urlAlias}}">
-            <a href="/{{nodeData.lang}}{{item.urlAlias}}">[[item.identityNode.properties.name]]</a>
+    <sortable-js on-update="reorder">
+      <template is="dom-repeat" items="[[children]]">
+        <div class="horizontal-section">
+          <h4>
+            <template is="dom-if" if="{{item.urlAlias}}">
+              <a href="/{{nodeData.lang}}{{item.urlAlias}}">[[item.identityNode.properties.name]]</a>
+            </template>
+            <template is="dom-if" if="{{!item.urlAlias}}">
+              <a href="/{{nodeData.lang}}/{{item.identityNode.properties.uuid}}">[[item.identityNode.properties.name]]</a>
+            </template>
+          </h4>
+          <template is="dom-repeat" items="[[_toArray(item.versionNode.properties)]]">
+            <template is="dom-if" if="{{item.value}}">
+              <p>[[item.name]]: [[item.value]]</p>
+            </template>
           </template>
-          <template is="dom-if" if="{{!item.urlAlias}}">
-            <a href="/{{nodeData.lang}}/{{item.identityNode.properties.uuid}}">[[item.identityNode.properties.name]]</a>
-          </template>
-        </h4>
-        <template is="dom-repeat" items="[[_toArray(item.versionNode.properties)]]">
-          <template is="dom-if" if="{{item.value}}">
-            <p>[[item.name]]: [[item.value]]</p>
-          </template>
-        </template>
-        
-        <paper-button on-click="edit"><iron-icon icon="create"></iron-icon></paper-button>
-        <paper-button on-click="delete"><iron-icon icon="delete"></iron-icon></paper-button>
-      </div>
-    </template>
-
+          
+          <paper-button on-click="edit"><iron-icon icon="create"></iron-icon></paper-button>
+          <paper-button on-click="delete"><iron-icon icon="delete"></iron-icon></paper-button>
+        </div>
+      </template>
+    </sortable-js>
   </template>
   <script>
   (function() {
@@ -115,9 +117,39 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         });
       },
 
+      reorder: function(event) {
+        if(event.oldIndex === undefined || event.newIndex === undefined) return;
+        console.log('old index: ' + event.oldIndex + ' new index: ' + event.newIndex);
+        console.log(this.immutableMove(this.children, event.oldIndex, event.newIndex));
+      },
+
+      immutableMove: function(arr, from, to) {
+        return arr.reduce((prev, current, idx, self) => {
+          if (from === to) {
+            prev.push(current);
+          }
+          if (idx === from) {
+            return prev;
+          }
+          if (from < to) {
+            prev.push(current);
+          }
+          if (idx === to) {
+            prev.push(self[from]);
+          }
+          if (from > to) {
+            prev.push(current);
+          }
+          return prev;
+        }, []);
+      },
+
       ready: function() {
         this.isReady = true;
-        //this.getChildren();
+        if(!this.children) {
+          this.getChildren();
+        }
+        
       }
 
 

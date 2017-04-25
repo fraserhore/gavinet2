@@ -26,7 +26,8 @@
     "moment-element": "^0.4.1",
     "vaadin-core-elements": "^1.1.2",
     "polymer-redux": "^0.3.0",
-    "redux": "^3.6.0"
+    "redux": "^3.6.0",
+    "polymer-sortablejs": "^0.1.3"
   },
   "devDependencies": {
     "web-component-tester": "^4.0.0"
