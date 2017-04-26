@@ -156,6 +156,12 @@ module.exports.routes = {
     skipAssets: true
   },  
 
+  'POST /content/reorder': {
+    controller: 'ContentController',
+    action: 'reorder',
+    skipAssets: true
+  },  
+
   'GET /swagger/doc': {
     controller: 'SwaggerController',
     action: 'doc',

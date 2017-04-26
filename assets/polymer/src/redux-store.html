@@ -341,6 +341,22 @@
                         });
                 }
             
+            },
+
+            reorder: function(options) {
+                return function(dispatch) {
+                    var request = api.reorder(options);
+
+                    Promise.all([request.completes])
+                        .then(function (requests) {
+                            var response = requests[0].response;
+                            console.log(response);
+                            // dispatch({
+                            //     type: 'REORDER',
+                            //     reordered: response
+                            // });
+                        });
+                }
             }
 
 

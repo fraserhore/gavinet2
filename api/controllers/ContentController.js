@@ -781,6 +781,12 @@ module.exports = {
                 };
         //console.log(options);
         ContentService.createSnapshot(options, function(done){return res.json(done)});       
+    },
+
+    reorder: function(req, res) {
+        var options = req.body;
+        console.log(options);
+        ContentService.reorder(options, function(done){return res.json(done)});   
     }
 
 

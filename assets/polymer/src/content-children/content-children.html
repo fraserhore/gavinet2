@@ -19,7 +19,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       }
     </style>
 
-    <sortable-js on-update="reorder">
+    <sortable-js on-update="reorderChildren">
       <template is="dom-repeat" items="[[children]]">
         <div class="horizontal-section">
           <h4>
@@ -117,10 +117,21 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         });
       },
 
-      reorder: function(event) {
+      reorderChildren: function(event) {
         if(event.oldIndex === undefined || event.newIndex === undefined) return;
         console.log('old index: ' + event.oldIndex + ' new index: ' + event.newIndex);
         console.log(this.immutableMove(this.children, event.oldIndex, event.newIndex));
+        var uuids = [],
+            reorderedUuids = [],
+            options = {};
+        for (var i = 0; i < this.children.length; i++) {
+          var child = this.children[i];
+          uuids.push(child.identityNode.properties.uuid);
+        };
+        reorderedUuids = this.immutableMove(uuids, event.oldIndex, event.newIndex);
+        options = { "uuids" : reorderedUuids };
+        console.log(options);
+        this.dispatch("reorder", options);
       },
 
       immutableMove: function(arr, from, to) {

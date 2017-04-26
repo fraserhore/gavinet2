@@ -211,6 +211,15 @@
                 },
 
 
+                reorder: function(options) {
+                    var ajax = this.$.ajax;
+                    ajax.url = '/content/reorder';
+                    ajax.method = 'POST';
+                    ajax.body = options;
+                    console.log(options);
+                    return ajax.generateRequest();
+                },
+
                 // READ SPECIFIC ITEM operation
                 // itemId: The id of the item to get
                 // listName: The name of the list you want to get items from
@@ -279,6 +288,8 @@
                         console.log("Failed to deleted item " + itemId);
                    });
                 },
+
+
 
                 getAllItems: function(viewFields, filter, rowlimit, orderbyfield, success, error) {
                     var queryFilter = "&$filter=";

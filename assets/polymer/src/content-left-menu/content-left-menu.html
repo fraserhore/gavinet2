@@ -81,7 +81,8 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       ],
 
       getParent: function() {
-        if(!this.isReady) return;
+        console.log(this.nodeData);
+        if(!this.isReady || !this.nodeData) return;
         var options = {
             "id": this.nodeData.identityNode.properties.uuid
             };
@@ -89,7 +90,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       },
 
       getSiblings: function() {
-        if(!this.isReady) return;
+        if(!this.isReady || !this.nodeData) return;
         var options = {
             "id": this.nodeData.identityNode.properties.uuid
             };

@@ -270,7 +270,7 @@ module.exports = {
                     +  versionMatch
                     +  contentTypeMatch
                     +' OPTIONAL MATCH (identityNode)-[:URL_ALIAS]->(urlAliasIdentity)-[urlAliasVersionRel:VERSION {to:9007199254740991}]->(urlAliasVersion)'
-                    +' RETURN identityNode, version, versionNode, authorNode, urlAliasVersion.urlAlias as urlAlias';
+                    +' RETURN identityNode, version, versionNode, authorNode, urlAliasVersion.urlAlias as urlAlias ORDER BY parentChildRel.order, parentChildRel.from';
        console.log(query);
         return session
             .run(query, options)
@@ -1276,6 +1276,33 @@ module.exports = {
             "identityNamePattern": "childversion.name"
         };
         return done( ContentService.create(options2, function(done2){return res.json(done2)}) );
+    },
+
+    reorder: function(options, done) {
+        var session = driver.session();
+        
+        var query =   'WITH ' + JSON.stringify(options.uuids) + ' as uuids'
+                    +' UNWIND range(0, size(uuids) - 1) as index'
+                    +' MATCH ()-[r:CONTAINS]->(a {uuid:uuids[index]})'
+                    +' WITH r, a ORDER BY index ASC'
+                    +' WITH COLLECT(r) as rels'
+                    +' FOREACH(i IN RANGE(0, SIZE(rels)-1) | FOREACH(x in [rels[i]] | set x.order = i))'
+                    +' RETURN rels'
+       console.log(options);
+       console.log(query);
+        return session
+            .run(query, options)
+            .then(result => {
+                var record = result.records[0];
+                session.close();
+                return done( {"relationships" : record.get('rels')} );
+            })
+            .catch(error => {
+                session.close();
+               console.log(error);
+                return done(error);
+                throw error;
+            });        
     },
 
     // Utilies
