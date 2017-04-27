@@ -27,7 +27,8 @@
     "vaadin-core-elements": "^1.1.2",
     "polymer-redux": "^0.3.0",
     "redux": "^3.6.0",
-    "polymer-sortablejs": "^0.1.3"
+    "polymer-sortablejs": "^0.1.3",
+    "polymer-quill": "^1.2.3"
   },
   "devDependencies": {
     "web-component-tester": "^4.0.0"

@@ -7,290 +7,362 @@ The complete set of contributors may be found at http://polymer.github.io/CONTRI
 Code distributed by Google as part of the polymer project is also
 subject to an additional IP rights grant found at http://polymer.github.io/PATENTS.txt
 -->
-
 <link rel="import" href="/polymer/bower_components/polymer/polymer.html">
-
 <dom-module id="content-edit">
-  <template>
-    <style>
-      :host {
-        display: block;
-      }
-    </style>
-
-    <iron-ajax id="getContentTypes"
-      auto
-      url="/content/getContentTypes"
-      params=''
-      handle-as="json"
-      last-response="{{contenttypes}}"
-      debounce-duration="300"></iron-ajax>
-
-    <iron-ajax id="getContentTypeSchema"
-      url="/content/getContentTypeSchema"
-      params='{"contenttype": formData.contenttype}'
-      handle-as="json"
-      last-response="{{dataSchema}}"
-      on-response="_dataSchemaResponse"
-      debounce-duration="300"></iron-ajax>
-
-    <iron-ajax id="postData"
-      url="/content/{{formData.action}}"
-      content-type="application/json"
-      method="POST"
-      body="{{formData}}"
-      handle-as="json"
-      last-response="{{res}}"
-      on-response="_postDataResponse"
-      debounce-duration="300"></iron-ajax>
-
-    <paper-dropdown-menu label="Content Type" selected-item="{{selectedItem}}" selected-item-label="{{selected}}" on-iron-select="_updateContentType">
-      <paper-menu class="dropdown-content">
-        <template is="dom-repeat" items="[[contenttypes]]">
-          <paper-item value="[[item.contentTypeVersion.properties.identifier]]">[[item.contentTypeIdentity.properties.name]]</paper-item>
-        </template>
-      </paper-menu>
-    </paper-dropdown-menu>
-    <!-- Create an identity node name using the pattern defined in the schema -->
-    <paper-input name="identityNamePattern" label="identityNamePattern" value="{{formData.identityNamePattern}}"></paper-input>
-    <template id="repeatProperties" is="dom-repeat" items="{{_toArray(dataSchema.properties)}}" as="property">
-      <template is="dom-if" if="{{_eq(property.object.type, 'string')}}">
-        <paper-input name="properties[[[property.key]]]" label="{{property.object.title}}" value="[[_getFormDataProperty(property.key)]]" on-value-changed="_updateProperty"></paper-input>
-      </template>
-      <template is="dom-if" if="{{_eq(property.object.type, 'boolean')}}">
-        <paper-toggle-button name="properties[[[property.key]]]" label="{{property.object.title}}" value="[[_getFormDataProperty(property.key)]]" on-value-changed="_updateProperty">{{property.object.title}}</paper-toggle-button>
-      </template>
-      <template is="dom-if" if="{{_eq(property.object.type, 'integer')}}">
-        <paper-input name="properties[[[property.key]]]" label="{{property.object.title}}" value="[[_getFormDataProperty(property.key)]]" on-value-changed="_updateProperty"></paper-input>
-      </template>
-      <template is="dom-if" if="{{_eq(property.object.type, 'relationship')}}">
-        <br/>
-        <label>{{property.object.title}}</label>
-        <template id="repeatRelationships" is="dom-repeat" items="{{formData.relationships}}" as="relationship">
-          <template is="dom-if" if="_eq(property.key, relationship.relationshipName)">
-            <paper-item>-{{property.key}}[{{relationship.relationshipName}}]-> {{relationship.relatedNode.properties.name}}</paper-item>
-          </template>
-        </template>
-        <paper-button raised on-click="openDialog" data-dialog="relationshipDialog{{index}}">Add [[property.object.title]]</paper-button>
-        <content-relationship id="relationshipDialog{{index}}" form-data="{{formData}}" relationship-name="{{property.object.identifier}}" direction="{{property.object.direction}}" parent-node-id="{{property.object.enumItemsParent}}" related-node-id="{{relatedNodeId}}" related-node="{{relatedNode}}"></content-relationship>
-      </template>
-    </template>
-
-  </template>
-  <script>
-  (function() {
-    'use strict';
-
-    Polymer({
-      is: 'content-edit',
-
-      properties: {
-        dataSchema: {
-          type: Object,
-          value: function() {
-            return {};
-          },
-          notify: true,
-          observer: '_dataSchemaChanged'
-        },
-        uiSchema: {
-          type: Object,
-          value: function() {
-            return {};
-          },
-          notify: true
-        },
-        relationships: {
-          type: Array,
-          value: [],
-          notify: true
-        },
-        formData: {
-          type: Object,
-          value: function() {
-            return {};
-          },
-          notify: true,
-          reflectToAttribute: true,
-          observer: '_formDataChanged'
-        },
-        data: {
-          type: Object,
-          value: function() {
-            return {};
-          },
-          notify: true
+    <template>
+        <style>
+        :host {
+            display: block;
         }
-      },
-
-      observers: [
-          '_relationshipsChanged(formData.relationships)'
-      ],
-
-      _relationshipsChanged: function() {
-        //console.log('test');
-      },
-
-      ready: function() {
+        </style>
+        <iron-ajax id="getContentTypes" auto url="/content/getContentTypes" params='' handle-as="json" last-response="{{contenttypes}}" debounce-duration="300"></iron-ajax>
+        <iron-ajax id="getContentTypeSchema" url="/content/getContentTypeSchema" params='{"contenttype": formData.contenttype}' handle-as="json" last-response="{{dataSchema}}" on-response="_dataSchemaResponse" debounce-duration="300"></iron-ajax>
+        <iron-ajax id="postData" url="/content/{{formData.action}}" content-type="application/json" method="POST" body="{{formData}}" handle-as="json" last-response="{{res}}" on-response="_postDataResponse" debounce-duration="300"></iron-ajax>
         
-      },
+        <paper-button raised on-click="update">Edit</paper-button>
+        <paper-button raised on-click="create">New</paper-button>
+        <paper-dialog id="editDialog" entry-animation="scale-up-animation" exit-animation="fade-out-animation" autoFitOnAttach="true" on-iron-overlay-closed="_dialogClosed">
+            <h2>Create / Edit Item</h2>
+            <paper-dialog-scrollable>
+                <paper-dropdown-menu label="Content Type" selected-item="{{selectedItem}}" selected-item-label="{{selected}}" on-iron-select="_updateContentType">
+                    <paper-menu class="dropdown-content">
+                        <template is="dom-repeat" items="[[contenttypes]]">
+                            <paper-item value="[[item.contentTypeVersion.properties.identifier]]">[[item.contentTypeIdentity.properties.name]]</paper-item>
+                        </template>
+                    </paper-menu>
+                </paper-dropdown-menu>
+                <!-- Create an identity node name using the pattern defined in the schema -->
+                <paper-input name="identityNamePattern" label="identityNamePattern" value="{{formData.identityNamePattern}}"></paper-input>
+                <template id="repeatProperties" is="dom-repeat" items="{{_toArray(dataSchema.properties)}}" as="property">
+                    <template is="dom-if" if="{{_eq(property.object.type, 'string')}}">
+                        <template is="dom-if" if="{{_le(property.object.maxLength, 256)}}">
+                          <paper-input name="properties[[[property.key]]]" label="{{property.object.title}}" value="[[_getFormDataProperty(property.key)]]" on-value-changed="_updateProperty"></paper-input>
+                        </template>
+                        <template is="dom-if" if="{{_gt(property.object.maxLength, 256)}}">
+                          <polymer-quill store-as="html" save-interval="1000" toolbar-type="full" show-html content="[[_getFormDataProperty(property.key)]]" on-change="_updateProperty"></polymer-quill>
+                          <div>max length: {{property.object.maxLength}}</div>
+                        </template>
+                    </template>
+                    <template is="dom-if" if="{{_eq(property.object.type, 'boolean')}}">
+                        <paper-toggle-button name="properties[[[property.key]]]" label="{{property.object.title}}" value="[[_getFormDataProperty(property.key)]]" on-value-changed="_updateProperty">{{property.object.title}}</paper-toggle-button>
+                    </template>
+                    <template is="dom-if" if="{{_eq(property.object.type, 'integer')}}">
+                        <paper-input name="properties[[[property.key]]]" label="{{property.object.title}}" value="[[_getFormDataProperty(property.key)]]" on-value-changed="_updateProperty"></paper-input>
+                    </template>
+                    <template is="dom-if" if="{{_eq(property.object.type, 'relationship')}}">
+                        <br/>
+                        <label>{{property.object.title}}</label>
+                        <template id="repeatRelationships" is="dom-repeat" items="{{formData.relationships}}" as="relationship">
+                            <template is="dom-if" if="_eq(property.key, relationship.relationshipName)">
+                                <paper-item>-{{property.key}}[{{relationship.relationshipName}}]-> {{relationship.relatedNode.properties.name}}</paper-item>
+                            </template>
+                        </template>
+                        <paper-button raised on-click="openDialog" data-dialog="relationshipDialog{{index}}">Add [[property.object.title]]</paper-button>
+                        <content-relationship id="relationshipDialog{{index}}" form-data="{{formData}}" relationship-name="{{property.object.identifier}}" direction="{{property.object.direction}}" parent-node-id="{{property.object.enumItemsParent}}" related-node-id="{{relatedNodeId}}" related-node="{{relatedNode}}"></content-relationship>
+                    </template>
+                </template>
+            </paper-dialog-scrollable>
+            <div class="buttons">
+                <paper-button dialog-dismiss>Cancel</paper-button>
+                <paper-button raised on-click="_submit" data-form="contentEdit">Submit</paper-button>
+            </div>
+        </paper-dialog>
+    </template>
+    <script>
+    (function() {
+        'use strict';
 
-      // open: function() {
-      //   this.$.editDialog.open();
-      //   if(this.formData.contenttype) {
-      //     this.$.getContentTypeSchema.params = {"contenttype": this.formData.contenttype};
-      //     this.$.getContentTypeSchema.url = '/content/getContentTypeSchema';
-      //     this.$.editDialog.refit();
-      //   }
-      // },
+        Polymer({
+            is: 'content-edit',
+            behaviors: [ ReduxBehavior, AsyncActionsBehavior ],
+            properties: {
+                nodeData: {
+                  type: Object,
+                  statePath: 'nodeData'
+                },
+                dataSchema: {
+                    type: Object,
+                    value: function() {
+                        return {};
+                    },
+                    notify: true,
+                    observer: '_dataSchemaChanged'
+                },
+                uiSchema: {
+                    type: Object,
+                    value: function() {
+                        return {};
+                    },
+                    notify: true
+                },
+                relationships: {
+                    type: Array,
+                    value: [],
+                    notify: true
+                },
+                formData: {
+                    type: Object,
+                    value: function() {
+                        return {};
+                    },
+                    notify: true,
+                    reflectToAttribute: true,
+                    observer: '_formDataChanged'
+                },
+                data: {
+                    type: Object,
+                    value: function() {
+                        return {};
+                    },
+                    notify: true
+                }
+            },
+
+            observers: [
+                '_relationshipsChanged(formData.relationships)'
+            ],
+
+            _relationshipsChanged: function() {
+                //console.log('test');
+            },
+
+            ready: function() {
+
+            },
+
+            create: function(event) {
+                this.set('formData.action', 'create');
+                this.set('formData.authorId', this.nodeData.authorNode.properties.uuid); // Should come from the user session
+                this.set('formData.parentId', this.nodeData.identityNode.properties.uuid);
+                this.set('formData.lang', this.nodeData.lang);
+                this.set('formData.versionName', '');
+                //this.set('formData.contenttype', 'folder');
+                //console.log(this.formData);
+                this.$.editDialog.open();
+            },
+
+            update: function(event) {
+                var identityNode = event.detail.identityNode || this.nodeData.identityNode,
+                    versionNode = event.detail.versionNode || this.nodeData.versionNode,
+                    relationships = event.detail.relationships || this.nodeData.relationships,
+                    authorNode = event.detail.authorNode || this.nodeData.authorNode;
+                this.set('formData.action', 'update');
+                this.set('formData.authorId', authorNode.properties.uuid);
+                this.set('formData.id', identityNode.properties.uuid);
+                this.set('formData.versionName', '');
+                this.set('formData.properties', versionNode.properties);
+                this.set('formData.contenttype', identityNode.properties.contentType);
+                //console.log(identityNode);
+                //this.set('formData.relationships', relationships);
+                //this.notifyPath('formData.properties');    
+                this._init();
+                this.$.editDialog.open();
+                // this.$.editDialog.refit(); this didn't work. need to try something else.
+            },
+
+            delete: function(event) {
+                this.$.api.delete(event.model.item.identityNode.properties.uuid);
+            },
+
+            deleteResponse: function(request) {},
+
+            _dialogClosed: function() {
+                //this.$.getContent.generateRequest();
+            },
 
 
-      _dataSchemaChanged: function() {
-        //console.log(this.dataSchema);
-
-      },
-
-      _formDataChanged: function() {
-         //console.log('form data changed');
-      },
-
-      _submit: function() {
-        console.log('formData');
-        console.log(this.formData);
-        this.$.postData.generateRequest();
-        //this.$.editDialog.close();
-      },
+            // open: function() {
+            //   this.$.editDialog.open();
+            //   if(this.formData.contenttype) {
+            //     this.$.getContentTypeSchema.params = {"contenttype": this.formData.contenttype};
+            //     this.$.getContentTypeSchema.url = '/content/getContentTypeSchema';
+            //     this.$.editDialog.refit();
+            //   }
+            // },
 
 
-      edit: function(event) {
-        //console.log(event.model.item.identityNode.properties.uuid);
+            _dataSchemaChanged: function() {
+                //console.log(this.dataSchema);
 
-      },
+            },
 
-      openDialog: function(event) {
-        var button = event.target;
-        //console.dir(event.target);
-        //event.target.nextElementSibling.open();
-        while (!button.dataDialog && button !== document.body) {
-          button = button.parentElement;
-        }
-        if (!button.dataDialog) {
-          return;
-        }
-        var id = button.dataDialog;
-        var dialog = Polymer.dom(this.root).querySelector('#'+id);
-        if (dialog) {
-          dialog.open();
-        }
-      },
+            _formDataChanged: function() {
+                //console.log('form data changed');
+            },
 
-      _updateContentType: function(event) {
-        var selectedItem = event.target.selectedItem;
-        if(selectedItem) {
-          this.formData.contenttype = selectedItem.value;
-          // could add a change listener to formData.contenttype to handle the following
-          this.$.getContentTypeSchema.params = {"contenttype": selectedItem.value};
-          this.$.getContentTypeSchema.generateRequest();
-          //this._initFormData();
-        }
-      },
+            _submit: function() {
+                console.log('formData');
+                console.log(this.formData);
+                this.$.postData.generateRequest();
+                this.$.editDialog.close();
+            },
 
-      _dataSchemaResponse: function() {
-        // console.log(this.dataSchema);
-        this._initFormData();
-      },
+            // _submit: function(event) {
+            //     var button = event.target;
+            //     while (!button.hasAttribute('data-form') && button !== document.body) {
+            //         button = button.parentElement;
+            //     }
+            //     if (!button.hasAttribute('data-form')) {
+            //         return;
+            //     }
+            //     var id = button.getAttribute('data-form');
+            //     var form = this.$.contentEdit;
+            //     //console.log(form);
+            //     if (form) {
+            //         console.log('submit form');
+            //         console.log(form);
+            //         form._submit();
+            //     }
+            //     this.$.editDialog.close();
+            //     //this.$.getContent.generateRequest();
+            //     this.getNodeData();
+            //     this.getChildren();
+            // }
 
-      _init: function() {
-        //console.log('init');
-        //console.log(this.formData);
-        this.$.getContentTypeSchema.params = {"contenttype": this.formData.contenttype};
-        this.$.getContentTypeSchema.generateRequest();
-      },
 
-      _initFormData: function() {
-        //console.log(this.dataSchema);
-        if(!this.dataSchema.properties) return;
-        // Configure the formData properties and relationships based on the dataSchema if they are not already provided
-        var dataSchemaKeys = Object.keys(this.dataSchema.properties);
-        // console.log(this.dataSchemaKeys);
-        if(!this.formData.properties) {
-          this.formData.properties = {};
-        }
-        if(!this.formData.relationships) {
-          this.formData.relationships = [];
-        }
-        for (var i = 0; i < dataSchemaKeys.length; i++) {
-          var key = dataSchemaKeys[i];
-          if(!this.formData.properties[key]) {
-            switch(this.dataSchema.properties[key].type) {
-              case 'String':
-                this.formData.properties[key] = '';
-                break;
-              case 'Array':
-                this.formData.properties[key] = [];
-                break;
-              case 'Object':
-                this.formData.properties[key] = {};
-                break;
-              case 'Relationship':
-                break;
-              case 'relationship':
-                break;
-              default:
-                this.formData.properties[key] = undefined;
-                break;       
+            edit: function(event) {
+                //console.log(event.model.item.identityNode.properties.uuid);
+
+            },
+
+            openDialog: function(event) {
+                var button = event.target;
+                //console.dir(event.target);
+                //event.target.nextElementSibling.open();
+                while (!button.dataDialog && button !== document.body) {
+                    button = button.parentElement;
+                }
+                if (!button.dataDialog) {
+                    return;
+                }
+                var id = button.dataDialog;
+                var dialog = Polymer.dom(this.root).querySelector('#' + id);
+                if (dialog) {
+                    dialog.open();
+                }
+            },
+
+            _updateContentType: function(event) {
+                var selectedItem = event.target.selectedItem;
+                if (selectedItem) {
+                    this.formData.contenttype = selectedItem.value;
+                    // could add a change listener to formData.contenttype to handle the following
+                    this.$.getContentTypeSchema.params = {
+                        "contenttype": selectedItem.value
+                    };
+                    this.$.getContentTypeSchema.generateRequest();
+                    //this._initFormData();
+                }
+            },
+
+            _dataSchemaResponse: function() {
+                // console.log(this.dataSchema);
+                this._initFormData();
+            },
+
+            _init: function() {
+                //console.log('init');
+                //console.log(this.formData);
+                this.$.getContentTypeSchema.params = {
+                    "contenttype": this.formData.contenttype
+                };
+                this.$.getContentTypeSchema.generateRequest();
+            },
+
+            _initFormData: function() {
+                //console.log(this.dataSchema);
+                if (!this.dataSchema.properties) return;
+                // Configure the formData properties and relationships based on the dataSchema if they are not already provided
+                var dataSchemaKeys = Object.keys(this.dataSchema.properties);
+                // console.log(this.dataSchemaKeys);
+                if (!this.formData.properties) {
+                    this.formData.properties = {};
+                }
+                if (!this.formData.relationships) {
+                    this.formData.relationships = [];
+                }
+                for (var i = 0; i < dataSchemaKeys.length; i++) {
+                    var key = dataSchemaKeys[i];
+                    if (!this.formData.properties[key]) {
+                        switch (this.dataSchema.properties[key].type) {
+                            case 'String':
+                                this.formData.properties[key] = '';
+                                break;
+                            case 'Array':
+                                this.formData.properties[key] = [];
+                                break;
+                            case 'Object':
+                                this.formData.properties[key] = {};
+                                break;
+                            case 'Relationship':
+                                break;
+                            case 'relationship':
+                                break;
+                            default:
+                                this.formData.properties[key] = undefined;
+                                break;
+                        }
+                    }
+                };
+                // console.log(this.formData);
+            },
+
+            _toArray: function(obj) {
+                if (!obj) return;
+                return Object.keys(obj).map(function(key) {
+                    return {
+                        key: key,
+                        object: obj[key]
+                    };
+                });
+            },
+            _getFormDataProperty: function(property) {
+                if (!property || !this.formData.properties) return;
+                var propertyData = this.formData.properties[property] || "";
+                return propertyData;
+            },
+
+            _getFormDataPropertyByKey: function(change, key, path) {
+                // first argument is the change record for the array change,
+                // change.base is the array specified in the binding
+                // this.get(path, root) returns a value for a path
+                // relative to a root object.
+                return this.get(path, change.base[key]);
+            },
+
+            _updateProperty: function(event) {
+                var value = event.detail.html ? event.detail.html : event.detail.value;
+                if (!value || !event.model.property) return;
+                console.log(value);
+                this.set(['formData', 'properties', event.model.property.key], value);
+                //this.formData.properties[event.model.item.key] = event.detail.value;
+            },
+
+            _eq: function(a, b) {
+                // console.log(a +' = '+b);
+                return a === b;
+            },
+
+            _le: function(a, b) {
+                return a <= b;
+            },
+
+            _gt: function(a, b) {
+                return a > b;
+            },
+
+            _stringify: function(obj) {
+                return JSON.stringify(obj);
+            },
+
+            _postDataResponse: function(event) {
+                console.log(event);
+                this.fire('contentEdited', {
+                    action: this.formData.action
+                });
             }
-          }
-        };
-        // console.log(this.formData);
-      },
 
-      _toArray: function(obj) {
-        if(!obj) return;
-        return Object.keys(obj).map(function(key) {
-            return {
-                key: key,
-                object: obj[key]
-            };
         });
-      },
-      _getFormDataProperty: function(property) {
-        if(!property || !this.formData.properties) return;
-        var propertyData = this.formData.properties[property] || "";
-        return propertyData;
-      },
-
-      _getFormDataPropertyByKey: function(change, key, path) {
-        // first argument is the change record for the array change,
-        // change.base is the array specified in the binding
-        // this.get(path, root) returns a value for a path
-        // relative to a root object.
-        return this.get(path, change.base[key]);
-      },
-
-      _updateProperty: function(event) {
-        //console.log(event.model.property);
-        if(!event.detail.value || !event.model.property) return;
-        this.set(['formData', 'properties', event.model.property.key], event.detail.value);
-        //this.formData.properties[event.model.item.key] = event.detail.value;
-      },
-
-      _eq: function(a, b) {
-        // console.log(a +' = '+b);
-        return a === b;
-      },
-
-      _stringify: function(obj) {
-        return JSON.stringify(obj);
-      },
-
-      _postDataResponse: function(event) {
-        console.log(event);
-        this.fire('contentEdited', {action: this.formData.action});
-      }
-
-    });
-  })();
-  </script>
+    })();
+    </script>
 </dom-module>
-  
