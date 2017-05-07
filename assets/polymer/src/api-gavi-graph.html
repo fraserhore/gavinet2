@@ -163,7 +163,8 @@
 
                 // getContentTypeSchema Operation
                 // Options: 
-                getContentTypeSchema: function(options) {                   
+                getContentTypeSchema: function(options) { 
+                    console.log(options);                  
                     var ajax = this.$.ajax;
                     ajax.url = '/content/getContentTypeSchema';
                     ajax.params = options;

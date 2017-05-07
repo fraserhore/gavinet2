@@ -15,32 +15,45 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
             display: block;
         }
         </style>
-        <iron-ajax id="getContentTypes" auto url="/content/getContentTypes" params='' handle-as="json" last-response="{{contenttypes}}" debounce-duration="300"></iron-ajax>
-        <iron-ajax id="getContentTypeSchema" url="/content/getContentTypeSchema" params='{"contenttype": formData.contenttype}' handle-as="json" last-response="{{dataSchema}}" on-response="_dataSchemaResponse" debounce-duration="300"></iron-ajax>
-        <iron-ajax id="postData" url="/content/{{formData.action}}" content-type="application/json" method="POST" body="{{formData}}" handle-as="json" last-response="{{res}}" on-response="_postDataResponse" debounce-duration="300"></iron-ajax>
-        
+        <style is="custom-style">
+          polymer-quill {
+            --polymer-quill-editor-min-width: 500px;
+          }
+        </style>
+
+        <iron-ajax id="postData" 
+            url="/content/{{formData.action}}" 
+            content-type="application/json" 
+            method="POST" 
+            body="{{formData}}" 
+            handle-as="json" 
+            last-response="{{res}}" 
+            on-response="_postDataResponse" 
+            debounce-duration="300"></iron-ajax>
+
         <paper-button raised on-click="update">Edit</paper-button>
         <paper-button raised on-click="create">New</paper-button>
+        <paper-dropdown-menu label="Content Type" selected-item="{{selectedItem}}" selected-item-label="{{selected}}" on-iron-select="_updateContentType">
+            <paper-menu class="dropdown-content">
+                <template is="dom-repeat" items="[[contentTypes]]">
+                    <paper-item value="[[item.contentTypeVersion.properties.identifier]]">[[item.contentTypeIdentity.properties.name]]</paper-item>
+                </template>
+            </paper-menu>
+        </paper-dropdown-menu>
         <paper-dialog id="editDialog" entry-animation="scale-up-animation" exit-animation="fade-out-animation" autoFitOnAttach="true" on-iron-overlay-closed="_dialogClosed">
             <h2>Create / Edit Item</h2>
             <paper-dialog-scrollable>
-                <paper-dropdown-menu label="Content Type" selected-item="{{selectedItem}}" selected-item-label="{{selected}}" on-iron-select="_updateContentType">
-                    <paper-menu class="dropdown-content">
-                        <template is="dom-repeat" items="[[contenttypes]]">
-                            <paper-item value="[[item.contentTypeVersion.properties.identifier]]">[[item.contentTypeIdentity.properties.name]]</paper-item>
-                        </template>
-                    </paper-menu>
-                </paper-dropdown-menu>
                 <!-- Create an identity node name using the pattern defined in the schema -->
-                <paper-input name="identityNamePattern" label="identityNamePattern" value="{{formData.identityNamePattern}}"></paper-input>
-                <template id="repeatProperties" is="dom-repeat" items="{{_toArray(dataSchema.properties)}}" as="property">
+                <!-- <paper-input name="identityNamePattern" label="identityNamePattern" value="{{formData.identityNamePattern}}"></paper-input> -->
+                <template id="repeatProperties" is="dom-repeat" items="{{_toArray(contentTypeSchema.properties)}}" as="property">
                     <template is="dom-if" if="{{_eq(property.object.type, 'string')}}">
                         <template is="dom-if" if="{{_le(property.object.maxLength, 256)}}">
-                          <paper-input name="properties[[[property.key]]]" label="{{property.object.title}}" value="[[_getFormDataProperty(property.key)]]" on-value-changed="_updateProperty"></paper-input>
+                            <paper-input name="properties[[[property.key]]]" label="{{property.object.title}}" value="[[_getFormDataProperty(property.key)]]" on-value-changed="_updateProperty"></paper-input>
                         </template>
                         <template is="dom-if" if="{{_gt(property.object.maxLength, 256)}}">
-                          <polymer-quill store-as="html" save-interval="1000" toolbar-type="full" show-html content="[[_getFormDataProperty(property.key)]]" on-change="_updateProperty"></polymer-quill>
-                          <div>max length: {{property.object.maxLength}}</div>
+                            <label>{{property.object.title}}</label>
+                            <polymer-quill store-as="html" save-interval="1000" toolbar-type="full" show-html content="[[_getFormDataProperty(property.key)]]" on-change="_updateProperty"></polymer-quill>
+                            <div>max length: {{property.object.maxLength}}</div>
                         </template>
                     </template>
                     <template is="dom-if" if="{{_eq(property.object.type, 'boolean')}}">
@@ -74,48 +87,32 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
         Polymer({
             is: 'content-edit',
-            behaviors: [ ReduxBehavior, AsyncActionsBehavior ],
+            behaviors: [ReduxBehavior, AsyncActionsBehavior],
             properties: {
                 nodeData: {
-                  type: Object,
-                  statePath: 'nodeData'
-                },
-                dataSchema: {
                     type: Object,
-                    value: function() {
-                        return {};
-                    },
-                    notify: true,
-                    observer: '_dataSchemaChanged'
+                    //statePath: 'nodeData'
                 },
-                uiSchema: {
+                contentTypes: {
                     type: Object,
-                    value: function() {
-                        return {};
-                    },
-                    notify: true
+                    statePath: 'contentTypes'
+                },
+                contentTypeSchema: {
+                    type: Object,
+                    statePath: 'contentTypeSchema',
+                    observer: '_initFormData'
+                },
+                formData: {
+                    type: Object,
+                    value: {}
+                //     statePath: 'formData',
+                //     observer: '_formDataChanged'
                 },
                 relationships: {
                     type: Array,
                     value: [],
                     notify: true
-                },
-                formData: {
-                    type: Object,
-                    value: function() {
-                        return {};
-                    },
-                    notify: true,
-                    reflectToAttribute: true,
-                    observer: '_formDataChanged'
-                },
-                data: {
-                    type: Object,
-                    value: function() {
-                        return {};
-                    },
-                    notify: true
-                }
+                }   
             },
 
             observers: [
@@ -127,7 +124,16 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
             },
 
             ready: function() {
+                this.isReady = true;
+                if(!this.contentTypes) {
+                  this.getContentTypes();
+                }
+            },
 
+            getContentTypes: function() {
+                if(!this.isReady) return;
+                var options;
+                this.dispatch('getContentTypes', options);
             },
 
             create: function(event) {
@@ -152,7 +158,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
                 this.set('formData.versionName', '');
                 this.set('formData.properties', versionNode.properties);
                 this.set('formData.contenttype', identityNode.properties.contentType);
-                //console.log(identityNode);
+                console.log(this.formData);
                 //this.set('formData.relationships', relationships);
                 //this.notifyPath('formData.properties');    
                 this._init();
@@ -179,16 +185,6 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
             //     this.$.editDialog.refit();
             //   }
             // },
-
-
-            _dataSchemaChanged: function() {
-                //console.log(this.dataSchema);
-
-            },
-
-            _formDataChanged: function() {
-                //console.log('form data changed');
-            },
 
             _submit: function() {
                 console.log('formData');
@@ -247,44 +243,36 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
                 if (selectedItem) {
                     this.formData.contenttype = selectedItem.value;
                     // could add a change listener to formData.contenttype to handle the following
-                    this.$.getContentTypeSchema.params = {
-                        "contenttype": selectedItem.value
+                    var options = {
+                        "contentType": selectedItem.value
                     };
-                    this.$.getContentTypeSchema.generateRequest();
-                    //this._initFormData();
+                    this.dispatch('getContentTypeSchema', options);
                 }
             },
 
-            _dataSchemaResponse: function() {
-                // console.log(this.dataSchema);
-                this._initFormData();
-            },
-
             _init: function() {
-                //console.log('init');
-                //console.log(this.formData);
-                this.$.getContentTypeSchema.params = {
-                    "contenttype": this.formData.contenttype
+                var options = {
+                    "contentType": this.formData.contenttype
                 };
-                this.$.getContentTypeSchema.generateRequest();
+                this.dispatch('getContentTypeSchema', options);
             },
 
             _initFormData: function() {
-                //console.log(this.dataSchema);
-                if (!this.dataSchema.properties) return;
-                // Configure the formData properties and relationships based on the dataSchema if they are not already provided
-                var dataSchemaKeys = Object.keys(this.dataSchema.properties);
-                // console.log(this.dataSchemaKeys);
+                //console.log(this.contentTypeSchema);
+                if (!this.contentTypeSchema.properties) return;
+                // Configure the formData properties and relationships based on the contentTypeSchema if they are not already provided
+                var contentTypeSchemaKeys = Object.keys(this.contentTypeSchema.properties);
+                // console.log(this.contentTypeSchemaKeys);
                 if (!this.formData.properties) {
                     this.formData.properties = {};
                 }
                 if (!this.formData.relationships) {
                     this.formData.relationships = [];
                 }
-                for (var i = 0; i < dataSchemaKeys.length; i++) {
-                    var key = dataSchemaKeys[i];
+                for (var i = 0; i < contentTypeSchemaKeys.length; i++) {
+                    var key = contentTypeSchemaKeys[i];
                     if (!this.formData.properties[key]) {
-                        switch (this.dataSchema.properties[key].type) {
+                        switch (this.contentTypeSchema.properties[key].type) {
                             case 'String':
                                 this.formData.properties[key] = '';
                                 break;

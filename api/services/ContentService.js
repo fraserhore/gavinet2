@@ -252,7 +252,7 @@ module.exports = {
 
     /** Get child content objects */
     getChildren: function(options, done) {
-        console.log(options);
+        //console.log(options);
         var session = driver.session();
         var versionMatch = "";
         var contentTypeMatch = options.contentTypes ? " AND identityNode.contentType IN [" + options.contentTypes + "]" : '';
@@ -271,7 +271,7 @@ module.exports = {
                     +  contentTypeMatch
                     +' OPTIONAL MATCH (identityNode)-[:URL_ALIAS]->(urlAliasIdentity)-[urlAliasVersionRel:VERSION {to:9007199254740991}]->(urlAliasVersion)'
                     +' RETURN identityNode, version, versionNode, authorNode, urlAliasVersion.urlAlias as urlAlias ORDER BY parentChildRel.order, parentChildRel.from';
-       console.log(query);
+       //console.log(query);
         return session
             .run(query, options)
             .then(result => {
@@ -325,24 +325,6 @@ module.exports = {
             });
     },
 
-    /** Get content types */
-    getContentTypes: function(req, res) {
-
-        var query =  'MATCH (a:ContentType)-[:VERSION {to:9007199254740991}]->(b:Version)'
-                    +' RETURN a as contentTypeIdentity, b as contentTypeVersion'
-        var params = {
-            "id": ''
-        };
-        var cb = function(err, data) {
-            //console.log(data);
-            return res.json(data);
-        }
-        db.cypher({
-            query: query,
-            params: params
-        }, cb);
-    },
-
     /** Get parent */
     getParent: function(req, res) {
 
@@ -392,14 +374,42 @@ module.exports = {
             });        
     },
 
+    /** Get content types */
+    getContentTypes: function(options, done) {
+        var session = driver.session();
+        var query =  'MATCH (a:ContentType)-[:VERSION {to:9007199254740991}]->(b:Version)'
+                    +' RETURN a as contentTypeIdentity, b as contentTypeVersion';
+
+        return session
+            .run(query, options)
+            .then(result => {
+                var contentTypes = [];
+                result.records.forEach(function(record) {
+                    contentTypes.push({
+                        'contentTypeIdentity': record.get('contentTypeIdentity'), 
+                        'contentTypeVersion': record.get('contentTypeVersion')
+                    });
+                });
+                session.close();
+                return done(contentTypes);
+            })
+            .catch(error => {
+                session.close();
+               //console.log(error);
+                return done(error);
+                throw error;
+            });
+    },
+
     /** Get content type schema */
     getContentTypeSchema: function(options, done) {
         var session = driver.session();
         var query =   'MATCH (contentTypeIdentity:ContentType)-[contentTypeVersionRelationship:VERSION {to:9007199254740991}]->(contentTypeVersion:Version {identifier:{contentType}})'
-                    +' MATCH (contentTypeIdentity)-[:PROPERTY|RELATIONSHIP|CONTAINS {to:9007199254740991}]->(propertyIdentity)-[propertyVersionRelationship:VERSION {to:9007199254740991}]->(propertyVersion:Version)'
+                    +' MATCH (contentTypeIdentity)-[propertyRelationship:PROPERTY|RELATIONSHIP|CONTAINS {to:9007199254740991}]->(propertyIdentity)-[propertyVersionRelationship:VERSION {to:9007199254740991}]->(propertyVersion:Version)'
                     +' MATCH (contentTypeIdentity)-[:INSTANCE_OF]->(instanceType)-[:VERSION {to:9007199254740991}]->(instanceVersion:Version)'
                     +' OPTIONAL MATCH (propertyIdentity)-[:ENUM]->(enumItemsParent)'
                     +' OPTIONAL MATCH (contentTypeIdentity)-[:URL_ALIAS]->(urlAliasIdentity)'
+                    +' WITH contentTypeIdentity, contentTypeVersionRelationship, contentTypeVersion, propertyIdentity, propertyRelationship, propertyVersion,  propertyVersionRelationship, instanceType, instanceVersion, enumItemsParent, urlAliasIdentity ORDER BY propertyRelationship.order'
                     +' CALL apoc.map.setKey(contentTypeVersion, "versionRelationship", contentTypeVersionRelationship) yield value as contentTypeVersionObject'
                     +' CALL apoc.map.setKey(contentTypeIdentity, "version", contentTypeVersionObject) yield value as contentTypeObject'
                     +' CALL apoc.map.setKey(contentTypeObject, "contentType2", instanceVersion.identifier) yield value as contentTypeObject2'
@@ -417,6 +427,8 @@ module.exports = {
                 var record = result.records[0];
                 if(!record) return;
 
+                console.log(record);
+
                 var contentType = record.get('contentType'),
                     properties = contentType.properties,
                     propertiesTemp = {};
@@ -427,7 +439,7 @@ module.exports = {
                 };
 
                 contentType.properties = propertiesTemp;
-
+                console.log(contentType);
                 session.close();
                 return done(contentType);
             })

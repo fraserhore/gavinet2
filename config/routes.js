@@ -114,15 +114,15 @@ module.exports.routes = {
     skipAssets: true
   },
 
-  'GET /content/getContentTypeSchema': {
-    controller: 'ContentController',
-    action: 'getContentTypeSchema',
-    skipAssets: true
-  },  
-
   'GET /content/getContentTypes': {
     controller: 'ContentController',
     action: 'getContentTypes',
+    skipAssets: true
+  },
+
+  'GET /content/getContentTypeSchema': {
+    controller: 'ContentController',
+    action: 'getContentTypeSchema',
     skipAssets: true
   },  
 

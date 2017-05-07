@@ -490,24 +490,6 @@ module.exports = {
         ContentService.getChildren(options, function(done){return res.json(done)});
     },
 
-    /** Get content types */
-    getContentTypes: function(req, res) {
-
-        var query =  'MATCH (a:ContentType)-[:VERSION {to:9007199254740991}]->(b:Version)'
-                    +' RETURN a as contentTypeIdentity, b as contentTypeVersion'
-        var params = {
-            "id": ''
-        };
-        var cb = function(err, data) {
-            //console.log(data);
-            return res.json(data);
-        }
-        db.cypher({
-            query: query,
-            params: params
-        }, cb);
-    },
-
     /** Get parent */
     getParent: function(req, res) {
 
@@ -535,9 +517,15 @@ module.exports = {
         ContentService.getSiblings(options, function(done){return res.json(done)});
     },
 
+    /** Get content types */
+    getContentTypes: function(req, res) {
+        var options = {};
+        ContentService.getContentTypes(options, function(done){return res.json(done)});
+    },
+
     /** Get content type schema */
     getContentTypeSchema: function(req, res) {
-        var options = {"contentType": req.param('contenttype')};
+        var options = {"contentType": req.param('contentType')};
         ContentService.getContentTypeSchema(options, function(done){return res.json(done)});
     },
 

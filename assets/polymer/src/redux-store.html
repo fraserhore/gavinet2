@@ -47,6 +47,12 @@
             case 'LOAD_CHILDREN' :
                 return Object.assign({}, state, {children: action.children});
 
+            case 'LOAD_CONTENT_TYPES' :
+                return Object.assign({}, state, {contentTypes: action.contentTypes});
+
+            case 'LOAD_CONTENT_TYPE_SCHEMA' :
+                return Object.assign({}, state, {contentTypeSchema: action.contentTypeSchema});
+
             case 'UPDATE_VERSION_VALIDITY_DATE' :
                 return Object.assign({}, state, {versionValidityDate: action.versionValidityDate});
 
@@ -190,14 +196,15 @@
             
             },
 
-            getContentTypeSchema: function() {
+            getContentTypeSchema: function(options) {
                 return function(dispatch) {
-
-                    var request = api.getContentTypeSchema();
+                    console.log(options);
+                    var request = api.getContentTypeSchema(options);
 
                     Promise.all([request.completes])
                         .then(function (requests) {
                             var response = requests[0].response;
+                            console.log(response);
                             dispatch({
                                 type: 'LOAD_CONTENT_TYPE_SCHEMA',
                                 contentTypeSchema: response
