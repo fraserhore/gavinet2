@@ -421,8 +421,8 @@ module.exports = {
                     +' WITH *, apoc.map.setKey(propIObject2, "urlAlias", propIurlAliasI.name) as propIObject3'
                     +' WITH *, apoc.map.setKey(propV, "versionRationship", propVR) as propVObject'
                     +' WITH *, apoc.map.setKey(propIObject3, "version", propVObject) as propIObject4'
-                    +' WITH apoc.map.setKey(ctIObject3, "properties", collect(propIObject4)) as ctIObject4'
-                    +' RETURN ctIObject4'
+                    +' WITH apoc.map.setKey(ctIObject3, "properties", collect(propIObject4)) as contentType'
+                    +' RETURN contentType'
         return session
             .run(query, options)
             .then(result => {
