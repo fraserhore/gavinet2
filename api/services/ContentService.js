@@ -404,6 +404,7 @@ module.exports = {
     /** Get content type schema */
     getContentTypeSchema: function(options, done) {
         var session = driver.session();
+        // ct = contentType, I = identity, V = version, R = relationship, prop = property, cProp = complex property
         var query =   'MATCH (ctI:ContentType)-[ctVR:VERSION {to:9007199254740991}]->(ctV:Version {identifier:{contentType}})'
                     +' MATCH (ctI)-[propR:PROPERTY|RELATIONSHIP|CONTAINS {to:9007199254740991}]->(propI)-[propVR:VERSION {to:9007199254740991}]->(propV:Version)'
                     +' MATCH (ctI)-[:INSTANCE_OF]->(instanceType)-[:VERSION {to:9007199254740991}]->(instanceV:Version)'
@@ -411,18 +412,28 @@ module.exports = {
                     +' OPTIONAL MATCH (propI)-[:ENUM_ITEMS_PARENT]->(enumItemsParent)'
                     +' OPTIONAL MATCH (propI)-[:ENUM_ITEM]->(enumItem)'
                     +' OPTIONAL MATCH (propI)-[:URL_ALIAS]->(propIurlAliasI)'
+                    +' OPTIONAL MATCH (propI)-[cPropR:PROPERTY|RELATIONSHIP|CONTAINS {to:9007199254740991}]->(cPropI)-[cPropVR:VERSION {to:9007199254740991}]->(cPropV:Version)'
+                    +' OPTIONAL MATCH (cPropI)-[:ENUM_ITEMS_PARENT]->(cPropEnumItemsParent)'
+                    +' OPTIONAL MATCH (cPropI)-[:ENUM_ITEM]->(cPropEnumItem)'
+                    +' OPTIONAL MATCH (cPropI)-[:URL_ALIAS]->(cPropIurlAliasI)'
                     +' WITH * ORDER BY propR.order'
                     +' WITH *, apoc.map.setKey(ctI, "contentType2", instanceV.identifier) as ctIObject'
                     +' WITH *, apoc.map.setKey(ctIObject, "urlAlias", ctIurlAliasI.name) as ctIObject2'
                     +' WITH *, apoc.map.setKey(ctV, "versionRationship", ctVR) as ctVObject'
                     +' WITH *, apoc.map.setKey(ctIObject2, "version", ctVObject) as ctIObject3'
                     +' WITH *, apoc.map.setKey(propI, "enumItemsParent", enumItemsParent.uuid) as propIObject'
-                    +' WITH *, apoc.map.setKey(propI, "enumItems", collect(enumItem.uuid)) as propIObject2'
+                    +' WITH *, apoc.map.setKey(propIObject, "enumItems", collect(enumItem.uuid)) as propIObject2'
                     +' WITH *, apoc.map.setKey(propIObject2, "urlAlias", propIurlAliasI.name) as propIObject3'
                     +' WITH *, apoc.map.setKey(propV, "versionRationship", propVR) as propVObject'
                     +' WITH *, apoc.map.setKey(propIObject3, "version", propVObject) as propIObject4'
-                    +' WITH apoc.map.setKey(ctIObject3, "properties", collect(propIObject4)) as contentType'
-                    +' RETURN contentType'
+                    +' WITH *, apoc.map.setKey(cPropI, "enumItemsParent", cPropEnumItemsParent.uuid) as cPropIObject'
+                    +' WITH *, apoc.map.setKey(cPropIObject, "enumItems", collect(cPropEnumItem.uuid)) as cPropIObject2'
+                    +' WITH *, apoc.map.setKey(cPropIObject2, "urlAlias", cPropIurlAliasI.name) as cPropIObject3'
+                    +' WITH *, apoc.map.setKey(cPropV, "versionRationship", cPropVR) as cPropVObject'
+                    +' WITH *, apoc.map.setKey(cPropIObject3, "version", cPropVObject) as cPropIObject4'
+                    +' WITH *, apoc.map.setKey(propIObject4, "properties", collect(cPropIObject4)) as propIObject5'
+                    +' WITH apoc.map.setKey(ctIObject3, "properties", collect(propIObject5)) as contentType'
+                    +' RETURN contentType';
         return session
             .run(query, options)
             .then(result => {
