@@ -1,0 +1,70 @@
+{
+    "name": "Test Actor 2",
+    "uuid": "f71d3e00-527a-4dfe-82f9-f927e4fb2a25",
+    "contentType": "actor",
+    "VERSION": [
+        {
+            "from": {
+                "low": 1448921680,
+                "high": 348
+            },
+            "to": {
+                "low": -1,
+                "high": 2097151
+            },
+            "versionNumber": {
+                "low": 3,
+                "high": 0
+            },
+            "versionName": "",
+            "lang": "en-gb",
+            "Version": {
+                "name": "Test Actor 2",
+                "uuid": "fe9e3374-bd74-4871-80e8-b66ac688f603",
+                "MEMBER_OF": [
+                    {
+                        "from": {
+                            "low": 1448921680,
+                            "high": 348
+                        },
+                        "to": {
+                            "low": -1,
+                            "high": 2097151
+                        },
+                        "versionNumber": {
+                            "low": 3,
+                            "high": 0
+                        },
+                        "versionName": "",
+                        "lang": "en-gb",
+                        "Activity": {
+                            "name": "Test Activity",
+                            "uuid": "11bd983f-ec54-47b4-b42e-aa698ba0e169",
+                            "contentType": "activity",
+                            "VERSION": {
+                                "from": {
+                                    "low": -762731352,
+                                    "high": 345
+                                },
+                                "to": {
+                                    "low": -1,
+                                    "high": 2097151
+                                },
+                                "versionNumber": {
+                                    "low": 1,
+                                    "high": 0
+                                },
+                                "versionName": "current",
+                                "lang": "en-gb",
+                                "Version": {
+                                    "name": "Test Activity",
+                                    "uuid": "791206eb-bee4-420c-bfdb-7164db923b92"
+                                }
+                            }
+                        }
+                    }
+                ]
+            }
+        }
+    ]
+}

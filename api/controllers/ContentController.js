@@ -471,9 +471,9 @@ module.exports = {
         var options = {
             "id": req.param('id') || 0,
             "lang": parseInt(req.param('lang')) || "en-gb",
-            "versionName": req.param('versionName'),
-            "versionValidityDate": parseInt(req.param('versionValidityDate')),
-            "contentTypes": req.param('contentTypes')
+            "versionName": req.param('versionName') || null,
+            "versionValidityDate": parseInt(req.param('versionValidityDate')) || null,
+            "contentTypes": req.param('contentTypes') || null
         };
         ContentService.getChildren(options, function(done){return res.json(done)});
     },
@@ -703,7 +703,7 @@ module.exports = {
     //     "lang" : "en-gb"
     // }
     createBranch: function(req, res) {
-       console.log(req.body);
+      // console.log(req.body);
         var options = {
                 "parentId": req.body.parentId,
                 "authorId": req.body.authorId,
@@ -727,7 +727,7 @@ module.exports = {
     //     "lang" : "en-gb"
     // }
     replaceBranch: function(req, res) {
-       console.log(req.body);
+      // console.log(req.body);
         var options = {
                 "parentId": req.body.parentId,
                 "authorId": req.body.authorId,
@@ -773,7 +773,7 @@ module.exports = {
 
     reorder: function(req, res) {
         var options = req.body;
-        console.log(options);
+       // console.log(options);
         ContentService.reorder(options, function(done){return res.json(done)});   
     }
 

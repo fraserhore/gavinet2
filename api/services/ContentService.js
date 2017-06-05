@@ -61,7 +61,12 @@ module.exports = {
                 // get the content type schema
                 +' OPTIONAL MATCH (identityNode)-[:INSTANCE_OF]->(contentTypeIdentity)-[:VERSION {to:9007199254740991}]->(contentTypeVersion),'
                 +' (contentTypeIdentity)-[:PROPERTY|RELATIONSHIP|CONTAINS {to:9007199254740991}]->(propertyIdentity)-[:VERSION {to:9007199254740991}]->(propertyVersion:Version)'
-                +' RETURN identityNode, version, versionNode, authorNode, urlAlias, contentTypeIdentity, contentTypeVersion, collect(propertyIdentity) as propertyIdentities, collect(propertyVersion) as propertyVersions';
+                +' OPTIONAL MATCH (contentTypeIdentity)-[]->(relationshipTypeIdentity:RelationshipType)-[:VERSION {to:9007199254740991}]->(relationsipTypeVersion {type:"relationship"})'
+                +' WITH *, collect(relationsipTypeVersion.identifier) as relationshipIdentifiers'
+                +' OPTIONAL MATCH (identityNode)-[relationship]->(relatedIdentityNode)-[:VERSION {to:9007199254740991}]->(relatedVersion)'
+                +' WHERE toLower(type(relationship)) IN relationshipIdentifiers'
+                +' WITH *, reduce(map = [], n IN collect(relatedVersion)| [{referenceNode: identityNode, relationshipName:type(relationship), direction: "outbound", relatedNode: n}]) as relationships'
+                +' RETURN identityNode, version, versionNode, relationships, authorNode, urlAlias, contentTypeIdentity, contentTypeVersion, collect(propertyIdentity) as propertyIdentities, collect(propertyVersion) as propertyVersions';
         // console.log(query);
         return session
             .run(query, options)
@@ -83,6 +88,7 @@ module.exports = {
                     'identityNode': record.get('identityNode'), 
                     'version': record.get('version'),
                     'versionNode': record.get('versionNode'),
+                    'relationships': record.get('relationships'),
                     'authorNode': record.get('authorNode'),
                     'lang': options.lang,
                     'schema': schema
@@ -271,7 +277,7 @@ module.exports = {
                     +  contentTypeMatch
                     +' OPTIONAL MATCH (identityNode)-[:URL_ALIAS]->(urlAliasIdentity)-[urlAliasVersionRel:VERSION {to:9007199254740991}]->(urlAliasVersion)'
                     +' RETURN identityNode, version, versionNode, authorNode, urlAliasVersion.urlAlias as urlAlias ORDER BY parentChildRel.order, parentChildRel.from';
-       //console.log(query);
+       // console.log(query);
         return session
             .run(query, options)
             .then(result => {
@@ -286,6 +292,7 @@ module.exports = {
                     });
                 });
                 session.close();
+                //console.log(children);
                 return done(children);
             })
             .catch(error => {
@@ -440,7 +447,7 @@ module.exports = {
                 var record = result.records[0];
                 if(!record) return;
 
-                console.log(record);
+                //console.log(record);
 
                 var contentType = record.get('contentType'),
                     properties = contentType.properties,
@@ -452,7 +459,7 @@ module.exports = {
                 };
 
                 contentType.properties = propertiesTemp;
-                console.log(contentType);
+                //console.log(contentType);
                 session.close();
                 return done(contentType);
             })
@@ -1208,8 +1215,8 @@ module.exports = {
 					+ 'AND r1.versionName = {currentVersionName} AND r1.lang = {lang} '
 					+ 'CREATE (b)-[:VERSION {from:timestamp(), to:9007199254740991, versionNumber:1, versionName:{newVersionName}, lang:{lang}}]->(a) '
 					+ 'RETURN a,b'
-       console.log(options);
-       console.log(query);
+      // console.log(options);
+      // console.log(query);
         return session
             .run(query, options)
             .then(result => {
@@ -1257,8 +1264,8 @@ module.exports = {
                     + 'AND r1.versionName = {currentVersionName} AND r1.lang = {lang} '
                     + 'CREATE (b)-[:VERSION {from:timestamp(), to:9007199254740991, versionNumber:1, versionName:{newVersionName}, lang:{lang}}]->(a) '
                     + 'RETURN a,b'
-       console.log(options);
-       console.log(query);
+      // console.log(options);
+      // console.log(query);
         return session
             .run(query, options)
             .then(result => {
@@ -1313,8 +1320,8 @@ module.exports = {
                     +' WITH COLLECT(r) as rels'
                     +' FOREACH(i IN RANGE(0, SIZE(rels)-1) | FOREACH(x in [rels[i]] | set x.order = i))'
                     +' RETURN rels'
-       console.log(options);
-       console.log(query);
+      // console.log(options);
+      // console.log(query);
         return session
             .run(query, options)
             .then(result => {

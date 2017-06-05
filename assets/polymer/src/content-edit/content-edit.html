@@ -50,6 +50,9 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
                         <template is="dom-if" if="{{_le(property.object.maxLength, 256)}}">
                             <paper-input name="properties[[[property.key]]]" label="{{property.object.title}}" value="[[_getFormDataProperty(property.key)]]" on-value-changed="_updateProperty"></paper-input>
                         </template>
+                        <template is="dom-if" if="{{_eq(property.object.maxLength, undefined)}}">
+                            <paper-input name="properties[[[property.key]]]" label="{{property.object.title}}" value="[[_getFormDataProperty(property.key)]]" on-value-changed="_updateProperty"></paper-input>
+                        </template>
                         <template is="dom-if" if="{{_gt(property.object.maxLength, 256)}}">
                             <label>{{property.object.title}}</label>
                             <polymer-quill store-as="html" save-interval="1000" toolbar-type="full" show-html content="[[_getFormDataProperty(property.key)]]" on-change="_updateProperty"></polymer-quill>
@@ -67,7 +70,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
                         <label>{{property.object.title}}</label>
                         <template id="repeatRelationships" is="dom-repeat" items="{{formData.relationships}}" as="relationship">
                             <template is="dom-if" if="_eq(property.key, relationship.relationshipName)">
-                                <paper-item>-{{property.key}}[{{relationship.relationshipName}}]-> {{relationship.relatedNode.properties.name}}</paper-item>
+                                <paper-item>-[{{relationship.relationshipName}}]-> {{relationship.relatedNode.properties.name}}</paper-item>
                             </template>
                         </template>
                         <paper-button raised on-click="openDialog" data-dialog="relationshipDialog{{index}}">Add [[property.object.title]]</paper-button>
@@ -159,11 +162,11 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
                 this.set('formData.properties', versionNode.properties);
                 this.set('formData.contenttype', identityNode.properties.contentType);
                 console.log(this.formData);
-                //this.set('formData.relationships', relationships);
+                this.set('formData.relationships', relationships);
                 //this.notifyPath('formData.properties');    
                 this._init();
                 this.$.editDialog.open();
-                this.$.editDialog.refit(); // this didn't work. need to try something else.
+                // this.$.editDialog.refit(); this didn't work. need to try something else.
             },
 
             delete: function(event) {
