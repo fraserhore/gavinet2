@@ -438,16 +438,7 @@ module.exports = {
 
                 //console.log(record);
 
-                var contentType = record.get('contentType'),
-                    properties = contentType.properties,
-                    propertiesTemp = {};
-
-                for (var i = 0; i < properties.length; i++) {
-                    propertiesTemp[properties[i].version.identifier] = properties[i].version;
-                    propertiesTemp[properties[i].version.identifier]['enumItemsParent'] = properties[i].enumItemsParent;
-                };
-
-                contentType.properties = propertiesTemp;
+                var contentType = record.get('contentType');
                 //console.log(contentType);
                 session.close();
                 return done(contentType);

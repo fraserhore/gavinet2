@@ -161,7 +161,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
                 this.set('formData.versionName', '');
                 this.set('formData.properties', versionNode.properties);
                 this.set('formData.contenttype', identityNode.properties.contentType);
-                console.log(this.formData);
+                // console.log(this.formData);
                 this.set('formData.relationships', relationships);
                 //this.notifyPath('formData.properties');    
                 this._init();
@@ -261,7 +261,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
             },
 
             _initFormData: function() {
-                //console.log(this.contentTypeSchema);
+                // console.log(this.contentTypeSchema);
                 if (!this.contentTypeSchema.properties) return;
                 // Configure the formData properties and relationships based on the contentTypeSchema if they are not already provided
                 var contentTypeSchemaKeys = Object.keys(this.contentTypeSchema.properties);
@@ -324,7 +324,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
             _updateProperty: function(event) {
                 var value = event.detail.html ? event.detail.html : event.detail.value;
                 if (!value || !event.model.property) return;
-                console.log(value);
+                // console.log(value);
                 this.set(['formData', 'properties', event.model.property.key], value);
                 //this.formData.properties[event.model.item.key] = event.detail.value;
             },
@@ -347,7 +347,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
             },
 
             _postDataResponse: function(event) {
-                console.log(event);
+                // console.log(event);
                 this.fire('contentEdited', {
                     action: this.formData.action
                 });
