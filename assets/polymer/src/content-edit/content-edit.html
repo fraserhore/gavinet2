@@ -140,13 +140,19 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
             },
 
             create: function(event) {
+                if (!this.selectedItem) {
+                    alert('Please select a content type');
+                    return;
+                }
                 this.set('formData.action', 'create');
                 this.set('formData.authorId', this.nodeData.authorNode.properties.uuid); // Should come from the user session
                 this.set('formData.parentId', this.nodeData.identityNode.properties.uuid);
                 this.set('formData.lang', this.nodeData.lang);
                 this.set('formData.versionName', '');
-                //this.set('formData.contenttype', 'folder');
-                //console.log(this.formData);
+                this.set('formData.contenttype', this.selectedItem.value);
+                this._init();
+                console.log(this.selectedItem.value);
+                console.log(this.formData);
                 this.$.editDialog.open();
             },
 
@@ -155,13 +161,14 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
                     versionNode = event.detail.versionNode || this.nodeData.versionNode,
                     relationships = event.detail.relationships || this.nodeData.relationships,
                     authorNode = event.detail.authorNode || this.nodeData.authorNode;
+                console.log(relationships);
                 this.set('formData.action', 'update');
                 this.set('formData.authorId', authorNode.properties.uuid);
                 this.set('formData.id', identityNode.properties.uuid);
                 this.set('formData.versionName', '');
                 this.set('formData.properties', versionNode.properties);
                 this.set('formData.contenttype', identityNode.properties.contentType);
-                // console.log(this.formData);
+                //console.log(this.formData);
                 this.set('formData.relationships', relationships);
                 //this.notifyPath('formData.properties');    
                 this._init();

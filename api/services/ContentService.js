@@ -67,7 +67,7 @@ module.exports = {
                 +' WHERE toLower(type(relationship)) IN relationshipIdentifiers'
                 +' WITH *, reduce(map = [], n IN collect(relatedVersion)| [{referenceNode: identityNode, relationshipName:type(relationship), direction: "outbound", relatedNode: n}]) as relationships'
                 +' RETURN identityNode, version, versionNode, relationships, authorNode, urlAlias, contentTypeIdentity, contentTypeVersion, collect(propertyIdentity) as propertyIdentities, collect(propertyVersion) as propertyVersions';
-        // console.log(query);
+        console.log(query);
         return session
             .run(query, options)
             .then(result => {
@@ -488,7 +488,7 @@ module.exports = {
                                      + whereRelated 
                                      + createRelationships;
         }
-        //console.log(options);
+        console.log(options);
         var query =  // Match path from root to parent so we can use it later to create the URL alias.
 					 ' MATCH p = (a:Root)-[:CONTAINS*]->(parent)'
 					// Match on parent uuid and author uuid
@@ -606,7 +606,7 @@ module.exports = {
                 whereRelated = ' WHERE ',
                 createRelationships = '';
             for (var i = relationships.length - 1; i >= 0; i--) {
-               //console.log(relationships[i]);
+               console.log(relationships[i]);
                 var relationshipName = relationships[i].relationshipName.toUpperCase(),
                     direction = relationships[i].direction,
                     inboundSymbol = direction === 'inbound' ? '<' : '',
@@ -618,7 +618,7 @@ module.exports = {
                 whereRelated += relatedIdentifier + '.uuid = "' + relatedNodeId + '"';
                 if(i) {
                     matchRelated += ', ';
-                    whereRelated += ', ';
+                    whereRelated += ' AND ';
                 } 
                 createRelationships += ' CREATE (identitynode)' + inboundSymbol + '-[:' + relationshipName + ' {from:timestamp(), to:9007199254740991}]-' + outboundSymbol + '(' + relatedIdentifier + ')';
             };
@@ -676,6 +676,7 @@ module.exports = {
                     // Return results
                     +' RETURN identitynode, currentversion, newversion, urlAliasIdentity, newUrlAliasVersion, author';
 
+        //console.log(query);
         return session
             .run(query, options)
             .then(result => {

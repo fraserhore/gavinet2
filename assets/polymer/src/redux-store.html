@@ -143,7 +143,7 @@
             },
 
             getChildren: function(options) {
-                console.log(options);
+                //console.log(options);
                 return function(dispatch) {
                     dispatch({ type: 'SIGN_UP_STARTED'});
 
@@ -152,7 +152,7 @@
                     Promise.all([request.completes])
                         .then(function (requests) {
                             var response = requests[0].response;
-                            console.log(response);
+                            //console.log(response);
                             dispatch({
                                 type: 'LOAD_CHILDREN',
                                 children: response
@@ -198,13 +198,13 @@
 
             getContentTypeSchema: function(options) {
                 return function(dispatch) {
-                    console.log(options);
+                    //console.log(options);
                     var request = api.getContentTypeSchema(options);
 
                     Promise.all([request.completes])
                         .then(function (requests) {
                             var response = requests[0].response;
-                            console.log(response);
+                            //console.log(response);
                             dispatch({
                                 type: 'LOAD_CONTENT_TYPE_SCHEMA',
                                 contentTypeSchema: response
